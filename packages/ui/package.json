@@ -1,0 +1,21 @@
+{
+  "name": "@time-capsule/ui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "build": "echo \"@time-capsule/ui: no build step\""
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "dependencies": {
+    "@time-capsule/game-engine": "workspace:*",
+    "lucide-react": "^0.460.0"
+  }
+}

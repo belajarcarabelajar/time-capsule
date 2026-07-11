@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes float-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+@keyframes rise { from { transform: translateY(100px); opacity:0; } to { transform: translateY(-300px); opacity:1; } }
+@keyframes progress-loading { 0% { transform: scaleX(0); } 50% { transform: scaleX(0.7); } 100% { transform: scaleX(1); } }
+.animate-float-slow { animation: float-slow 8s infinite ease-in-out; }
+.animate-rise { animation: rise 4s infinite linear; }
+.animate-progress-loading { animation: progress-loading 2s infinite ease-in-out; }
+.animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
