@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "deploy": "turbo run build && wrangler pages deploy apps/web/dist --project-name time-capsule"
+    "deploy": "bash scripts/deploy-website.sh"
   },
   "workspaces": [
     "apps/*",

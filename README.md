@@ -114,11 +114,9 @@ Production output: `apps/web/dist`.
 
 ### Deploy
 
-You can deploy the built assets to Cloudflare Pages using the `deploy` script. Ensure you have your Cloudflare API token and account ID set in your environment:
+You can deploy the built assets to Cloudflare Pages using the `deploy` script, which automates loading credentials from `/home/belajarcarabelajar/cloudflare/.env` and deploying:
 
 ```bash
-export CLOUDFLARE_API_TOKEN="YOUR_API_TOKEN"
-export CLOUDFLARE_ACCOUNT_ID="YOUR_ACCOUNT_ID"
 bun run deploy
 ```
 
@@ -128,7 +126,7 @@ bun run deploy
 |--------|-------------|
 | `bun run dev` | `turbo run dev` — start workspace dev tasks |
 | `bun run build` | `turbo run build` — build in dependency order |
-| `bun run deploy` | `turbo run build && wrangler deploy apps/web/dist` — build and deploy to Cloudflare Pages |
+| `bun run deploy` | `bash scripts/deploy-website.sh` — build and deploy to Cloudflare Pages |
 
 ## Contributing
 
