@@ -35,7 +35,8 @@ import { apiKey, GEMINI_SYSTEM_PROMPT, cfApiToken, cfAccountId } from './systemP
           messages: [
             { role: 'system', content: GEMINI_SYSTEM_PROMPT + '\nIMPORTANT: You must respond ONLY with valid JSON matching the format requested. Do not include any conversational preamble or markdown code block markers.' },
             { role: 'user', content: promptText }
-          ]
+          ],
+          response_format: { type: "json_object" }
         })
       });
 
@@ -58,7 +59,23 @@ import { apiKey, GEMINI_SYSTEM_PROMPT, cfApiToken, cfAccountId } from './systemP
          console.error("Invalid response format:", rawText);
          throw new Error("Gagal memproses skenario cerita.");
       }
-      parsedData = JSON.parse(jsonMatch[0]);
+      
+      const jsonString = jsonMatch[0];
+      try {
+        parsedData = JSON.parse(jsonString);
+      } catch (err) {
+        console.warn("Standard JSON parse failed, attempting sanitization...", err);
+        try {
+          // Escape raw control characters inside double-quoted values (e.g. unescaped newlines)
+          const sanitizedString = jsonString.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match, p1) => {
+            return '"' + p1.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + '"';
+          });
+          parsedData = JSON.parse(sanitizedString);
+        } catch (sanitizeErr) {
+          console.error("JSON parsing and sanitization failed:", sanitizeErr);
+          throw new Error("Gagal memproses skenario cerita.");
+        }
+      }
     }
 
     return parsedData;
