@@ -102,11 +102,15 @@ const geminiResponseSchema = {
   required: ["meta", "characters", "scenes", "script"]
 };
 
-  const fetchScenarioData = async (activeTopic, chapterNum) => {
+  const fetchScenarioData = async (activeTopic, chapterNum, historySummary = "") => {
     let promptText = `TOPIK UTAMA: ${activeTopic}`;
     
     if (chapterNum > 1) {
-      promptText += `\n\nKONTEKS: Ini adalah BAGIAN ${chapterNum}. \nATURAN KHUSUS: \n1. JANGAN ULANGI scene kedatangan. \n2. LANGSUNG diskusi mendalam/lanjutan topik.`;
+      promptText += `\n\nKONTEKS: Ini adalah BAGIAN ${chapterNum}.`;
+      if (historySummary) {
+        promptText += `\n\nRIWAYAT CERITA/MATERI SEBELUMNYA (JANGAN ULANGI TOPIK/KUIS INI):\n${historySummary}`;
+      }
+      promptText += `\n\nATURAN KHUSUS: \n1. JANGAN ULANGI scene kedatangan. \n2. LANGSUNG diskusi mendalam/lanjutan topik. \n3. Lanjutkan materi ke sub-topik baru yang lebih mendalam dan berbeda dari bagian sebelumnya. \n4. Buat pertanyaan kuis yang sepenuhnya baru.`;
     } else {
       promptText += `\n\nKONTEKS: Ini adalah BAGIAN 1 (AWAL). \nATURAN KHUSUS: \n1. Mulai cerita dengan adegan Penjelajah Waktu BARU SAJA MENDARAT.`;
     }

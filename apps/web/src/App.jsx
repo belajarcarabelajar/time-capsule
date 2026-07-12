@@ -33,6 +33,34 @@ ${errorDetail.stack || "N/A"}
     setTimeout(() => setCopied(false), 2000);
   };
   
+  const [historyList, setHistoryList] = useState([]); // List of gameData for previous chapters
+
+  const generateHistorySummary = (pastChaptersData) => {
+    let summary = "";
+    pastChaptersData.forEach((data, index) => {
+      if (!data) return;
+      summary += `\n--- RINGKASAN BAGIAN ${index + 1} ---\n`;
+      if (data.meta?.location) {
+        summary += `Lokasi: ${data.meta.location}\n`;
+      }
+      const quizzes = data.script?.filter(item => item.type === 'quiz').map(item => item.text);
+      if (quizzes && quizzes.length > 0) {
+        summary += `Kuis yang sudah ditanyakan:\n`;
+        quizzes.forEach(q => {
+          summary += `- "${q}"\n`;
+        });
+      }
+      const dialogues = data.script?.filter(item => item.type === 'dialogue').map(item => `${item.speakerId}: ${item.text.slice(0, 60)}...`);
+      if (dialogues && dialogues.length > 0) {
+        summary += `Dialog/Narasi singkat:\n`;
+        dialogues.slice(0, 3).forEach(d => {
+          summary += `- ${d}\n`;
+        });
+      }
+    });
+    return summary;
+  };
+
   const [gameData, setGameData] = useState(null);
   const [idx, setIdx] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
@@ -60,9 +88,10 @@ ${errorDetail.stack || "N/A"}
     SoundEngine.init();
     SoundEngine.playWarp();
     setErrorMsg(null);
+    setHistoryList([]); // Reset history
 
     try {
-      const data = await fetchScenarioData(topic, 1);
+      const data = await fetchScenarioData(topic, 1, "");
       setGameData(data);
       setChapterCount(1);
       
@@ -75,7 +104,7 @@ ${errorDetail.stack || "N/A"}
       
       // Clear old preloaded data to avoid stale content
       setNextGameData(null); 
-      preloadNextChapter(topic, 2);
+      preloadNextChapter(topic, 2, [data]);
 
     } catch (err) {
       console.error(err);
@@ -92,11 +121,12 @@ ${errorDetail.stack || "N/A"}
     }
   };
 
-  const preloadNextChapter = async (activeTopic, nextChapterNum) => {
+  const preloadNextChapter = async (activeTopic, nextChapterNum, currentHistory = []) => {
     if (isPreloading) return;
     setIsPreloading(true);
     try {
-      const data = await fetchScenarioData(activeTopic, nextChapterNum);
+      const historySummary = generateHistorySummary(currentHistory);
+      const data = await fetchScenarioData(activeTopic, nextChapterNum, historySummary);
       setNextGameData(data);
     } catch (e) {
       console.error("[SMART PRELOAD] Gagal:", e);
@@ -109,6 +139,9 @@ ${errorDetail.stack || "N/A"}
     const nextChapterNum = chapterCount + 1;
     setErrorMsg(null);
 
+    const updatedHistory = [...historyList, gameData];
+    setHistoryList(updatedHistory);
+
     if (nextGameData) {
       setGameData(nextGameData);
       setNextGameData(null);
@@ -120,11 +153,12 @@ ${errorDetail.stack || "N/A"}
       setFeedback(null);
       setQuizMode(false);
 
-      preloadNextChapter(topic, nextChapterNum + 1);
+      preloadNextChapter(topic, nextChapterNum + 1, [...updatedHistory, nextGameData]);
     } else {
       setIsLoading(true);
       try {
-        const data = await fetchScenarioData(topic, nextChapterNum);
+        const historySummary = generateHistorySummary(updatedHistory);
+        const data = await fetchScenarioData(topic, nextChapterNum, historySummary);
         setGameData(data);
         setChapterCount(nextChapterNum);
         
@@ -134,7 +168,7 @@ ${errorDetail.stack || "N/A"}
         setFeedback(null);
         setQuizMode(false);
 
-        preloadNextChapter(topic, nextChapterNum + 1);
+        preloadNextChapter(topic, nextChapterNum + 1, [...updatedHistory, data]);
       } catch (err) {
         console.error(err);
         setErrorMsg("Koneksi terputus. Mohon coba lagi.");
@@ -207,6 +241,7 @@ ${errorDetail.stack || "N/A"}
        setChapterCount(1);
        setNextGameData(null);
        setErrorMsg(null);
+       setHistoryList([]); // Reset history on exit
     }, 2500);
   };
 
