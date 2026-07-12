@@ -1,4 +1,6 @@
 const apiKey = (typeof process !== 'undefined' ? process.env.VITE_GEMINI_API_KEY : null) || import.meta.env?.VITE_GEMINI_API_KEY || ""; // Biarkan kosong atau set via env VITE_GEMINI_API_KEY
+const cfApiToken = (typeof process !== 'undefined' ? process.env.VITE_CF_API_TOKEN : null) || import.meta.env?.VITE_CF_API_TOKEN || "";
+const cfAccountId = (typeof process !== 'undefined' ? process.env.VITE_CF_ACCOUNT_ID : null) || import.meta.env?.VITE_CF_ACCOUNT_ID || "";
 
 // --- SYSTEM PROMPT (PROMPT DIPERBARUI: LEBIH PANJANG & PLAYER AKTIF) ---
 const GEMINI_SYSTEM_PROMPT = `
@@ -95,4 +97,4 @@ FORMAT JSON OUTPUT:
 }
 `;
 
-export { apiKey, GEMINI_SYSTEM_PROMPT };
+export { apiKey, GEMINI_SYSTEM_PROMPT, cfApiToken, cfAccountId };
