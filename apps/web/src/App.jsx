@@ -15,6 +15,23 @@ export default function App() {
   const [topic, setTopic] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null); // New state for errors
+  const [errorDetail, setErrorDetail] = useState(null); // Detailed logs for user copying
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyError = () => {
+    if (!errorDetail) return;
+    const logText = `=== TIME CAPSULE ERROR LOG ===
+Time: ${errorDetail.time}
+Topic: ${errorDetail.topic}
+Chapter: ${errorDetail.chapter}
+Error Message: ${errorDetail.message}
+Stack Trace:
+${errorDetail.stack || "N/A"}
+=============================`;
+    navigator.clipboard.writeText(logText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   
   const [gameData, setGameData] = useState(null);
   const [idx, setIdx] = useState(0);
@@ -63,6 +80,13 @@ export default function App() {
     } catch (err) {
       console.error(err);
       setErrorMsg("Gagal membuka portal. Coba lagi.");
+      setErrorDetail({
+        message: err.message,
+        stack: err.stack,
+        time: new Date().toISOString(),
+        topic: topic,
+        chapter: 1
+      });
     } finally {
       setIsLoading(false);
     }
@@ -114,6 +138,13 @@ export default function App() {
       } catch (err) {
         console.error(err);
         setErrorMsg("Koneksi terputus. Mohon coba lagi.");
+        setErrorDetail({
+          message: err.message,
+          stack: err.stack,
+          time: new Date().toISOString(),
+          topic: topic,
+          chapter: nextChapterNum
+        });
       } finally {
         setIsLoading(false);
       }
@@ -229,8 +260,19 @@ export default function App() {
           </div>
 
           {errorMsg && (
-            <div className="p-3 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-xs flex items-center gap-2 justify-center animate-shake">
-               <AlertTriangle className="w-4 h-4" /> {errorMsg}
+            <div className="flex flex-col gap-1 w-full max-w-xs mx-auto animate-shake">
+              <div className="p-3 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-xs flex items-center gap-2 justify-center">
+                 <AlertTriangle className="w-4 h-4" /> {errorMsg}
+              </div>
+              {errorDetail && (
+                <button
+                  type="button"
+                  onClick={handleCopyError}
+                  className="text-[10px] text-amber-500/85 hover:text-amber-400 underline transition-colors cursor-pointer self-center"
+                >
+                  {copied ? "Detail Eror Tersalin!" : "Salin Detail Eror"}
+                </button>
+              )}
             </div>
           )}
 
@@ -316,8 +358,19 @@ export default function App() {
                   </p>
 
                   {errorMsg && (
-                    <div className="mb-4 p-2 bg-red-900/60 border border-red-500 rounded text-red-200 text-xs animate-pulse">
-                      {errorMsg}
+                    <div className="flex flex-col gap-1 w-full mx-auto mb-4 animate-pulse">
+                      <div className="p-2 bg-red-900/60 border border-red-500 rounded text-red-200 text-xs text-center">
+                        {errorMsg}
+                      </div>
+                      {errorDetail && (
+                        <button
+                          type="button"
+                          onClick={handleCopyError}
+                          className="text-[10px] text-amber-500/85 hover:text-amber-400 underline transition-colors cursor-pointer self-center"
+                        >
+                          {copied ? "Detail Eror Tersalin!" : "Salin Detail Eror"}
+                        </button>
+                      )}
                     </div>
                   )}
                   
