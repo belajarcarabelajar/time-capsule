@@ -1,9 +1,53 @@
 import { apiKey, GEMINI_SYSTEM_PROMPT, cfApiToken, cfAccountId } from './systemPrompt.js';
 
-const charSchema = {
+const playerSchema = {
   type: "OBJECT",
   properties: {
-    id: { type: "STRING" },
+    id: { type: "STRING", enum: ["PLAYER"] },
+    name: { type: "STRING", enum: ["Penjelajah"] },
+    icon: { type: "STRING", enum: ["🧑🏻‍🚀"] },
+    desc: { type: "STRING", enum: ["Masa Depan"] }
+  },
+  required: ["id", "name", "icon", "desc"]
+};
+
+const npc1Schema = {
+  type: "OBJECT",
+  properties: {
+    id: { type: "STRING", enum: ["NPC_1"] },
+    name: { type: "STRING" },
+    icon: { type: "STRING" },
+    desc: { type: "STRING" }
+  },
+  required: ["id", "name", "icon", "desc"]
+};
+
+const npc2Schema = {
+  type: "OBJECT",
+  properties: {
+    id: { type: "STRING", enum: ["NPC_2"] },
+    name: { type: "STRING" },
+    icon: { type: "STRING" },
+    desc: { type: "STRING" }
+  },
+  required: ["id", "name", "icon", "desc"]
+};
+
+const npc3Schema = {
+  type: "OBJECT",
+  properties: {
+    id: { type: "STRING", enum: ["NPC_3"] },
+    name: { type: "STRING" },
+    icon: { type: "STRING" },
+    desc: { type: "STRING" }
+  },
+  required: ["id", "name", "icon", "desc"]
+};
+
+const npc4Schema = {
+  type: "OBJECT",
+  properties: {
+    id: { type: "STRING", enum: ["NPC_4"] },
     name: { type: "STRING" },
     icon: { type: "STRING" },
     desc: { type: "STRING" }
@@ -25,11 +69,11 @@ const geminiResponseSchema = {
     characters: {
       type: "OBJECT",
       properties: {
-        PLAYER: charSchema,
-        NPC_1: charSchema,
-        NPC_2: charSchema,
-        NPC_3: charSchema,
-        NPC_4: charSchema
+        PLAYER: playerSchema,
+        NPC_1: npc1Schema,
+        NPC_2: npc2Schema,
+        NPC_3: npc3Schema,
+        NPC_4: npc4Schema
       },
       required: ["PLAYER", "NPC_1", "NPC_2", "NPC_3"]
     },
@@ -58,7 +102,7 @@ const geminiResponseSchema = {
             type: "OBJECT",
             properties: {
               type: { type: "STRING", enum: ["dialogue"] },
-              speakerId: { type: "STRING" },
+              speakerId: { type: "STRING", enum: ["PLAYER", "NPC_1", "NPC_2", "NPC_3", "NPC_4"] },
               mood: { type: "STRING" },
               text: { type: "STRING" }
             },
@@ -68,7 +112,7 @@ const geminiResponseSchema = {
             type: "OBJECT",
             properties: {
               type: { type: "STRING", enum: ["quiz"] },
-              speakerId: { type: "STRING" },
+              speakerId: { type: "STRING", enum: ["PLAYER", "NPC_1", "NPC_2", "NPC_3", "NPC_4"] },
               mood: { type: "STRING" },
               text: { type: "STRING" },
               choices: {
