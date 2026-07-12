@@ -53,27 +53,49 @@ const geminiResponseSchema = {
     script: {
       type: "ARRAY",
       items: {
-        type: "OBJECT",
-        properties: {
-          type: { type: "STRING" },
-          speakerId: { type: "STRING" },
-          mood: { type: "STRING" },
-          text: { type: "STRING" },
-          choices: {
-            type: "ARRAY",
-            items: {
-              type: "OBJECT",
-              properties: {
-                text: { type: "STRING" },
-                correct: { type: "BOOLEAN" },
-                response: { type: "STRING" }
-              },
-              required: ["text", "correct", "response"]
-            }
+        anyOf: [
+          {
+            type: "OBJECT",
+            properties: {
+              type: { type: "STRING", enum: ["dialogue"] },
+              speakerId: { type: "STRING" },
+              mood: { type: "STRING" },
+              text: { type: "STRING" }
+            },
+            required: ["type", "speakerId", "mood", "text"]
           },
-          explanation: { type: "STRING" }
-        },
-        required: ["type", "text"]
+          {
+            type: "OBJECT",
+            properties: {
+              type: { type: "STRING", enum: ["quiz"] },
+              speakerId: { type: "STRING" },
+              mood: { type: "STRING" },
+              text: { type: "STRING" },
+              choices: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    text: { type: "STRING" },
+                    correct: { type: "BOOLEAN" },
+                    response: { type: "STRING" }
+                  },
+                  required: ["text", "correct", "response"]
+                }
+              },
+              explanation: { type: "STRING" }
+            },
+            required: ["type", "speakerId", "mood", "text", "choices"]
+          },
+          {
+            type: "OBJECT",
+            properties: {
+              type: { type: "STRING", enum: ["narrator"] },
+              text: { type: "STRING" }
+            },
+            required: ["type", "text"]
+          }
+        ]
       }
     }
   },
