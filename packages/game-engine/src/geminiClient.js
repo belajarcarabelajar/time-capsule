@@ -1,5 +1,85 @@
 import { apiKey, GEMINI_SYSTEM_PROMPT, cfApiToken, cfAccountId } from './systemPrompt.js';
 
+const charSchema = {
+  type: "OBJECT",
+  properties: {
+    id: { type: "STRING" },
+    name: { type: "STRING" },
+    icon: { type: "STRING" },
+    desc: { type: "STRING" }
+  },
+  required: ["id", "name", "icon", "desc"]
+};
+
+const geminiResponseSchema = {
+  type: "OBJECT",
+  properties: {
+    meta: {
+      type: "OBJECT",
+      properties: {
+        location: { type: "STRING" },
+        themeColor: { type: "STRING" }
+      },
+      required: ["location", "themeColor"]
+    },
+    characters: {
+      type: "OBJECT",
+      properties: {
+        PLAYER: charSchema,
+        NPC_1: charSchema,
+        NPC_2: charSchema,
+        NPC_3: charSchema,
+        NPC_4: charSchema
+      },
+      required: ["PLAYER", "NPC_1", "NPC_2", "NPC_3"]
+    },
+    scenes: {
+      type: "OBJECT",
+      properties: {
+        MAIN: {
+          type: "OBJECT",
+          properties: {
+            bg: { type: "STRING" },
+            elements: {
+              type: "ARRAY",
+              items: { type: "STRING" }
+            }
+          },
+          required: ["bg", "elements"]
+        }
+      },
+      required: ["MAIN"]
+    },
+    script: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          type: { type: "STRING" },
+          speakerId: { type: "STRING" },
+          mood: { type: "STRING" },
+          text: { type: "STRING" },
+          choices: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                text: { type: "STRING" },
+                correct: { type: "BOOLEAN" },
+                response: { type: "STRING" }
+              },
+              required: ["text", "correct", "response"]
+            }
+          },
+          explanation: { type: "STRING" }
+        },
+        required: ["type", "text"]
+      }
+    }
+  },
+  required: ["meta", "characters", "scenes", "script"]
+};
+
   const fetchScenarioData = async (activeTopic, chapterNum) => {
     let promptText = `TOPIK UTAMA: ${activeTopic}`;
     
@@ -11,14 +91,17 @@ import { apiKey, GEMINI_SYSTEM_PROMPT, cfApiToken, cfAccountId } from './systemP
 
     let rawText;
     if (apiKey) {
-      // Use Gemini API
+      // Use Gemini API with strict structured schema validation
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: promptText }] }],
           systemInstruction: { parts: [{ text: GEMINI_SYSTEM_PROMPT }] },
-          generationConfig: { responseMimeType: "application/json" }
+          generationConfig: { 
+            responseMimeType: "application/json",
+            responseSchema: geminiResponseSchema
+          }
         })
       });
 
