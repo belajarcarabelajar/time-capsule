@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
   const cfApiToken = env.VITE_CF_API_TOKEN || '';
 
   return {
+    envDir: path.resolve(__dirname, '../..'),
     plugins: [react()],
     resolve: {
       dedupe: ['react', 'react-dom'],
