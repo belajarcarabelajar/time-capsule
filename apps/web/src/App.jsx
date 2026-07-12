@@ -113,7 +113,7 @@ export default function App() {
         preloadNextChapter(topic, nextChapterNum + 1);
       } catch (err) {
         console.error(err);
-        setErrorMsg("Koneksi waktu terputus. Mohon coba lagi.");
+        setErrorMsg("Koneksi terputus. Mohon coba lagi.");
       } finally {
         setIsLoading(false);
       }

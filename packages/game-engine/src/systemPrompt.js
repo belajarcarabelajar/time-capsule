@@ -1,6 +1,6 @@
-const apiKey = ""; // Biarkan kosong
+const apiKey = (typeof process !== 'undefined' ? process.env.VITE_GEMINI_API_KEY : null) || import.meta.env?.VITE_GEMINI_API_KEY || ""; // Biarkan kosong atau set via env VITE_GEMINI_API_KEY
 
-// --- SISTEM OTAK (PROMPT DIPERBARUI: LEBIH PANJANG & PLAYER AKTIF) ---
+// --- SYSTEM PROMPT (PROMPT DIPERBARUI: LEBIH PANJANG & PLAYER AKTIF) ---
 const GEMINI_SYSTEM_PROMPT = `
 Anda adalah mesin simulasi sejarah dengan sistem ALUR KRONOLOGIS.
 Tugas: Buat skenario percakapan sejarah yang PANJANG, MENDALAM, dan INTERAKTIF antara PENJELAJAH WAKTU (Player) dan 3-4 TOKOH SEJARAH (NPCs).

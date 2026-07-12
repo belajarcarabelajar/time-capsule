@@ -3,13 +3,13 @@
 > Interactive historical time-travel simulation — type a past event, meet historical figures, and explore chronologically generated chapters powered by Gemini.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![pnpm](https://img.shields.io/badge/pnpm-workspace-F69220?logo=pnpm&logoColor=white)](https://pnpm.io)
+[![Bun](https://img.shields.io/badge/Bun-workspace-fbf0df?logo=bun&logoColor=black)](https://bun.sh)
 [![Turborepo](https://img.shields.io/badge/Turborepo-pipeline-EF4444?logo=turborepo&logoColor=white)](https://turbo.build)
 [![Vite](https://img.shields.io/badge/Vite-React-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
 
 ## About
 
-**Time Capsule** is an open-source educational adventure app. You enter a historical topic (for example a battle, kingdom, or figure), and the app generates a multi-chapter dialogue scenario: you are a time traveler talking with 3–4 NPCs, making diplomacy/quiz choices, and unlocking narrator “history insights” at the end of each section.
+**Time Capsule** is an open-source educational adventure app. You enter a historical topic (for example a battle, kingdom, or figure), and the app generates a multi-chapter dialogue scenario: you are a time traveler talking with 3–4 NPCs, making diplomacy/quiz choices, and unlocking narrator "history insights" at the end of each section.
 
 Scenarios are produced on the client via the **Google Gemini** API (`gemini-2.5-flash-preview-09-2025`), using a fixed system prompt and JSON response schema in `@time-capsule/game-engine`.
 
@@ -19,7 +19,7 @@ Scenarios are produced on the client via the **Google Gemini** API (`gemini-2.5-
 
 - 🏛️ **Topic-driven scenarios** — start from any historical event/theme
 - 🗣️ **Dialogue + narrator + quiz modes** — typewriter UI, character boxes, full-screen quiz popups
-- 📖 **Multi-chapter flow** — continue to “BAGIAN N+1” with smart preload of the next chapter
+- 📖 **Multi-chapter flow** — continue to "BAGIAN N+1" with smart preload of the next chapter
 - 🔊 **Web Audio sound engine** — clicks, typing, warp, correct/wrong feedback
 - 🎨 **Mood-reactive backgrounds** — gradients and emoji particles from scene/mood data
 - ⌨️ **Keyboard continue** — press Enter to advance when not on the start screen
@@ -34,8 +34,10 @@ time-capsule/
 │   ├── game-engine/         # @time-capsule/game-engine — Gemini client, system prompt, SoundEngine
 │   └── ui/                  # @time-capsule/ui — Typewriter, LoadingPanel, DynamicBackground,
 │                            #                      QuizPopup, NarratorBox, DialogueBox, formatText
+├── .env.example             # Example environment variables template
 ├── package.json             # private root, workspaces, turbo scripts
-├── pnpm-workspace.yaml
+├── bunfig.toml              # Bun workspace configuration
+├── bun.lock                 # Bun lockfile (committed)
 └── turbo.json               # dev + build pipelines
 ```
 
@@ -47,7 +49,7 @@ time-capsule/
 
 ## Tech stack
 
-- **Package manager:** pnpm workspaces  
+- **Package manager:** Bun workspaces  
 - **Orchestration:** Turborepo (`dev`, `build`)  
 - **App bundler:** Vite + `@vitejs/plugin-react`  
 - **UI:** React 18, Tailwind CSS v3, `lucide-react`  
@@ -59,33 +61,44 @@ Tailwind `content` scans both `apps/web/src` and `packages/ui/src` so utility cl
 
 ### Prerequisites
 
-- Node.js 18+
-- [pnpm](https://pnpm.io) 9+ (lockfile targets `pnpm@9.15.0`)
+- [Bun](https://bun.sh) 1.0+
 
 ### Install
 
 ```bash
-pnpm install
+bun install
 ```
 
 ### Configure Gemini API key
 
-Edit `packages/game-engine/src/systemPrompt.js` and set:
+You can set your Google Gemini API key in one of two ways:
 
-```js
-const apiKey = "YOUR_GEMINI_API_KEY";
-```
+1. **Environment Variable (Recommended):**
+   Create a `.env` or `.env.local` file in the root directory (or in `apps/web/`) and add:
+   ```env
+   VITE_GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+   ```
+   Or set it in your current terminal session:
+   ```bash
+   VITE_GEMINI_API_KEY=YOUR_GEMINI_API_KEY bun run dev
+   ```
 
-Do not commit real keys. Prefer a local-only change or future env wiring.
+2. **Hardcoding (Fallback):**
+   Edit `packages/game-engine/src/systemPrompt.js` and set:
+   ```js
+   const apiKey = "YOUR_GEMINI_API_KEY";
+   ```
+   > [!WARNING]
+   > Do not commit real keys to version control. Using the environment variable method keeps your API keys secure.
 
 ### Develop
 
 ```bash
 # all packages via Turbo
-pnpm dev
+bun run dev
 
 # or only the web app
-pnpm --filter @time-capsule/web dev
+bun --filter @time-capsule/web run dev
 ```
 
 Open the URL Vite prints (default `http://localhost:5173`).
@@ -93,7 +106,7 @@ Open the URL Vite prints (default `http://localhost:5173`).
 ### Build
 
 ```bash
-pnpm build
+bun run build
 # equivalent: turbo run build
 ```
 
@@ -103,8 +116,8 @@ Production output: `apps/web/dist`.
 
 | Script | Description |
 |--------|-------------|
-| `pnpm dev` | `turbo run dev` — start workspace dev tasks |
-| `pnpm build` | `turbo run build` — build in dependency order |
+| `bun run dev` | `turbo run dev` — start workspace dev tasks |
+| `bun run build` | `turbo run build` — build in dependency order |
 
 ## Contributing
 

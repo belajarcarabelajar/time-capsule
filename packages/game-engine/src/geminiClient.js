@@ -26,7 +26,7 @@ import { apiKey, GEMINI_SYSTEM_PROMPT } from './systemPrompt.js';
     const jsonMatch = rawText?.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
        console.error("Invalid response format:", rawText);
-       throw new Error("Gagal mengolah data waktu.");
+       throw new Error("Gagal memproses skenario cerita.");
     }
     return JSON.parse(jsonMatch[0]);
   };

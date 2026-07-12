@@ -1,0 +1,5 @@
+[install]
+# Bun workspace config - replaces pnpm-workspace.yaml
+
+[install.scopes]
+# Add private registry scopes here if needed
