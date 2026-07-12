@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "turbo run dev",
-    "build": "turbo run build"
+    "build": "turbo run build",
+    "deploy": "turbo run build && wrangler pages deploy apps/web/dist --project-name time-capsule"
   },
   "workspaces": [
     "apps/*",

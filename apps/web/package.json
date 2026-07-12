@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "wrangler pages deploy dist --project-name time-capsule"
   },
   "dependencies": {
     "@time-capsule/game-engine": "workspace:*",
