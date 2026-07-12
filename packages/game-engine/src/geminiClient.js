@@ -25,12 +25,10 @@ import { apiKey, GEMINI_SYSTEM_PROMPT, cfApiToken, cfAccountId } from './systemP
       const data = await response.json();
       rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     } else {
-      // Fallback to Cloudflare Workers AI using Meta Llama 3.1 8B Instruct
-      const model = '@cf/meta/llama-3.1-8b-instruct';
-      const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/${model}`, {
+      // Fallback to Cloudflare Workers AI using Meta Llama 3.1 8B Instruct (via Pages Function proxy)
+      const response = await fetch(`/api/ai`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${cfApiToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
