@@ -35,42 +35,44 @@ ${errorDetail.stack || "N/A"}
   
   const [historyList, setHistoryList] = useState([]); // List of gameData for previous chapters
 
-  const generateHistorySummary = (pastChaptersData) => {
+    const generateHistorySummary = (pastChaptersData) => {
     let summary = "";
     pastChaptersData.forEach((data, index) => {
       if (!data) return;
-      summary += `\n--- RINGKASAN BAGIAN ${index + 1} ---\n`;
+      summary += "\n--- RINGKASAN BAGIAN " + (index + 1) + " ---\n";
       if (data.meta?.location) {
-        summary += `Lokasi: ${data.meta.location}\n`;
+        summary += "Lokasi: " + data.meta.location + "\n";
       }
 
-      if (data.script) {
-        const { quizzes, dialogues } = data.script.reduce((acc, item) => {
-          if (item.type === 'quiz') {
-            acc.quizzes.push(item.text);
-          } else if (item.type === 'dialogue') {
-            acc.dialogues.push(`${item.speakerId}: ${item.text.slice(0, 60)}...`);
-          }
-          return acc;
-        }, { quizzes: [], dialogues: [] });
+      const script = data.script;
+      if (script && script.length > 0) {
+        let hasQuiz = false;
+        let dialogueCount = 0;
+        let quizStr = "";
+        let dialogueStr = "";
 
-        if (quizzes.length > 0) {
-          summary += `Kuis yang sudah ditanyakan:\n`;
-          quizzes.forEach(q => {
-            summary += `- "${q}"\n`;
-          });
+        for (let i = 0; i < script.length; i++) {
+          const item = script[i];
+          if (item.type === 'quiz') {
+            quizStr += '- "' + item.text + '"\n';
+            hasQuiz = true;
+          } else if (item.type === 'dialogue' && dialogueCount < 3) {
+            dialogueStr += '- ' + item.speakerId + ': ' + item.text.slice(0, 60) + '...\n';
+            dialogueCount++;
+          }
         }
 
-        if (dialogues.length > 0) {
-          summary += `Dialog/Narasi singkat:\n`;
-          dialogues.slice(0, 3).forEach(d => {
-            summary += `- ${d}\n`;
-          });
+        if (hasQuiz) {
+          summary += "Kuis yang sudah ditanyakan:\n" + quizStr;
+        }
+        if (dialogueCount > 0) {
+          summary += "Dialog/Narasi singkat:\n" + dialogueStr;
         }
       }
     });
     return summary;
   };
+
 
   const [gameData, setGameData] = useState(null);
   const [idx, setIdx] = useState(0);
