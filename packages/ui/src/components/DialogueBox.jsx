@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronRight } from 'lucide-react';
 import { Typewriter } from './Typewriter.jsx';
 import { formatText } from '../utils/formatText.js';
+import DOMPurify from 'dompurify';
 
 const DialogueBox = ({ text, mood, isPlayer, isTyping, onComplete, charName, charDesc, charIcon }) => {
   const boxStyle = isPlayer
@@ -38,7 +39,7 @@ const DialogueBox = ({ text, mood, isPlayer, isTyping, onComplete, charName, cha
       </div>
 
       <div className="text-sm md:text-xl leading-relaxed min-h-[60px] font-medium">
-        {isTyping ? <Typewriter text={safeText} onComplete={onComplete} /> : <span dangerouslySetInnerHTML={{ __html: formatText(text) }} />}
+        {isTyping ? <Typewriter text={safeText} onComplete={onComplete} /> : <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formatText(text)) }} />}
       </div>
 
       {!isTyping && (
