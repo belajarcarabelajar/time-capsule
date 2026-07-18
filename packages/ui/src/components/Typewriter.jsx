@@ -29,21 +29,14 @@ const Typewriter = ({ text, onComplete, speed = 20 }) => {
     if (segments.length === 0) return;
     const totalChars = segments.reduce((acc, seg) => acc + seg.text.length, 0);
 
-    const timer = setInterval(() => {
-      setVisibleCount(prev => {
-        if (prev < totalChars) {
-          if (prev % 2 === 0) SoundEngine.playType();
-          return prev + 1;
-        } else {
-          clearInterval(timer);
-          // FIX: Do NOT call onComplete here inside the setState updater
-          return prev;
-        }
-      });
-    }, speed);
-
-    return () => clearInterval(timer);
-  }, [segments, speed]);
+    if (visibleCount < totalChars) {
+      const timer = setTimeout(() => {
+        if (visibleCount % 2 === 0) SoundEngine.playType();
+        setVisibleCount(prev => prev + 1);
+      }, speed);
+      return () => clearTimeout(timer);
+    }
+  }, [segments, speed, visibleCount]);
 
   // Monitor completion separately
   useEffect(() => {
