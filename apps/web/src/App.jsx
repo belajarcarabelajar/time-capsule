@@ -43,19 +43,32 @@ ${errorDetail.stack || "N/A"}
       if (data.meta?.location) {
         summary += `Lokasi: ${data.meta.location}\n`;
       }
-      const quizzes = data.script?.filter(item => item.type === 'quiz').map(item => item.text);
-      if (quizzes && quizzes.length > 0) {
-        summary += `Kuis yang sudah ditanyakan:\n`;
-        quizzes.forEach(q => {
-          summary += `- "${q}"\n`;
-        });
+      const quizzes = [];
+      const dialogues = [];
+
+      if (data.script) {
+        for (let i = 0; i < data.script.length; i++) {
+          const item = data.script[i];
+          if (item.type === 'quiz') {
+            quizzes.push(item.text);
+          } else if (item.type === 'dialogue' && dialogues.length < 3) {
+            dialogues.push(`${item.speakerId}: ${item.text.slice(0, 60)}...`);
+          }
+        }
       }
-      const dialogues = data.script?.filter(item => item.type === 'dialogue').map(item => `${item.speakerId}: ${item.text.slice(0, 60)}...`);
-      if (dialogues && dialogues.length > 0) {
+
+      if (quizzes.length > 0) {
+        summary += `Kuis yang sudah ditanyakan:\n`;
+        for (let i = 0; i < quizzes.length; i++) {
+          summary += `- "${quizzes[i]}"\n`;
+        }
+      }
+
+      if (dialogues.length > 0) {
         summary += `Dialog/Narasi singkat:\n`;
-        dialogues.slice(0, 3).forEach(d => {
-          summary += `- ${d}\n`;
-        });
+        for (let i = 0; i < dialogues.length; i++) {
+          summary += `- ${dialogues[i]}\n`;
+        }
       }
     });
     return summary;
