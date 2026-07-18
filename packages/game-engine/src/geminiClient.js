@@ -220,8 +220,10 @@ const geminiResponseSchema = {
         console.warn("Standard JSON parse failed, attempting sanitization...", err);
         try {
           // Layer 1: Flatten multiline string values by escaping literal newlines, tabs, and carriage returns inside quotes
+          const escapes = { '\n': '\\n', '\r': '\\r', '\t': '\\t' };
           let cleaned = jsonString.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match, p1) => {
-            return '"' + p1.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + '"';
+            if (!/[\n\r\t]/.test(p1)) return match;
+            return '"' + p1.replace(/[\n\r\t]/g, m => escapes[m]) + '"';
           });
 
           // Layer 2: Escape unescaped double quotes within string values on a line-by-line basis
