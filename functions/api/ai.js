@@ -19,13 +19,19 @@ export async function onRequestPost(context) {
     const body = await request.json();
     const model = '@cf/meta/llama-3.1-8b-instruct';
     
+    // Extract only necessary fields to prevent unvalidated input forwarding
+    const safeBody = {
+      messages: body.messages,
+      response_format: body.response_format
+    };
+
     const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/${model}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${cfApiToken}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(safeBody)
     });
 
     const data = await response.json();
