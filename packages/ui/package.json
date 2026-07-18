@@ -16,10 +16,7 @@
   },
   "dependencies": {
     "@time-capsule/game-engine": "workspace:*",
-    "dompurify": "^3.4.12",
+    "isomorphic-dompurify": "^3.19.0",
     "lucide-react": "^0.460.0"
-  },
-  "devDependencies": {
-    "@types/dompurify": "^3.2.0"
   }
 }

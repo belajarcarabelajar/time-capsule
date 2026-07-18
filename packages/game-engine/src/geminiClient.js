@@ -11,21 +11,49 @@ const playerSchema = {
   required: ["id", "name", "icon", "desc"]
 };
 
-const createNpcSchema = (id) => ({
+const npc1Schema = {
   type: "OBJECT",
   properties: {
-    id: { type: "STRING", enum: [id] },
+    id: { type: "STRING", enum: ["NPC_1"] },
     name: { type: "STRING" },
     icon: { type: "STRING" },
     desc: { type: "STRING" }
   },
   required: ["id", "name", "icon", "desc"]
-});
+};
 
-const npc1Schema = createNpcSchema("NPC_1");
-const npc2Schema = createNpcSchema("NPC_2");
-const npc3Schema = createNpcSchema("NPC_3");
-const npc4Schema = createNpcSchema("NPC_4");
+const npc2Schema = {
+  type: "OBJECT",
+  properties: {
+    id: { type: "STRING", enum: ["NPC_2"] },
+    name: { type: "STRING" },
+    icon: { type: "STRING" },
+    desc: { type: "STRING" }
+  },
+  required: ["id", "name", "icon", "desc"]
+};
+
+const npc3Schema = {
+  type: "OBJECT",
+  properties: {
+    id: { type: "STRING", enum: ["NPC_3"] },
+    name: { type: "STRING" },
+    icon: { type: "STRING" },
+    desc: { type: "STRING" }
+  },
+  required: ["id", "name", "icon", "desc"]
+};
+
+const npc4Schema = {
+  type: "OBJECT",
+  properties: {
+    id: { type: "STRING", enum: ["NPC_4"] },
+    name: { type: "STRING" },
+    icon: { type: "STRING" },
+    desc: { type: "STRING" }
+  },
+  required: ["id", "name", "icon", "desc"]
+};
 
 const geminiResponseSchema = {
   type: "OBJECT",
