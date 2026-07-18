@@ -20,7 +20,15 @@ CF_ENV_FILE="/home/belajarcarabelajar/cloudflare/.env"
 if [ -f "$CF_ENV_FILE" ]; then
     echo -e "${GREEN}[OK]${NC} Memuat kredensial Cloudflare dari $CF_ENV_FILE"
     # Memuat variabel dari berkas env Cloudflare
-    export $(cat "$CF_ENV_FILE" | grep -v '^#' | xargs)
+    while IFS='=' read -r key value || [ -n "$key" ]; do
+        [[ -z "$key" || "$key" == \#* ]] && continue
+        # Remove single and double quotes at the boundaries
+        value="${value%\"}"
+        value="${value#\"}"
+        value="${value%\'}"
+        value="${value#\'}"
+        export "$key=$value"
+    done < "$CF_ENV_FILE"
 else
     echo -e "${RED}[ERROR]${NC} Berkas kredensial Cloudflare tidak ditemukan di $CF_ENV_FILE."
     exit 1
