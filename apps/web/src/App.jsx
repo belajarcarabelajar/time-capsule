@@ -43,19 +43,30 @@ ${errorDetail.stack || "N/A"}
       if (data.meta?.location) {
         summary += `Lokasi: ${data.meta.location}\n`;
       }
-      const quizzes = data.script?.filter(item => item.type === 'quiz').map(item => item.text);
-      if (quizzes && quizzes.length > 0) {
-        summary += `Kuis yang sudah ditanyakan:\n`;
-        quizzes.forEach(q => {
-          summary += `- "${q}"\n`;
-        });
-      }
-      const dialogues = data.script?.filter(item => item.type === 'dialogue').map(item => `${item.speakerId}: ${item.text.slice(0, 60)}...`);
-      if (dialogues && dialogues.length > 0) {
-        summary += `Dialog/Narasi singkat:\n`;
-        dialogues.slice(0, 3).forEach(d => {
-          summary += `- ${d}\n`;
-        });
+      const script = data.script;
+      if (script && script.length > 0) {
+        let hasQuiz = false;
+        let dialogueCount = 0;
+        let quizStr = "";
+        let dialogueStr = "";
+
+        for (let i = 0; i < script.length; i++) {
+          const item = script[i];
+          if (item.type === 'quiz') {
+            quizStr += `- "${item.text}"\n`;
+            hasQuiz = true;
+          } else if (item.type === 'dialogue' && dialogueCount < 3) {
+            dialogueStr += `- ${item.speakerId}: ${item.text.slice(0, 60)}...\n`;
+            dialogueCount++;
+          }
+        }
+
+        if (hasQuiz) {
+          summary += `Kuis yang sudah ditanyakan:\n${quizStr}`;
+        }
+        if (dialogueCount > 0) {
+          summary += `Dialog/Narasi singkat:\n${dialogueStr}`;
+        }
       }
     });
     return summary;
