@@ -43,19 +43,30 @@ ${errorDetail.stack || "N/A"}
       if (data.meta?.location) {
         summary += `Lokasi: ${data.meta.location}\n`;
       }
-      const quizzes = data.script?.filter(item => item.type === 'quiz').map(item => item.text);
-      if (quizzes && quizzes.length > 0) {
-        summary += `Kuis yang sudah ditanyakan:\n`;
-        quizzes.forEach(q => {
-          summary += `- "${q}"\n`;
-        });
-      }
-      const dialogues = data.script?.filter(item => item.type === 'dialogue').map(item => `${item.speakerId}: ${item.text.slice(0, 60)}...`);
-      if (dialogues && dialogues.length > 0) {
-        summary += `Dialog/Narasi singkat:\n`;
-        dialogues.slice(0, 3).forEach(d => {
-          summary += `- ${d}\n`;
-        });
+
+      if (data.script) {
+        const { quizzes, dialogues } = data.script.reduce((acc, item) => {
+          if (item.type === 'quiz') {
+            acc.quizzes.push(item.text);
+          } else if (item.type === 'dialogue') {
+            acc.dialogues.push(`${item.speakerId}: ${item.text.slice(0, 60)}...`);
+          }
+          return acc;
+        }, { quizzes: [], dialogues: [] });
+
+        if (quizzes.length > 0) {
+          summary += `Kuis yang sudah ditanyakan:\n`;
+          quizzes.forEach(q => {
+            summary += `- "${q}"\n`;
+          });
+        }
+
+        if (dialogues.length > 0) {
+          summary += `Dialog/Narasi singkat:\n`;
+          dialogues.slice(0, 3).forEach(d => {
+            summary += `- ${d}\n`;
+          });
+        }
       }
     });
     return summary;
