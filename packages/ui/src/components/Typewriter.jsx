@@ -24,11 +24,10 @@ const Typewriter = ({ text, onComplete, speed = 20 }) => {
     setVisibleCount(0);
   }, [text]);
 
-  const totalChars = segments.reduce((acc, seg) => acc + seg.text.length, 0);
-
   // Typing animation interval
   useEffect(() => {
     if (segments.length === 0) return;
+    const totalChars = segments.reduce((acc, seg) => acc + seg.text.length, 0);
 
     if (visibleCount < totalChars) {
       const timer = setTimeout(() => {
@@ -37,11 +36,12 @@ const Typewriter = ({ text, onComplete, speed = 20 }) => {
       }, speed);
       return () => clearTimeout(timer);
     }
-  }, [segments, speed, visibleCount, totalChars]);
+  }, [segments, speed, visibleCount]);
 
   // Monitor completion separately
   useEffect(() => {
     if (segments.length === 0) return;
+    const totalChars = segments.reduce((acc, seg) => acc + seg.text.length, 0);
     
     // Only trigger if we have text and have reached the end
     if (totalChars > 0 && visibleCount >= totalChars) {
@@ -49,7 +49,7 @@ const Typewriter = ({ text, onComplete, speed = 20 }) => {
         onCompleteRef.current();
       }
     }
-  }, [visibleCount, segments, totalChars]);
+  }, [visibleCount, segments]);
 
   let charCounter = 0;
   return (

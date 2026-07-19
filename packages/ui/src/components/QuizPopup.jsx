@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
 import { formatText } from '../utils/formatText.js';
+import DOMPurify from 'isomorphic-dompurify';
 
 const QuizPopup = ({ data, onAnswer, charData }) => {
   // Support both choices and options properties for resilience
@@ -26,7 +27,7 @@ const QuizPopup = ({ data, onAnswer, charData }) => {
             {data?.text && (
               <p 
                 className="text-amber-50 text-base md:text-lg font-serif italic leading-relaxed" 
-                dangerouslySetInnerHTML={{ __html: formatText(data.text) }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formatText(data.text)) }}
               ></p>
             )}
         </div>
@@ -41,7 +42,7 @@ const QuizPopup = ({ data, onAnswer, charData }) => {
               <span className="bg-stone-700 text-amber-500 group-hover:bg-amber-500 group-hover:text-stone-900 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors border border-stone-600">
                 {String.fromCharCode(65+i)}
               </span>
-              <span className="flex-1 text-sm md:text-base" dangerouslySetInnerHTML={{ __html: formatText(c.text || c.option || c.choice || "") }}></span>
+              <span className="flex-1 text-sm md:text-base" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formatText(c.text || c.option || c.choice || "")) }}></span>
               <ChevronRight className="w-5 h-5 text-stone-500 group-hover:text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           ))}
