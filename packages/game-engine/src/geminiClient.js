@@ -11,49 +11,16 @@ const playerSchema = {
   required: ["id", "name", "icon", "desc"]
 };
 
-const npc1Schema = {
+const createNpcSchema = (id) => ({
   type: "OBJECT",
   properties: {
-    id: { type: "STRING", enum: ["NPC_1"] },
+    id: { type: "STRING", enum: [id] },
     name: { type: "STRING" },
     icon: { type: "STRING" },
     desc: { type: "STRING" }
   },
   required: ["id", "name", "icon", "desc"]
-};
-
-const npc2Schema = {
-  type: "OBJECT",
-  properties: {
-    id: { type: "STRING", enum: ["NPC_2"] },
-    name: { type: "STRING" },
-    icon: { type: "STRING" },
-    desc: { type: "STRING" }
-  },
-  required: ["id", "name", "icon", "desc"]
-};
-
-const npc3Schema = {
-  type: "OBJECT",
-  properties: {
-    id: { type: "STRING", enum: ["NPC_3"] },
-    name: { type: "STRING" },
-    icon: { type: "STRING" },
-    desc: { type: "STRING" }
-  },
-  required: ["id", "name", "icon", "desc"]
-};
-
-const npc4Schema = {
-  type: "OBJECT",
-  properties: {
-    id: { type: "STRING", enum: ["NPC_4"] },
-    name: { type: "STRING" },
-    icon: { type: "STRING" },
-    desc: { type: "STRING" }
-  },
-  required: ["id", "name", "icon", "desc"]
-};
+});
 
 const geminiResponseSchema = {
   type: "OBJECT",
@@ -70,10 +37,10 @@ const geminiResponseSchema = {
       type: "OBJECT",
       properties: {
         PLAYER: playerSchema,
-        NPC_1: npc1Schema,
-        NPC_2: npc2Schema,
-        NPC_3: npc3Schema,
-        NPC_4: npc4Schema
+        NPC_1: createNpcSchema("NPC_1"),
+        NPC_2: createNpcSchema("NPC_2"),
+        NPC_3: createNpcSchema("NPC_3"),
+        NPC_4: createNpcSchema("NPC_4")
       },
       required: ["PLAYER", "NPC_1", "NPC_2", "NPC_3"]
     },
