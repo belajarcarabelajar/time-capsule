@@ -16,6 +16,9 @@ echo -e "${BLUE}=== Memulai Proses Deployment Time Capsule ===${NC}"
 
 # 1. Memuat Variabel Lingkungan Cloudflare
 CF_ENV_FILE="/home/belajarcarabelajar/cloudflare/.env"
+if [ ! -f "$CF_ENV_FILE" ] && [ -f "/root/.env" ]; then
+    CF_ENV_FILE="/root/.env"
+fi
 
 if [ -f "$CF_ENV_FILE" ]; then
     echo -e "${GREEN}[OK]${NC} Memuat kredensial Cloudflare dari $CF_ENV_FILE"
@@ -30,7 +33,7 @@ if [ -f "$CF_ENV_FILE" ]; then
         export "$key=$value"
     done < "$CF_ENV_FILE"
 else
-    echo -e "${RED}[ERROR]${NC} Berkas kredensial Cloudflare tidak ditemukan di $CF_ENV_FILE."
+    echo -e "${RED}[ERROR]${NC} Berkas kredensial Cloudflare tidak ditemukan."
     exit 1
 fi
 

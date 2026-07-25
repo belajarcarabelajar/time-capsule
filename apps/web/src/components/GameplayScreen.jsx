@@ -7,6 +7,7 @@ import {
   NarratorBox,
   DialogueBox,
 } from '@time-capsule/ui';
+import UserBar from './UserBar';
 
 export default function GameplayScreen({
   gameData,
@@ -75,12 +76,16 @@ export default function GameplayScreen({
             )}
           </div>
 
-          <button
-            onClick={(e) => { e.stopPropagation(); handleFinish(); }}
-            className="pointer-events-auto p-2 bg-black/40 rounded-full text-white/50 hover:bg-red-900/80 hover:text-white transition-colors border border-white/5"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2 pointer-events-auto">
+            <UserBar />
+            <button
+              onClick={(e) => { e.stopPropagation(); handleFinish(); }}
+              className="p-2 bg-black/40 rounded-full text-white/50 hover:bg-red-900/80 hover:text-white transition-colors border border-white/5 cursor-pointer"
+              title="Keluar ke Menu Utama"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <DynamicBackground scene={gameData?.scenes?.MAIN} currentMood={displayMood} />

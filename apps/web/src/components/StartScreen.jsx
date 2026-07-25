@@ -1,6 +1,8 @@
 import React from 'react';
 import { Zap, Search, Loader2, Hourglass, AlertTriangle } from 'lucide-react';
 import { LoadingPanel } from '@time-capsule/ui';
+import UserBar from './UserBar';
+import { useAuth } from '../context/AuthContext';
 
 export default function StartScreen({
   isLoading,
@@ -12,8 +14,16 @@ export default function StartScreen({
   setTopic,
   handleStartAdventure
 }) {
+  const { authError } = useAuth();
+  const displayError = errorMsg || authError;
+
   return (
     <div className="min-h-screen bg-black text-amber-50 font-serif flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Top Header Bar for User Login / Profile */}
+      <div className="absolute top-4 right-4 z-40">
+        <UserBar />
+      </div>
+
       {isLoading && <LoadingPanel text="MEMBUKA PORTAL SEJARAH..." />}
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-900/40 via-stone-950 to-black animate-pulse"></div>
@@ -35,10 +45,10 @@ export default function StartScreen({
           </p>
         </div>
 
-        {errorMsg && (
+        {displayError && (
           <div className="flex flex-col gap-1 w-full max-w-xs mx-auto animate-shake">
             <div className="p-3 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-xs flex items-center gap-2 justify-center">
-               <AlertTriangle className="w-4 h-4" /> {errorMsg}
+               <AlertTriangle className="w-4 h-4" /> {displayError}
             </div>
             {errorDetail && (
               <button
