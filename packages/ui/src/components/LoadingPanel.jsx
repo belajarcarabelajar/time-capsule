@@ -1,7 +1,7 @@
 import React from 'react';
 import { Hourglass } from 'lucide-react';
 
-const LoadingPanel = ({ text }) => {
+const LoadingPanel = ({ text = "MEMBUKA PORTAL WAKTU..." }) => {
   return (
     <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center p-8 backdrop-blur-md">
        <div className="w-full max-w-md space-y-6 text-center">
@@ -14,7 +14,7 @@ const LoadingPanel = ({ text }) => {
           </div>
           <div>
             <h3 className="text-2xl font-bold text-amber-500 mb-2 font-serif tracking-widest animate-pulse">
-               {text || "MENGHUBUNGKAN LINTASAN WAKTU..."}
+               {text}
             </h3>
             <p className="text-stone-400 text-sm font-mono">Memproses data historis & membangun simulasi...</p>
           </div>
