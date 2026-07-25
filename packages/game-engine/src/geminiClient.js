@@ -1,4 +1,4 @@
-import { apiKey, GEMINI_SYSTEM_PROMPT, cfApiToken, cfAccountId } from './systemPrompt.js';
+import { apiKey, GEMINI_SYSTEM_PROMPT } from './systemPrompt.js';
 
 const playerSchema = {
   type: "OBJECT",
