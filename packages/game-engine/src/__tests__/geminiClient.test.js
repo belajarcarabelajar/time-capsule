@@ -126,3 +126,46 @@ describe('fetchScenarioData JSON Sanitization', () => {
     await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Gagal memproses skenario cerita.');
   });
 });
+
+describe('Cloudflare Fallback Behavior', () => {
+  let originalFetch;
+  let fetchScenarioData;
+
+  beforeEach(async () => {
+    originalFetch = global.fetch;
+    const module = await import('../geminiClient.js');
+    fetchScenarioData = module.fetchScenarioData;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('should extract text from Cloudflare result.choices[0].message.content', async () => {
+    const validJsonString = '{"meta": {"location": "Cloudflare Choices", "themeColor": "blue"}, "characters": {}, "scenes": {}, "script": []}';
+
+    global.fetch = mock(async (url) => {
+      return new Response(JSON.stringify({
+        success: true,
+        result: { choices: [{ message: { content: validJsonString } }] }
+      }));
+    });
+
+    const result = await fetchScenarioData('Fallback Topic', 1);
+    expect(result.meta.location).toBe('Cloudflare Choices');
+  });
+
+  it('should extract text from Cloudflare result.response if choices array is missing', async () => {
+    const validJsonString = '{"meta": {"location": "Cloudflare Response", "themeColor": "green"}, "characters": {}, "scenes": {}, "script": []}';
+
+    global.fetch = mock(async (url) => {
+      return new Response(JSON.stringify({
+        success: true,
+        result: { response: validJsonString }
+      }));
+    });
+
+    const result = await fetchScenarioData('Fallback Topic', 1);
+    expect(result.meta.location).toBe('Cloudflare Response');
+  });
+});
