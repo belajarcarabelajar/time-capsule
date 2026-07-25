@@ -194,21 +194,11 @@ const geminiResponseSchema = {
           });
 
           // Layer 2: Escape unescaped double quotes within string values on a line-by-line basis
-          const lines = cleaned.split('\n');
-          const fixedLines = lines.map(line => {
-            const match = line.match(/^(\s*"[a-zA-Z0-9_]+"\s*:\s*")(.*)("\s*,?\s*)$/);
-            if (match) {
-              const prefix = match[1];
-              const middle = match[2];
-              const suffix = match[3];
-              // Escape any double quotes in the middle that are NOT already escaped
-              const fixedMiddle = middle.replace(/(?<!\\)"/g, '\\"');
-              return prefix + fixedMiddle + suffix;
-            }
-            return line;
+          const sanitizedString = cleaned.replace(/^(\s*"[a-zA-Z0-9_]+"\s*:\s*")(.*)("\s*,?\s*)$/gm, (match, prefix, middle, suffix) => {
+            // Escape any double quotes in the middle that are NOT already escaped
+            const fixedMiddle = middle.replace(/(?<!\\)"/g, '\\"');
+            return prefix + fixedMiddle + suffix;
           });
-
-          const sanitizedString = fixedLines.join('\n');
           parsedData = JSON.parse(sanitizedString);
         } catch (sanitizeErr) {
           console.error("JSON parsing and sanitization failed:", sanitizeErr);
