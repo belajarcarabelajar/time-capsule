@@ -4,6 +4,8 @@ import { formatText } from '../utils/formatText.js';
 import DOMPurify from 'isomorphic-dompurify';
 
 const QuizPopup = ({ data, onAnswer, charData }) => {
+  if (!data || data.type !== 'quiz') return null;
+
   // Support both choices and options properties for resilience
   const choices = data?.choices || data?.options || [];
 
