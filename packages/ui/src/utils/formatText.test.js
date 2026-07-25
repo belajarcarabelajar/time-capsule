@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, it, test, expect } from 'bun:test';
 import { formatText } from './formatText.js';
 
 describe('formatText', () => {
@@ -12,12 +12,14 @@ describe('formatText', () => {
     expect(formatText('This is **bold** text.')).toBe('This is <b>bold</b> text.');
     expect(formatText('**Start** bold.')).toBe('<b>Start</b> bold.');
     expect(formatText('End **bold**')).toBe('End <b>bold</b>');
+    expect(formatText('**bold**')).toBe('<b>bold</b>');
   });
 
   it('formats italic text correctly', () => {
     expect(formatText('This is *italic* text.')).toBe('This is <i>italic</i> text.');
     expect(formatText('*Start* italic.')).toBe('<i>Start</i> italic.');
     expect(formatText('End *italic*')).toBe('End <i>italic</i>');
+    expect(formatText('*italic*')).toBe('<i>italic</i>');
   });
 
   it('formats both bold and italic text in the same string', () => {
@@ -33,19 +35,14 @@ describe('formatText', () => {
     expect(formatText('Just normal text.')).toBe('Just normal text.');
   });
 
-  it('should format bold text', () => {
-    expect(formatText('**bold**')).toBe('<b>bold</b>');
-  });
-
-  it('should format italic text', () => {
-    expect(formatText('*italic*')).toBe('<i>italic</i>');
-  });
-
   it('should sanitize XSS attempts', () => {
     const malicious = '<script>alert("xss")</script>**bold**';
     const result = formatText(malicious);
     expect(result).not.toContain('<script>');
     expect(result).toContain('<b>bold</b>');
+
+    expect(formatText('<script>alert("xss")</script>')).toBe('');
+    expect(formatText('**bold** <script>alert("xss")</script>')).toBe('<b>bold</b> ');
   });
 
   it('should sanitize img onerror', () => {
