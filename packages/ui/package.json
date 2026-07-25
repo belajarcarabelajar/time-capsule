@@ -18,5 +18,11 @@
     "@time-capsule/game-engine": "workspace:*",
     "isomorphic-dompurify": "^3.19.0",
     "lucide-react": "^0.460.0"
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "^20.11.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "happy-dom": "^20.11.1"
   }
 }
