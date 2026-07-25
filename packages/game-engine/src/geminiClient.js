@@ -114,12 +114,35 @@ const geminiResponseSchema = {
 };
 
   const fetchScenarioData = async (activeTopic, chapterNum, historySummary = "") => {
-    let promptText = `TOPIK UTAMA: ${activeTopic}`;
+    // 1. Basic type validation
+    if (typeof activeTopic !== 'string' || typeof chapterNum !== 'number' || typeof historySummary !== 'string') {
+      throw new Error("Invalid input types.");
+    }
+
+    // 2. Length validation
+    // Assume a reasonable max length for topic (e.g., 200 chars) and history summary (e.g., 5000 chars)
+    if (activeTopic.length > 200) {
+      activeTopic = activeTopic.substring(0, 200);
+    }
+    if (historySummary.length > 5000) {
+      historySummary = historySummary.substring(historySummary.length - 5000); // keep recent history
+    }
+
+    // 3. Basic sanitization to prevent gross injection/breaking prompt structure
+    const sanitizeText = (text) => {
+      // Remove characters that might be used for prompt injection or breaking JSON
+      return text.replace(/[<>{}[\]]/g, '');
+    };
+
+    const cleanTopic = sanitizeText(activeTopic);
+    const cleanHistory = sanitizeText(historySummary);
+
+    let promptText = `TOPIK UTAMA: ${cleanTopic}`;
     
     if (chapterNum > 1) {
       promptText += `\n\nKONTEKS: Ini adalah BAGIAN ${chapterNum}.`;
-      if (historySummary) {
-        promptText += `\n\nRIWAYAT CERITA/MATERI SEBELUMNYA (JANGAN ULANGI TOPIK/KUIS INI):\n${historySummary}`;
+      if (cleanHistory) {
+        promptText += `\n\nRIWAYAT CERITA/MATERI SEBELUMNYA (JANGAN ULANGI TOPIK/KUIS INI):\n${cleanHistory}`;
       }
       promptText += `\n\nATURAN KHUSUS: \n1. JANGAN ULANGI scene kedatangan. \n2. LANGSUNG diskusi mendalam/lanjutan topik. \n3. Lanjutkan materi ke sub-topik baru yang lebih mendalam dan berbeda dari bagian sebelumnya. \n4. Buat pertanyaan kuis yang sepenuhnya baru.`;
     } else {
