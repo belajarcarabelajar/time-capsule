@@ -100,4 +100,26 @@ describe('GameplayScreen', () => {
     fireEvent.click(getByText('Test Location').parentElement.parentElement.parentElement);
     expect(handleNext).toHaveBeenCalledTimes(1);
   });
+
+  test('renders preloaded next chapter indicator and preloading state indicator', () => {
+    const { getByText, rerender } = render(
+      <GameplayScreen
+        showContinuePrompt={true}
+        chapterCount={1}
+        nextGameData={{ meta: { location: 'Location 2' } }}
+      />
+    );
+
+    expect(getByText(/DATA BAGIAN 2 SIAP!/i)).toBeTruthy();
+
+    rerender(
+      <GameplayScreen
+        showContinuePrompt={true}
+        chapterCount={1}
+        isPreloading={true}
+      />
+    );
+
+    expect(getByText(/SEDANG MENYUSUN DATA.../i)).toBeTruthy();
+  });
 });

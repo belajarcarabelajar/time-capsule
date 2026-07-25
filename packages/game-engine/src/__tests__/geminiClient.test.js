@@ -214,3 +214,132 @@ describe('Cloudflare Fallback Behavior', () => {
     expect(result.meta.location).toBe('Cloudflare Response');
   });
 });
+
+describe('Input Validation & Prompt Construction & Zod Schema Validation', () => {
+  let originalFetch;
+  let fetchScenarioData;
+
+  const validCharacters = {
+    PLAYER: { id: "PLAYER", name: "Penjelajah", icon: "🧑🏻‍🚀", desc: "Masa Depan" },
+    NPC_1: { id: "NPC_1", name: "Test1", icon: "1", desc: "Desc1" },
+    NPC_2: { id: "NPC_2", name: "Test2", icon: "2", desc: "Desc2" },
+    NPC_3: { id: "NPC_3", name: "Test3", icon: "3", desc: "Desc3" }
+  };
+  const validScenes = { MAIN: { bg: "test", elements: [] } };
+
+  beforeEach(async () => {
+    originalFetch = global.fetch;
+    const module = await import('../geminiClient.js');
+    fetchScenarioData = module.fetchScenarioData;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('should throw an error if input types are invalid', async () => {
+    await expect(fetchScenarioData(123, 1, "")).rejects.toThrow('Invalid input types.');
+    await expect(fetchScenarioData("Topic", "1", "")).rejects.toThrow('Invalid input types.');
+    await expect(fetchScenarioData("Topic", 1, 456)).rejects.toThrow('Invalid input types.');
+  });
+
+  it('should truncate topic > 200 chars and history > 5000 chars', async () => {
+    let capturedBody;
+    const validJsonString = JSON.stringify({
+      meta: { location: "Sanitized Location", themeColor: "red" },
+      characters: validCharacters,
+      scenes: validScenes,
+      script: []
+    });
+
+    global.fetch = mock(async (url, options) => {
+      capturedBody = JSON.parse(options.body);
+      return new Response(JSON.stringify({
+        candidates: [{ content: { parts: [{ text: validJsonString }] } }]
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+
+    const longTopic = "A".repeat(250);
+    const longHistory = "B".repeat(6000);
+
+    await fetchScenarioData(longTopic, 2, longHistory);
+
+    const promptSent = capturedBody.contents[0].parts[0].text;
+    
+    expect(promptSent).toContain("TOPIK UTAMA: " + "A".repeat(200));
+    expect(promptSent).toContain("B".repeat(5000));
+    expect(promptSent).toContain("KONTEKS: Ini adalah BAGIAN 2.");
+  });
+
+  it('should strip forbidden characters <>{}[\] from inputs', async () => {
+    let capturedBody;
+    const validJsonString = JSON.stringify({
+      meta: { location: "Sanitized Location", themeColor: "red" },
+      characters: validCharacters,
+      scenes: validScenes,
+      script: []
+    });
+
+    global.fetch = mock(async (url, options) => {
+      capturedBody = JSON.parse(options.body);
+      return new Response(JSON.stringify({
+        candidates: [{ content: { parts: [{ text: validJsonString }] } }]
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+
+    await fetchScenarioData("<Topic>{With}[Brackets]", 1, "<History>{With}[Brackets]");
+
+    const promptSent = capturedBody.contents[0].parts[0].text;
+    expect(promptSent).not.toContain("<");
+    expect(promptSent).not.toContain(">");
+    expect(promptSent).not.toContain("{");
+    expect(promptSent).not.toContain("}");
+    expect(promptSent).not.toContain("[");
+    expect(promptSent).not.toContain("]");
+    expect(promptSent).toContain("TopicWithBrackets");
+  });
+
+  it('should throw an error if response structure fails Zod schema validation', async () => {
+    const invalidSchemaJson = JSON.stringify({
+      meta: { location: "Missing Required Characters" },
+      // Missing characters and script fields required by Zod schema
+      scenes: validScenes
+    });
+
+    global.fetch = mock(async () => {
+      return new Response(JSON.stringify({
+        candidates: [{ content: { parts: [{ text: invalidSchemaJson }] } }]
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+
+    const consoleErrorSpy = mock(() => {});
+    const originalConsoleError = console.error;
+    console.error = consoleErrorSpy;
+
+    try {
+      await expect(fetchScenarioData('Invalid Schema Topic', 1)).rejects.toThrow('Gagal memproses skenario cerita.');
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    } finally {
+      console.error = originalConsoleError;
+    }
+  });
+
+  it('should throw an error when rawText contains no JSON brackets', async () => {
+    global.fetch = mock(async () => {
+      return new Response(JSON.stringify({
+        candidates: [{ content: { parts: [{ text: "Plain text response with no brackets" }] } }]
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+
+    const consoleErrorSpy = mock(() => {});
+    const originalConsoleError = console.error;
+    console.error = consoleErrorSpy;
+
+    try {
+      await expect(fetchScenarioData('Plain Text Topic', 1)).rejects.toThrow('Gagal memproses skenario cerita.');
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    } finally {
+      console.error = originalConsoleError;
+    }
+  });
+});
