@@ -1,20 +1,23 @@
 {
-  "name": "@time-capsule/web",
-  "version": "1.0.0",
+  "name": "web",
   "private": true,
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "wrangler pages deploy dist --project-name time-capsule"
+    "test": "bun test"
   },
   "dependencies": {
     "@time-capsule/game-engine": "workspace:*",
     "@time-capsule/ui": "workspace:*",
+    "clsx": "^2.1.1",
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.11.1",
