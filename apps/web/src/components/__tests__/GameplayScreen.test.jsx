@@ -1,5 +1,11 @@
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
-GlobalRegistrator.register();
+if (!GlobalRegistrator.isRegistered) {
+  try {
+    GlobalRegistrator.register();
+  } catch (e) {
+    // Already registered
+  }
+}
 
 import React from 'react';
 import { test, expect, describe, afterEach, mock } from 'bun:test';

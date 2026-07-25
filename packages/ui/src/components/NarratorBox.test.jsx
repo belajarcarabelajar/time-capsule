@@ -1,9 +1,13 @@
 import { describe, it, expect, mock, beforeEach, beforeAll, afterAll } from 'bun:test';
 import React from 'react';
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
-
-// Register global DOM *before* importing anything that might need it (like testing-library)
-GlobalRegistrator.register();
+if (!GlobalRegistrator.isRegistered) {
+  try {
+    GlobalRegistrator.register();
+  } catch (e) {
+    // Already registered
+  }
+}
 
 // Delay import to ensure document is available when the module is parsed
 const { render, screen, cleanup } = await import('@testing-library/react');
@@ -51,7 +55,7 @@ describe('NarratorBox', () => {
   });
 
   it('should render the title INSIGHT SEJARAH', () => {
-    render(<NarratorBox text="Test text" isTyping={false} />);
-    expect(screen.getByText('INSIGHT SEJARAH')).toBeTruthy();
+    const { getByText } = render(<NarratorBox text="Test text" isTyping={false} />);
+    expect(getByText('INSIGHT SEJARAH')).toBeTruthy();
   });
 });
