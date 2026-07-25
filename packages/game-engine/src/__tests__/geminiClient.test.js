@@ -125,4 +125,24 @@ describe('fetchScenarioData JSON Sanitization', () => {
     // Expect the function to throw an error
     await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Gagal memproses skenario cerita.');
   });
+
+  it('should throw an error if Cloudflare AI API returns success: false', async () => {
+    global.fetch = mock(async (url) => {
+      return new Response(JSON.stringify({
+        success: false,
+        errors: [{ message: 'Something went wrong with Cloudflare AI' }]
+      }));
+    });
+
+    const consoleErrorSpy = mock(() => {});
+    const originalConsoleError = console.error;
+    console.error = consoleErrorSpy;
+
+    try {
+      await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Gagal menghubungi portal Cloudflare AI.');
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    } finally {
+      console.error = originalConsoleError;
+    }
+  });
 });
