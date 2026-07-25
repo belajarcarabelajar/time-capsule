@@ -1,4 +1,4 @@
-import { apiKey, GEMINI_SYSTEM_PROMPT } from './systemPrompt.js';
+import { GEMINI_SYSTEM_PROMPT } from './systemPrompt.js';
 
 const playerSchema = {
   type: "OBJECT",
@@ -150,26 +150,28 @@ const geminiResponseSchema = {
     }
 
     let rawText;
-    if (apiKey) {
-      // Use Gemini API with strict structured schema validation
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }],
-          systemInstruction: { parts: [{ text: GEMINI_SYSTEM_PROMPT }] },
-          generationConfig: { 
-            responseMimeType: "application/json",
-            responseSchema: geminiResponseSchema
-          }
-        })
-      });
 
-      const data = await response.json();
+    // Attempt to use Gemini API via proxy first
+    const geminiResponse = await fetch(`/api/gemini`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: promptText }] }],
+        systemInstruction: { parts: [{ text: GEMINI_SYSTEM_PROMPT }] },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: geminiResponseSchema
+        }
+      })
+    });
+
+    if (geminiResponse.ok) {
+      const data = await geminiResponse.json();
       rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     } else {
+      console.warn("Gemini API proxy failed or is not configured. Falling back to Cloudflare Workers AI...", await geminiResponse.text().catch(() => ''));
       // Fallback to Cloudflare Workers AI using Meta Llama 3.1 8B Instruct (via Pages Function proxy)
-      const response = await fetch(`/api/ai`, {
+      const aiResponse = await fetch(`/api/ai`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -183,8 +185,8 @@ const geminiResponseSchema = {
         })
       });
 
-      const data = await response.json();
-      if (!data.success) {
+      const data = await aiResponse.json();
+      if (!aiResponse.ok || (data.success === false)) {
         console.error("Cloudflare Workers AI API error:", data.errors);
         throw new Error("Gagal menghubungi portal Cloudflare AI.");
       }

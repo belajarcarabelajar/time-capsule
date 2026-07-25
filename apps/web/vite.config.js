@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, path.resolve(__dirname, '../..'), '');
   const cfAccountId = env.VITE_CF_ACCOUNT_ID || '';
   const cfApiToken = env.VITE_CF_API_TOKEN || '';
+  const geminiApiKey = env.VITE_GEMINI_API_KEY || '';
 
   return {
     envDir: path.resolve(__dirname, '../..'),
@@ -34,6 +35,11 @@ export default defineConfig(({ mode }) => {
           headers: {
             'Authorization': `Bearer ${cfApiToken}`
           }
+        },
+        '/api/gemini': {
+          target: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${geminiApiKey}`,
+          changeOrigin: true,
+          rewrite: () => '',
         }
       }
     },

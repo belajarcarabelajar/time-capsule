@@ -6,7 +6,6 @@ describe("fetchScenarioData", () => {
 
   beforeEach(() => {
     originalFetch = global.fetch;
-    // ensure apiKey is empty for cloudflare path, or we can just mock it properly.
   });
 
   afterEach(() => {
@@ -21,16 +20,24 @@ describe("fetchScenarioData", () => {
       "missing_comma" true
     }`;
 
-    global.fetch = mock(() =>
-      Promise.resolve({
-        json: () => Promise.resolve({
+    global.fetch = mock(async (url) => {
+      if (url === '/api/gemini') {
+        return {
+          ok: false,
+          json: async () => ({ success: false, errors: [] }),
+          text: async () => "Not configured"
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({
           success: true,
           result: {
             response: malformedJSON
           }
         })
-      })
-    );
+      };
+    });
 
     const consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
     const consoleWarnSpy = spyOn(console, "warn").mockImplementation(() => {});
@@ -58,16 +65,24 @@ describe("fetchScenarioData", () => {
       ]
     }`;
 
-    global.fetch = mock(() =>
-      Promise.resolve({
-        json: () => Promise.resolve({
+    global.fetch = mock(async (url) => {
+      if (url === '/api/gemini') {
+        return {
+          ok: false,
+          json: async () => ({ success: false, errors: [] }),
+          text: async () => "Not configured"
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({
           success: true,
           result: {
             response: validJSON
           }
         })
-      })
-    );
+      };
+    });
 
     const result = await fetchScenarioData("Test Topic", 1);
     expect(result).toBeDefined();
