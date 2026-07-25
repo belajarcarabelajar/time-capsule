@@ -18,16 +18,15 @@ describe('fetchScenarioData JSON Sanitization', () => {
     const validJsonString = '{"meta": {"location": "Test", "themeColor": "red"}, "characters": {}, "scenes": {}, "script": []}';
 
     global.fetch = mock(async (url) => {
-      if (url.includes('generativelanguage.googleapis.com')) {
+      if (url === '/api/gemini') {
         return new Response(JSON.stringify({
           candidates: [{ content: { parts: [{ text: validJsonString }] } }]
-        }));
-      } else {
-        return new Response(JSON.stringify({
-          success: true,
-          result: { choices: [{ message: { content: validJsonString } }] }
-        }));
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
+      return new Response(JSON.stringify({
+        success: true,
+        result: { choices: [{ message: { content: validJsonString } }] }
+      }));
     });
 
     const result = await fetchScenarioData('Test Topic', 1);
@@ -46,16 +45,15 @@ describe('fetchScenarioData JSON Sanitization', () => {
     }`;
 
     global.fetch = mock(async (url) => {
-      if (url.includes('generativelanguage.googleapis.com')) {
+      if (url === '/api/gemini') {
         return new Response(JSON.stringify({
           candidates: [{ content: { parts: [{ text: malformedJsonString }] } }]
-        }));
-      } else {
-        return new Response(JSON.stringify({
-          success: true,
-          result: { choices: [{ message: { content: malformedJsonString } }] }
-        }));
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
+      return new Response(JSON.stringify({
+        success: true,
+        result: { choices: [{ message: { content: malformedJsonString } }] }
+      }));
     });
 
     const result = await fetchScenarioData('Test Topic', 1);
@@ -83,16 +81,15 @@ describe('fetchScenarioData JSON Sanitization', () => {
     }`;
 
     global.fetch = mock(async (url) => {
-      if (url.includes('generativelanguage.googleapis.com')) {
+      if (url === '/api/gemini') {
         return new Response(JSON.stringify({
           candidates: [{ content: { parts: [{ text: malformedJsonString }] } }]
-        }));
-      } else {
-        return new Response(JSON.stringify({
-          success: true,
-          result: { choices: [{ message: { content: malformedJsonString } }] }
-        }));
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
+      return new Response(JSON.stringify({
+        success: true,
+        result: { choices: [{ message: { content: malformedJsonString } }] }
+      }));
     });
 
     const result = await fetchScenarioData('Test Topic', 1);
@@ -110,16 +107,15 @@ describe('fetchScenarioData JSON Sanitization', () => {
     `;
 
     global.fetch = mock(async (url) => {
-      if (url.includes('generativelanguage.googleapis.com')) {
+      if (url === '/api/gemini') {
         return new Response(JSON.stringify({
           candidates: [{ content: { parts: [{ text: malformedJsonString }] } }]
-        }));
-      } else {
-        return new Response(JSON.stringify({
-          success: true,
-          result: { choices: [{ message: { content: malformedJsonString } }] }
-        }));
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
+      return new Response(JSON.stringify({
+        success: true,
+        result: { choices: [{ message: { content: malformedJsonString } }] }
+      }));
     });
 
     // Expect the function to throw an error
