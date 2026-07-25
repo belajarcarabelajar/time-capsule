@@ -1,4 +1,65 @@
 import { apiKey, GEMINI_SYSTEM_PROMPT, cfApiToken, cfAccountId } from './systemPrompt.js';
+import { z } from 'zod';
+
+const zPlayerSchema = z.object({
+  id: z.literal("PLAYER"),
+  name: z.literal("Penjelajah"),
+  icon: z.literal("🧑🏻‍🚀"),
+  desc: z.literal("Masa Depan")
+});
+
+const zNpc1Schema = z.object({ id: z.literal("NPC_1"), name: z.string(), icon: z.string(), desc: z.string() });
+const zNpc2Schema = z.object({ id: z.literal("NPC_2"), name: z.string(), icon: z.string(), desc: z.string() });
+const zNpc3Schema = z.object({ id: z.literal("NPC_3"), name: z.string(), icon: z.string(), desc: z.string() });
+const zNpc4Schema = z.object({ id: z.literal("NPC_4"), name: z.string(), icon: z.string(), desc: z.string() });
+
+const scenarioZodSchema = z.object({
+  meta: z.object({
+    location: z.string(),
+    themeColor: z.string()
+  }),
+  characters: z.object({
+    PLAYER: zPlayerSchema,
+    NPC_1: zNpc1Schema,
+    NPC_2: zNpc2Schema,
+    NPC_3: zNpc3Schema,
+    NPC_4: zNpc4Schema.optional()
+  }),
+  scenes: z.object({
+    MAIN: z.object({
+      bg: z.string(),
+      elements: z.array(z.string())
+    })
+  }),
+  script: z.array(
+    z.discriminatedUnion("type", [
+      z.object({
+        type: z.literal("dialogue"),
+        speakerId: z.enum(["PLAYER", "NPC_1", "NPC_2", "NPC_3", "NPC_4"]),
+        mood: z.string(),
+        text: z.string()
+      }),
+      z.object({
+        type: z.literal("quiz"),
+        speakerId: z.enum(["PLAYER", "NPC_1", "NPC_2", "NPC_3", "NPC_4"]),
+        mood: z.string(),
+        text: z.string(),
+        choices: z.array(
+          z.object({
+            text: z.string(),
+            correct: z.boolean(),
+            response: z.string()
+          })
+        ),
+        explanation: z.string().optional()
+      }),
+      z.object({
+        type: z.literal("narrator"),
+        text: z.string()
+      })
+    ])
+  )
+});
 
 const playerSchema = {
   type: "OBJECT",
@@ -206,7 +267,7 @@ const geminiResponseSchema = {
     if (typeof rawText === 'object') {
       parsedData = rawText;
     } else {
-      // IMPROVED JSON PARSING: Extract strictly the JSON part
+      // Extract strictly the JSON part
       const jsonMatch = rawText?.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
          console.error("Invalid response format:", rawText);
@@ -217,37 +278,17 @@ const geminiResponseSchema = {
       try {
         parsedData = JSON.parse(jsonString);
       } catch (err) {
-        console.warn("Standard JSON parse failed, attempting sanitization...", err);
-        try {
-          // Layer 1: Flatten multiline string values by escaping literal newlines, tabs, and carriage returns inside quotes
-          const escapes = { '\n': '\\n', '\r': '\\r', '\t': '\\t' };
-          let cleaned = jsonString.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match, p1) => {
-            if (!/[\n\r\t]/.test(p1)) return match;
-            return '"' + p1.replace(/[\n\r\t]/g, m => escapes[m]) + '"';
-          });
-
-          // Layer 2: Escape unescaped double quotes within string values on a line-by-line basis
-          const lines = cleaned.split('\n');
-          const fixedLines = lines.map(line => {
-            const match = line.match(/^(\s*"[a-zA-Z0-9_]+"\s*:\s*")(.*)("\s*,?\s*)$/);
-            if (match) {
-              const prefix = match[1];
-              const middle = match[2];
-              const suffix = match[3];
-              // Escape any double quotes in the middle that are NOT already escaped
-              const fixedMiddle = middle.replace(/(?<!\\)"/g, '\\"');
-              return prefix + fixedMiddle + suffix;
-            }
-            return line;
-          });
-
-          const sanitizedString = fixedLines.join('\n');
-          parsedData = JSON.parse(sanitizedString);
-        } catch (sanitizeErr) {
-          console.error("JSON parsing and sanitization failed:", sanitizeErr);
-          throw new Error("Gagal memproses skenario cerita.");
-        }
+        console.error("JSON parsing failed:", err);
+        throw new Error("Gagal memproses skenario cerita.");
       }
+    }
+
+    // Validate using Zod instead of relying on parsing
+    try {
+      parsedData = scenarioZodSchema.parse(parsedData);
+    } catch (err) {
+      console.error("Data validation failed:", err);
+      throw new Error("Gagal memproses skenario cerita.");
     }
 
     return parsedData;
