@@ -9,5 +9,8 @@
   },
   "scripts": {
     "build": "echo \"@time-capsule/game-engine: no build step\""
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
   }
 }

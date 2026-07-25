@@ -4,6 +4,14 @@ describe('fetchScenarioData JSON Sanitization', () => {
   let originalFetch;
   let fetchScenarioData;
 
+  const validCharacters = {
+    PLAYER: { id: "PLAYER", name: "Penjelajah", icon: "🧑🏻‍🚀", desc: "Masa Depan" },
+    NPC_1: { id: "NPC_1", name: "Test1", icon: "1", desc: "Desc1" },
+    NPC_2: { id: "NPC_2", name: "Test2", icon: "2", desc: "Desc2" },
+    NPC_3: { id: "NPC_3", name: "Test3", icon: "3", desc: "Desc3" }
+  };
+  const validScenes = { MAIN: { bg: "test", elements: [] } };
+
   beforeEach(async () => {
     originalFetch = global.fetch;
     const module = await import('../geminiClient.js');
@@ -15,7 +23,12 @@ describe('fetchScenarioData JSON Sanitization', () => {
   });
 
   it('should parse valid JSON successfully without sanitization', async () => {
-    const validJsonString = '{"meta": {"location": "Test", "themeColor": "red"}, "characters": {}, "scenes": {}, "script": []}';
+    const validJsonString = JSON.stringify({
+      meta: { location: "Test", themeColor: "red" },
+      characters: validCharacters,
+      scenes: validScenes,
+      script: []
+    });
 
     global.fetch = mock(async (url) => {
       if (url === '/api/gemini') {
@@ -34,13 +47,12 @@ describe('fetchScenarioData JSON Sanitization', () => {
   });
 
   it('should sanitize Layer 1: unescaped newlines, tabs, and carriage returns inside string values', async () => {
-    // Malformed JSON with literal newlines, carriage returns, and tabs inside quotes
     const malformedJsonString = `{
       "meta": { "location": "Test", "themeColor": "red" },
-      "characters": {},
-      "scenes": {},
+      "characters": ${JSON.stringify(validCharacters)},
+      "scenes": ${JSON.stringify(validScenes)},
       "script": [
-        { "text": "Line 1\nLine 2\r\nAnd a\ttab" }
+        { "type": "narrator", "text": "Line 1\nLine 2\r\nAnd a\ttab" }
       ]
     }`;
 
@@ -61,15 +73,13 @@ describe('fetchScenarioData JSON Sanitization', () => {
   });
 
   it('should sanitize Layer 2: unescaped double quotes inside string values', async () => {
-    // Malformed JSON with an unescaped double quote inside a string value on a line
-    // The regular expression expects something like: "key": "value",
     const malformedJsonString = `{
       "meta": {
         "location": "Test",
         "themeColor": "red"
       },
-      "characters": {},
-      "scenes": {},
+      "characters": ${JSON.stringify(validCharacters)},
+      "scenes": ${JSON.stringify(validScenes)},
       "script": [
         {
           "type": "dialogue",
@@ -97,7 +107,6 @@ describe('fetchScenarioData JSON Sanitization', () => {
   });
 
   it('should throw an error if JSON parsing and both sanitization layers fail', async () => {
-    // Malformed JSON that cannot be fixed by the simple regexes (e.g., missing closing brace)
     const malformedJsonString = `{
       "meta": { "location": "Test", "themeColor": "red" },
       "characters": {},
@@ -118,7 +127,6 @@ describe('fetchScenarioData JSON Sanitization', () => {
       }));
     });
 
-    // Expect the function to throw an error
     await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Gagal memproses skenario cerita.');
   });
 
@@ -148,6 +156,14 @@ describe('Cloudflare Fallback Behavior', () => {
   let originalFetch;
   let fetchScenarioData;
 
+  const validCharacters = {
+    PLAYER: { id: "PLAYER", name: "Penjelajah", icon: "🧑🏻‍🚀", desc: "Masa Depan" },
+    NPC_1: { id: "NPC_1", name: "Test1", icon: "1", desc: "Desc1" },
+    NPC_2: { id: "NPC_2", name: "Test2", icon: "2", desc: "Desc2" },
+    NPC_3: { id: "NPC_3", name: "Test3", icon: "3", desc: "Desc3" }
+  };
+  const validScenes = { MAIN: { bg: "test", elements: [] } };
+
   beforeEach(async () => {
     originalFetch = global.fetch;
     const module = await import('../geminiClient.js');
@@ -159,7 +175,12 @@ describe('Cloudflare Fallback Behavior', () => {
   });
 
   it('should extract text from Cloudflare result.choices[0].message.content', async () => {
-    const validJsonString = '{"meta": {"location": "Cloudflare Choices", "themeColor": "blue"}, "characters": {}, "scenes": {}, "script": []}';
+    const validJsonString = JSON.stringify({
+      meta: { location: "Cloudflare Choices", themeColor: "blue" },
+      characters: validCharacters,
+      scenes: validScenes,
+      script: []
+    });
 
     global.fetch = mock(async (url) => {
       if (url === '/api/gemini') return new Response('', { status: 500 });
@@ -174,7 +195,12 @@ describe('Cloudflare Fallback Behavior', () => {
   });
 
   it('should extract text from Cloudflare result.response if choices array is missing', async () => {
-    const validJsonString = '{"meta": {"location": "Cloudflare Response", "themeColor": "green"}, "characters": {}, "scenes": {}, "script": []}';
+    const validJsonString = JSON.stringify({
+      meta: { location: "Cloudflare Response", themeColor: "green" },
+      characters: validCharacters,
+      scenes: validScenes,
+      script: []
+    });
 
     global.fetch = mock(async (url) => {
       if (url === '/api/gemini') return new Response('', { status: 500 });

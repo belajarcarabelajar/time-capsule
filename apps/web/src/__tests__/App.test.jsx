@@ -54,7 +54,12 @@ describe('App Component Integration', () => {
   test('entering topic and starting game transitions to loading then gameplay', async () => {
     const mockGameData = {
       meta: { chapter: 1, title: 'Test Chapter', location: 'Test Location', year: '1945', themeColor: 'amber' },
-      characters: { 'PLAYER': { name: 'Player', icon: '🧑🏻‍🚀', desc: 'Masa Depan' } },
+      characters: {
+        PLAYER: { id: 'PLAYER', name: 'Penjelajah', icon: '🧑🏻‍🚀', desc: 'Masa Depan' },
+        NPC_1: { id: 'NPC_1', name: 'NPC 1', icon: '👤', desc: 'Desc 1' },
+        NPC_2: { id: 'NPC_2', name: 'NPC 2', icon: '👤', desc: 'Desc 2' },
+        NPC_3: { id: 'NPC_3', name: 'NPC 3', icon: '👤', desc: 'Desc 3' },
+      },
       scenes: { MAIN: { bg: 'from-stone-900 to-black', elements: [] } },
       script: [
         { type: 'narrator', text: 'Once upon a time...' }
