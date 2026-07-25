@@ -97,6 +97,7 @@ export async function verifyJwt(token, secret) {
 }
 
 export function parseCookies(request) {
+  if (!request || !request.headers || typeof request.headers.get !== 'function') return {};
   const cookieHeader = request.headers.get('Cookie');
   if (!cookieHeader) return {};
 
@@ -127,4 +128,21 @@ export function createCookieHeader(name, value, maxAgeSeconds = 7 * 24 * 3600) {
 
 export function createClearCookieHeader(name) {
   return `${name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+}
+
+export async function getUserFromRequest(request, env) {
+  if (!request) return null;
+  const jwtSecret = env?.JWT_SECRET || "time-capsule-secret-jwt-key-2026-belajarcarabelajar";
+  const cookies = parseCookies(request);
+  let token = cookies.auth_token;
+
+  if (!token && request.headers && typeof request.headers.get === 'function') {
+    const authHeader = request.headers.get("Authorization");
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.substring(7);
+    }
+  }
+
+  if (!token) return null;
+  return await verifyJwt(token, jwtSecret);
 }

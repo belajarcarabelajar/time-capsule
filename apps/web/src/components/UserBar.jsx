@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Loader2 } from 'lucide-react';
+import { LogOut, Loader2, Zap } from 'lucide-react';
 
 export default function UserBar() {
   const { user, loading, loginWithGoogle, logout } = useAuth();
@@ -43,37 +43,52 @@ export default function UserBar() {
     );
   }
 
+  const userPoints = user.points ?? 50;
+  const maxPoints = user.maxPoints ?? 50;
+
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center gap-2.5 bg-stone-900/90 hover:bg-stone-800 text-amber-100 px-3 py-1.5 rounded-full border border-amber-600/50 shadow-md transition-all cursor-pointer font-sans"
-      >
-        {user.picture ? (
-          <img src={user.picture} alt={user.name} className="w-6 h-6 rounded-full border border-amber-500" />
-        ) : (
-          <div className="w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center text-xs font-bold text-stone-900">
-            {user.name?.[0] || 'U'}
+    <div className="flex items-center gap-3 font-sans">
+      {/* Points Badge */}
+      <div className="flex items-center gap-1.5 bg-amber-950/60 border border-amber-500/40 text-amber-300 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm">
+        <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+        <span>{userPoints}/{maxPoints} Poin</span>
+      </div>
+
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={() => setShowDropdown(!showDropdown)}
+          className="flex items-center gap-2.5 bg-stone-900/90 hover:bg-stone-800 text-amber-100 px-3 py-1.5 rounded-full border border-amber-600/50 shadow-md transition-all cursor-pointer"
+        >
+          {user.picture ? (
+            <img src={user.picture} alt={user.name} className="w-6 h-6 rounded-full border border-amber-500" />
+          ) : (
+            <div className="w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center text-xs font-bold text-stone-900">
+              {user.name?.[0] || 'U'}
+            </div>
+          )}
+          <span className="text-xs font-semibold max-w-[120px] truncate">{user.name}</span>
+        </button>
+
+        {showDropdown && (
+          <div className="absolute right-0 mt-2 w-52 bg-stone-900 border border-amber-900/80 rounded-xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2">
+            <div className="px-3 py-2 border-b border-stone-800">
+              <p className="text-xs font-bold text-amber-400 truncate">{user.name}</p>
+              <p className="text-[10px] text-stone-400 truncate">{user.email}</p>
+              <div className="mt-1.5 pt-1.5 border-t border-stone-800/80 flex items-center justify-between text-[11px] text-amber-200/80">
+                <span>Poin Harian:</span>
+                <span className="font-bold text-amber-400">{userPoints}/{maxPoints}</span>
+              </div>
+            </div>
+            <button
+              onClick={() => { setShowDropdown(false); logout(); }}
+              className="w-full mt-1 flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-red-950/40 rounded-lg transition-colors cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Keluar</span>
+            </button>
           </div>
         )}
-        <span className="text-xs font-semibold max-w-[120px] truncate">{user.name}</span>
-      </button>
-
-      {showDropdown && (
-        <div className="absolute right-0 mt-2 w-48 bg-stone-900 border border-amber-900/80 rounded-xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 font-sans">
-          <div className="px-3 py-2 border-b border-stone-800">
-            <p className="text-xs font-bold text-amber-400 truncate">{user.name}</p>
-            <p className="text-[10px] text-stone-400 truncate">{user.email}</p>
-          </div>
-          <button
-            onClick={() => { setShowDropdown(false); logout(); }}
-            className="w-full mt-1 flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-red-950/40 rounded-lg transition-colors cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Keluar</span>
-          </button>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
