@@ -105,8 +105,8 @@ export async function onRequestGet(context) {
 
   const origin = requestUrl.origin;
   const redirectUri = env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/callback`;
-  const clientId = env.GOOGLE_CLIENT_ID;
-  const clientSecret = env.GOOGLE_CLIENT_SECRET;
+  const clientId = env.GOOGLE_CLIENT_ID || env.VITE_GOOGLE_CLIENT_ID;
+  const clientSecret = env.GOOGLE_CLIENT_SECRET || env.VITE_GOOGLE_CLIENT_SECRET;
   const jwtSecret = env.JWT_SECRET;
 
   const redirectWithError = (errorMessage) => {

@@ -2,10 +2,16 @@ import { createCookieHeader } from "./_utils.js";
 
 export async function onRequestGet(context) {
   const { request, env } = context;
-  const clientId = env.GOOGLE_CLIENT_ID;
-
   const requestUrl = new URL(request.url);
-  const redirectUri = env.GOOGLE_REDIRECT_URI || `${requestUrl.origin}/api/auth/callback`;
+  const origin = requestUrl.origin;
+  const clientId = env.GOOGLE_CLIENT_ID || env.VITE_GOOGLE_CLIENT_ID;
+
+  if (!clientId || clientId.includes("your-google-client-id")) {
+    const errorMsg = "Google OAuth Client ID belum dikonfigurasi di Cloudflare Pages project settings.";
+    return Response.redirect(`${origin}/?auth_error=${encodeURIComponent(errorMsg)}`, 302);
+  }
+
+  const redirectUri = env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/callback`;
 
   // Generate a cryptographically random state parameter to prevent CSRF attacks
   const state = crypto.randomUUID

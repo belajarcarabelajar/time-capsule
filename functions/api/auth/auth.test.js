@@ -32,6 +32,36 @@ describe("OAuth State Parameter - login.js", () => {
     expect(cookieHeader).toContain("HttpOnly");
     expect(cookieHeader).toContain("SameSite=Lax");
   });
+
+  it("should redirect to home with auth_error when GOOGLE_CLIENT_ID is missing", async () => {
+    const context = {
+      request: new Request("http://localhost:8788/api/auth/login"),
+      env: {},
+    };
+
+    const response = await loginHandler(context);
+    expect(response.status).toBe(302);
+
+    const locationHeader = response.headers.get("Location");
+    expect(locationHeader).toContain("auth_error=");
+    expect(locationHeader).toContain("Google%20OAuth%20Client%20ID%20belum%20dikonfigurasi");
+  });
+
+  it("should redirect to home with auth_error when GOOGLE_CLIENT_ID is placeholder value", async () => {
+    const context = {
+      request: new Request("http://localhost:8788/api/auth/login"),
+      env: {
+        GOOGLE_CLIENT_ID: "your-google-client-id.apps.googleusercontent.com"
+      },
+    };
+
+    const response = await loginHandler(context);
+    expect(response.status).toBe(302);
+
+    const locationHeader = response.headers.get("Location");
+    expect(locationHeader).toContain("auth_error=");
+    expect(locationHeader).toContain("Google%20OAuth%20Client%20ID%20belum%20dikonfigurasi");
+  });
 });
 
 describe("OAuth State Parameter Validation - callback.js", () => {

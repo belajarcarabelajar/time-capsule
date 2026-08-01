@@ -1,9 +1,9 @@
 import React from 'react';
-import { Lock, X } from 'lucide-react';
+import { Lock, X, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function AuthModal({ isOpen, onClose }) {
-  const { loginWithGoogle } = useAuth();
+  const { loginWithGoogle, authError } = useAuth();
 
   if (!isOpen) return null;
 
@@ -33,6 +33,13 @@ export default function AuthModal({ isOpen, onClose }) {
             Sesi Penjelajah Diperlukan! Silakan masuk menggunakan akun Google Anda untuk membuka portal sejarah dan mendapatkan 50 poin harian gratis.
           </p>
         </div>
+
+        {authError && (
+          <div className="p-3 bg-red-900/40 border border-red-500/60 rounded-xl text-red-200 text-xs flex items-center gap-2 justify-center text-left">
+            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+            <span>{authError}</span>
+          </div>
+        )}
 
         <div className="pt-2 flex flex-col gap-3">
           <button
