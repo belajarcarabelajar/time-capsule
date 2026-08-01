@@ -69,7 +69,6 @@ ${errorDetail.stack || "N/A"}
       preloadNextChapter(topic, 2, [data]);
 
     } catch (err) {
-      console.error(err);
       setErrorMsg("Gagal membuka portal. Coba lagi.");
       setErrorDetail({
         message: err.message,
@@ -91,7 +90,7 @@ ${errorDetail.stack || "N/A"}
       const data = await fetchScenarioData(activeTopic, nextChapterNum, historySummary);
       setNextGameData(data);
     } catch (e) {
-      console.error("[SMART PRELOAD] Gagal:", e);
+      // Preload failed, ignore silently as main load will retry
     } finally {
       setIsPreloading(false);
     }
@@ -132,7 +131,6 @@ ${errorDetail.stack || "N/A"}
 
         preloadNextChapter(topic, nextChapterNum + 1, [...updatedHistory, data]);
       } catch (err) {
-        console.error(err);
         setErrorMsg("Koneksi terputus. Mohon coba lagi.");
         setErrorDetail({
           message: err.message,
