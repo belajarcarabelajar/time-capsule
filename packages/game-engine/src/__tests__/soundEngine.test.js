@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
-import { SoundEngine } from './soundEngine.js';
+import { SoundEngine } from '../soundEngine.js';
 
 describe('SoundEngine', () => {
   let mockAudioContext;
@@ -67,6 +67,14 @@ describe('SoundEngine', () => {
       mockAudioContext.state = 'suspended';
       SoundEngine.init();
       expect(mockAudioContext.resume).toHaveBeenCalled();
+    });
+
+    it('catches resume promise rejection', async () => {
+      mockAudioContext.state = 'suspended';
+      mockAudioContext.resume = mock(() => Promise.reject(new Error('test')));
+      SoundEngine.init();
+      expect(mockAudioContext.resume).toHaveBeenCalled();
+      // Should not throw
     });
 
     it('does not create a new context if one already exists', () => {

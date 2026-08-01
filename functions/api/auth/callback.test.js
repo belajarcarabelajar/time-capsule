@@ -5,6 +5,8 @@ import { verifyJwt } from "./_utils.js";
 describe("onRequestGet - Auth Callback", () => {
   let originalFetch;
 
+  const TEST_STATE = "test-state-value-123456";
+
   beforeEach(() => {
     originalFetch = globalThis.fetch;
   });
@@ -13,248 +15,306 @@ describe("onRequestGet - Auth Callback", () => {
     globalThis.fetch = originalFetch;
   });
 
-  it("should redirect to error if code is missing", async () => {
-    const request = new Request("http://localhost/api/auth/callback");
+  // Helper that produces a request that passes OAuth state validation:
+  // the `state` URL param matches the `oauth_state` cookie set by login.js.
+  const createBaseContext = (urlParams = "?code=test-code") => {
+    const params = new URLSearchParams(urlParams);
+    params.set("state", TEST_STATE);
+    return {
+      request: new Request(`http://localhost/api/auth/callback?${params.toString()}`, {
+        headers: new Headers({
+          Cookie: `oauth_state=${TEST_STATE}`,
+          "CF-Connecting-IP": "192.168.1.1",
+          "CF-IPCountry": "ID",
+          "User-Agent": "TestAgent/1.0",
+        }),
+      }),
+      env: {
+        GOOGLE_CLIENT_ID: "test-client-id",
+        GOOGLE_CLIENT_SECRET: "test-client-secret",
+        JWT_SECRET: "test-jwt-secret",
+      },
+    };
+  };
+
+  // OAuth state parameter validation (CSRF protection)
+  it("should reject request when state parameter is missing from the URL", async () => {
+    const request = new Request("http://localhost/api/auth/callback?code=test-code", {
+      headers: { Cookie: `oauth_state=${TEST_STATE}` },
+    });
     const context = { request, env: {} };
 
     const response = await onRequestGet(context);
+
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toContain("auth_error=No%20code%20provided");
+    expect(response.headers.get("Location")).toContain("auth_error=");
+    expect(response.headers.get("Location")).toContain("Invalid%20OAuth%20state%20parameter");
   });
 
-  it("should redirect to error if error param is present", async () => {
-    const request = new Request("http://localhost/api/auth/callback?error=access_denied&code=123");
+  it("should reject request when oauth_state cookie is missing", async () => {
+    const request = new Request(`http://localhost/api/auth/callback?code=test-code&state=${TEST_STATE}`);
     const context = { request, env: {} };
 
     const response = await onRequestGet(context);
+
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toContain("auth_error=access_denied");
+    expect(response.headers.get("Location")).toContain("Invalid%20OAuth%20state%20parameter");
+  });
+
+  it("should reject request when state does not match the oauth_state cookie (CSRF attack)", async () => {
+    const request = new Request("http://localhost/api/auth/callback?code=test-code&state=attacker-state", {
+      headers: { Cookie: `oauth_state=${TEST_STATE}` },
+    });
+    const context = { request, env: {} };
+
+    const response = await onRequestGet(context);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toContain("Invalid%20OAuth%20state%20parameter");
+  });
+
+  it("should redirect with error if error param is present", async () => {
+    const context = createBaseContext("?error=access_denied");
+    const response = await onRequestGet(context);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(
+      "http://localhost/?auth_error=access_denied",
+    );
+  });
+
+  it("should redirect with error if no code is provided", async () => {
+    const context = createBaseContext("?");
+    const response = await onRequestGet(context);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(
+      "http://localhost/?auth_error=No%20code%20provided",
+    );
   });
 
   it("should handle token exchange failure", async () => {
-    const request = new Request("http://localhost/api/auth/callback?code=123");
-    const context = { request, env: {} };
-
     globalThis.fetch = mock(async (url) => {
       if (url === "https://oauth2.googleapis.com/token") {
         return {
           ok: false,
-          json: async () => ({ error_description: "Invalid code" })
+          json: async () => ({ error_description: "Invalid code" }),
         };
       }
     });
 
+    const context = createBaseContext();
     const response = await onRequestGet(context);
+
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toContain("auth_error=Invalid%20code");
+    expect(response.headers.get("Location")).toBe(
+      "http://localhost/?auth_error=Invalid%20code",
+    );
   });
 
   it("should handle user profile fetch failure", async () => {
-    const request = new Request("http://localhost/api/auth/callback?code=123");
-    const context = { request, env: {} };
-
     globalThis.fetch = mock(async (url) => {
       if (url === "https://oauth2.googleapis.com/token") {
         return {
           ok: true,
-          json: async () => ({ access_token: "valid_token" })
+          json: async () => ({ access_token: "valid_token" }),
         };
       }
       if (url === "https://www.googleapis.com/oauth2/v2/userinfo") {
         return {
           ok: false,
-          json: async () => ({})
+          json: async () => ({}),
         };
       }
     });
 
+    const context = createBaseContext();
     const response = await onRequestGet(context);
+
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toContain("auth_error=Failed to fetch user profile");
+    expect(response.headers.get("Location")).toBe(
+      "http://localhost/?auth_error=Failed%20to%20fetch%20user%20profile",
+    );
   });
 
-  it("should succeed and set cookie without DB configured", async () => {
-    const request = new Request("http://localhost/api/auth/callback?code=123");
-    const context = {
-      request,
-      env: { JWT_SECRET: "test_secret" }
-    };
-
+  it("should succeed and set a signed JWT cookie when DB is not configured", async () => {
     globalThis.fetch = mock(async (url) => {
       if (url === "https://oauth2.googleapis.com/token") {
         return {
           ok: true,
-          json: async () => ({ access_token: "valid_token" })
+          json: async () => ({ access_token: "valid_token" }),
         };
       }
       if (url === "https://www.googleapis.com/oauth2/v2/userinfo") {
         return {
           ok: true,
-          json: async () => ({ id: "user123", email: "test@test.com", name: "Test User" })
+          json: async () => ({ id: "user123", email: "test@test.com", name: "Test User" }),
         };
       }
     });
 
+    const context = createBaseContext();
     const response = await onRequestGet(context);
+
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toContain("auth_success=1");
+    expect(response.headers.get("Location")).toBe(
+      "http://localhost/?auth_success=1",
+    );
 
     const setCookie = response.headers.get("Set-Cookie");
     expect(setCookie).toContain("auth_token=");
 
     const token = setCookie.match(/auth_token=([^;]+)/)[1];
-    const payload = await verifyJwt(token, "test_secret");
+    const payload = await verifyJwt(token, "test-jwt-secret");
     expect(payload.sub).toBe("user123");
     expect(payload.name).toBe("Test User");
   });
 
   it("should insert new user and audit log when DB is configured and user is new", async () => {
-    const request = new Request("http://localhost/api/auth/callback?code=123");
-
     let executedQueries = [];
 
     const dbMock = {
       prepare: (query) => ({
         bind: (...args) => ({
-          first: async () => {
-            if (query.includes("SELECT id, points")) return null; // User not found
-            return null;
-          },
+          first: async () => null, // Simulate new user
           run: async () => {
             executedQueries.push({ query, args });
             return { success: true };
-          }
-        })
-      })
-    };
-
-    const context = {
-      request,
-      env: { JWT_SECRET: "test_secret", DB: dbMock }
+          },
+        }),
+      }),
     };
 
     globalThis.fetch = mock(async (url) => {
       if (url === "https://oauth2.googleapis.com/token") {
         return {
           ok: true,
-          json: async () => ({ access_token: "valid_token" })
+          json: async () => ({ access_token: "valid_token" }),
         };
       }
       if (url === "https://www.googleapis.com/oauth2/v2/userinfo") {
         return {
           ok: true,
-          json: async () => ({ id: "user123", email: "test@test.com", name: "Test User" })
+          json: async () => ({ id: "user123", email: "test@test.com", name: "Test User" }),
         };
       }
     });
 
-    const response = await onRequestGet(context);
-    expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toContain("auth_success=1");
+    const context = createBaseContext();
+    context.env.DB = dbMock;
 
-    expect(executedQueries.some(q => q.query.includes("INSERT INTO users"))).toBe(true);
-    expect(executedQueries.some(q => q.query.includes("INSERT INTO point_transactions"))).toBe(true);
-    expect(executedQueries.some(q => q.query.includes("INSERT INTO auth_audit_logs"))).toBe(true);
+    const response = await onRequestGet(context);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(
+      "http://localhost/?auth_success=1",
+    );
+
+    expect(executedQueries.some((q) => q.query.includes("INSERT INTO users"))).toBe(true);
+    expect(executedQueries.some((q) => q.query.includes("INSERT INTO point_transactions"))).toBe(true);
+
+    const insertAuditCall = executedQueries.find((q) =>
+      q.query.includes("INSERT INTO auth_audit_logs"),
+    );
+    expect(insertAuditCall).toBeTruthy();
+    expect(insertAuditCall.args[2]).toBe("192.168.1.1"); // IP Address
   });
 
   it("should update existing user when DB is configured and user exists", async () => {
-    const request = new Request("http://localhost/api/auth/callback?code=123");
-
     let executedQueries = [];
 
     const dbMock = {
       prepare: (query) => ({
         bind: (...args) => ({
           first: async () => {
-            if (query.includes("SELECT id, points")) return { id: "user123", points: 100, last_point_reset: "2024-01-01" };
+            if (query.includes("SELECT id, points")) {
+              return { id: "user123", points: 100, last_point_reset: "2024-01-01" };
+            }
             return null;
           },
           run: async () => {
             executedQueries.push({ query, args });
             return { success: true };
-          }
-        })
-      })
-    };
-
-    const context = {
-      request,
-      env: { JWT_SECRET: "test_secret", DB: dbMock }
+          },
+        }),
+      }),
     };
 
     globalThis.fetch = mock(async (url) => {
       if (url === "https://oauth2.googleapis.com/token") {
         return {
           ok: true,
-          json: async () => ({ access_token: "valid_token" })
+          json: async () => ({ access_token: "valid_token" }),
         };
       }
       if (url === "https://www.googleapis.com/oauth2/v2/userinfo") {
         return {
           ok: true,
-          json: async () => ({ id: "user123", email: "test@test.com", name: "Test User" })
+          json: async () => ({ id: "user123", email: "test@test.com", name: "Test User Updated" }),
         };
       }
     });
 
-    const response = await onRequestGet(context);
-    expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toContain("auth_success=1");
+    const context = createBaseContext();
+    context.env.DB = dbMock;
 
-    expect(executedQueries.some(q => q.query.includes("UPDATE users SET"))).toBe(true);
-    expect(executedQueries.some(q => q.query.includes("INSERT INTO auth_audit_logs"))).toBe(true);
+    const response = await onRequestGet(context);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(
+      "http://localhost/?auth_success=1",
+    );
+
+    expect(executedQueries.some((q) => q.query.includes("UPDATE users SET"))).toBe(true);
+    expect(executedQueries.some((q) => q.query.includes("INSERT INTO auth_audit_logs"))).toBe(true);
   });
 
   it("should gracefully handle DB errors and still authenticate", async () => {
-    const request = new Request("http://localhost/api/auth/callback?code=123");
-
     const dbMock = {
-      prepare: (query) => {
+      prepare: () => {
         throw new Error("Simulated DB connection error");
-      }
-    };
-
-    const context = {
-      request,
-      env: { JWT_SECRET: "test_secret", DB: dbMock }
+      },
     };
 
     globalThis.fetch = mock(async (url) => {
       if (url === "https://oauth2.googleapis.com/token") {
         return {
           ok: true,
-          json: async () => ({ access_token: "valid_token" })
+          json: async () => ({ access_token: "valid_token" }),
         };
       }
       if (url === "https://www.googleapis.com/oauth2/v2/userinfo") {
         return {
           ok: true,
-          json: async () => ({ id: "user123", email: "test@test.com", name: "Test User" })
+          json: async () => ({ id: "user123", email: "test@test.com" }),
         };
       }
     });
 
-    const response = await onRequestGet(context);
-    expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toContain("auth_success=1");
+    const context = createBaseContext();
+    context.env.DB = dbMock;
 
-    const setCookie = response.headers.get("Set-Cookie");
-    expect(setCookie).toContain("auth_token=");
+    const response = await onRequestGet(context);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(
+      "http://localhost/?auth_success=1",
+    );
+    expect(response.headers.get("Set-Cookie")).toContain("auth_token=");
   });
 
   it("should catch general errors and redirect to error", async () => {
-    const request = new Request("http://localhost/api/auth/callback?code=123");
-    const context = {
-      request,
-      env: { JWT_SECRET: "test_secret" }
-    };
-
-    globalThis.fetch = mock(async (url) => {
+    globalThis.fetch = mock(async () => {
       throw new Error("Simulated fetch network error");
     });
 
+    const context = createBaseContext();
     const response = await onRequestGet(context);
+
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toContain("auth_error=Authentication%20failed");
+    expect(response.headers.get("Location")).toContain(
+      "auth_error=Authentication%20failed",
+    );
   });
 });
+
