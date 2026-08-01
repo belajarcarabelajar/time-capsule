@@ -53,11 +53,11 @@ time-capsule/
 └── turbo.json               # dev + build pipelines
 ```
 
-| Package | Name | Role |
-|---------|------|------|
-| `apps/web` | `@time-capsule/web` | App shell, state, gameplay loop, auth context, Tailwind entry |
-| `packages/game-engine` | `@time-capsule/game-engine` | `GEMINI_SYSTEM_PROMPT`, `fetchScenarioData`, `SoundEngine` |
-| `packages/ui` | `@time-capsule/ui` | Presentational components shared by the web app |
+| Package                | Name                        | Role                                                          |
+| ---------------------- | --------------------------- | ------------------------------------------------------------- |
+| `apps/web`             | `@time-capsule/web`         | App shell, state, gameplay loop, auth context, Tailwind entry |
+| `packages/game-engine` | `@time-capsule/game-engine` | `GEMINI_SYSTEM_PROMPT`, `fetchScenarioData`, `SoundEngine`    |
+| `packages/ui`          | `@time-capsule/ui`          | Presentational components shared by the web app               |
 
 ## Tech stack
 
@@ -95,14 +95,14 @@ Copy the template and fill in your values:
 cp .env.example .env
 ```
 
-| Variable | Used by | Purpose |
-|----------|---------|---------|
-| `VITE_GEMINI_API_KEY` | dev proxy, `functions/api/gemini.js` | Google Gemini API key |
-| `VITE_CF_ACCOUNT_ID` / `VITE_CF_API_TOKEN` | dev proxy (`/api/ai`) | Cloudflare Workers AI fallback in local dev |
-| `GOOGLE_CLIENT_ID` / `VITE_GOOGLE_CLIENT_ID` | auth | Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | `functions/api/auth/callback.js` | Google OAuth client secret |
-| `GOOGLE_REDIRECT_URI` | auth | OAuth callback URL |
-| `JWT_SECRET` | auth | Signs the `auth_token` session JWT |
+| Variable                                     | Used by                              | Purpose                                     |
+| -------------------------------------------- | ------------------------------------ | ------------------------------------------- |
+| `VITE_GEMINI_API_KEY`                        | dev proxy, `functions/api/gemini.js` | Google Gemini API key                       |
+| `VITE_CF_ACCOUNT_ID` / `VITE_CF_API_TOKEN`   | dev proxy (`/api/ai`)                | Cloudflare Workers AI fallback in local dev |
+| `GOOGLE_CLIENT_ID` / `VITE_GOOGLE_CLIENT_ID` | auth                                 | Google OAuth client ID                      |
+| `GOOGLE_CLIENT_SECRET`                       | `functions/api/auth/callback.js`     | Google OAuth client secret                  |
+| `GOOGLE_REDIRECT_URI`                        | auth                                 | OAuth callback URL                          |
+| `JWT_SECRET`                                 | auth                                 | Signs the `auth_token` session JWT          |
 
 > [!NOTE]
 > In **local dev**, Vite proxies `/api/gemini` and `/api/ai` directly to Google/Cloudflare (see `apps/web/vite.config.js`) — no key is bundled into the client. In **production**, the `functions/api/*` Pages Functions read the same values from the Cloudflare environment. There is no client-side `apiKey` constant.
@@ -135,12 +135,12 @@ Production output: `apps/web/dist`.
 
 Google OAuth 2.0, implemented as Cloudflare Pages Functions under `functions/api/auth/`:
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/auth/login` | GET | Redirect to Google's consent screen |
-| `/api/auth/callback` | GET | Exchange the OAuth code, upsert the user in D1, set the `auth_token` JWT cookie |
-| `/api/auth/me` | GET | Return the current user from the JWT (cookie or `Bearer` header) |
-| `/api/auth/logout` | GET/POST | Clear the session cookie |
+| Endpoint             | Method   | Purpose                                                                         |
+| -------------------- | -------- | ------------------------------------------------------------------------------- |
+| `/api/auth/login`    | GET      | Redirect to Google's consent screen                                             |
+| `/api/auth/callback` | GET      | Exchange the OAuth code, upsert the user in D1, set the `auth_token` JWT cookie |
+| `/api/auth/me`       | GET      | Return the current user from the JWT (cookie or `Bearer` header)                |
+| `/api/auth/logout`   | GET/POST | Clear the session cookie                                                        |
 
 The frontend wires this through `apps/web/src/context/AuthContext.jsx` and renders `UserBar.jsx`.
 
@@ -187,13 +187,13 @@ The script loads credentials from `/home/belajarcarabelajar/cloudflare/.env` (fa
 
 ## Scripts (root)
 
-| Script | Description |
-|--------|-------------|
-| `bun run dev` | `turbo dev` — start workspace dev tasks |
-| `bun run build` | `turbo build` — build in dependency order |
-| `bun run lint` | `turbo lint` |
-| `bun run test` | `turbo test` |
-| `bun run format` | `prettier --write "**/*.{ts,tsx,md}"` |
+| Script           | Description                               |
+| ---------------- | ----------------------------------------- |
+| `bun run dev`    | `turbo dev` — start workspace dev tasks   |
+| `bun run build`  | `turbo build` — build in dependency order |
+| `bun run lint`   | `turbo lint`                              |
+| `bun run test`   | `turbo test`                              |
+| `bun run format` | `prettier --write "**/*.{ts,tsx,md}"`     |
 
 > Deployment is **not** a package script — run `bash scripts/deploy-website.sh` directly.
 

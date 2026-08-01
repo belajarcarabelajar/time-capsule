@@ -10,7 +10,7 @@ export async function onRequestGet(context) {
   const redirectUri = env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/callback`;
   const clientId = env.GOOGLE_CLIENT_ID;
   const clientSecret = env.GOOGLE_CLIENT_SECRET;
-  const jwtSecret = env.JWT_SECRET || "time-capsule-secret-jwt-key-2026-belajarcarabelajar";
+  const jwtSecret = env.JWT_SECRET;
 
   if (error || !code) {
     return Response.redirect(`${origin}/?auth_error=${encodeURIComponent(error || "No code provided")}`, 302);
