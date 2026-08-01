@@ -103,9 +103,14 @@ export function parseCookies(request) {
 
   const cookies = {};
   cookieHeader.split(';').forEach(cookie => {
-    const [name, ...rest] = cookie.trim().split('=');
-    if (name) {
-      cookies[name] = decodeURIComponent(rest.join('='));
+    const trimmedCookie = cookie.trim();
+    if (!trimmedCookie) return;
+    const eqIdx = trimmedCookie.indexOf('=');
+    if (eqIdx === -1) {
+      cookies[trimmedCookie] = '';
+    } else if (eqIdx > 0) {
+      const name = trimmedCookie.slice(0, eqIdx);
+      cookies[name] = decodeURIComponent(trimmedCookie.slice(eqIdx + 1));
     }
   });
   return cookies;
@@ -132,7 +137,7 @@ export function createClearCookieHeader(name) {
 
 export async function getUserFromRequest(request, env) {
   if (!request) return null;
-  const jwtSecret = env?.JWT_SECRET || "time-capsule-secret-jwt-key-2026-belajarcarabelajar";
+  const jwtSecret = env?.JWT_SECRET;
   const cookies = parseCookies(request);
   let token = cookies.auth_token;
 

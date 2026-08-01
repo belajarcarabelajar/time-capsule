@@ -10,7 +10,7 @@ export async function onRequestGet(context) {
   const redirectUri = env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/callback`;
   const clientId = env.GOOGLE_CLIENT_ID;
   const clientSecret = env.GOOGLE_CLIENT_SECRET;
-  const jwtSecret = env.JWT_SECRET || "time-capsule-secret-jwt-key-2026-belajarcarabelajar";
+  const jwtSecret = env.JWT_SECRET;
 
   if (error || !code) {
     return Response.redirect(`${origin}/?auth_error=${encodeURIComponent(error || "No code provided")}`, 302);
@@ -35,7 +35,6 @@ export async function onRequestGet(context) {
     const tokenData = await tokenResponse.json();
 
     if (!tokenResponse.ok || !tokenData.access_token) {
-      console.error("Failed to exchange code for token:", tokenData);
       return Response.redirect(`${origin}/?auth_error=${encodeURIComponent(tokenData.error_description || "Token exchange failed")}`, 302);
     }
 
@@ -146,6 +145,6 @@ export async function onRequestGet(context) {
 
     return response;
   } catch (err) {
-    return Response.redirect(`${origin}/?auth_error=${encodeURIComponent(err.message)}`, 302);
+    return Response.redirect(`${origin}/?auth_error=${encodeURIComponent("Authentication failed")}`, 302);
   }
 }

@@ -228,7 +228,6 @@ const fetchScenarioData = async (activeTopic, chapterNum, historySummary = "") =
     const data = await geminiResponse.json();
     rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
   } else {
-    console.warn("Gemini API proxy failed or is not configured. Falling back to Cloudflare Workers AI...", await geminiResponse.text().catch(() => ''));
     // Fallback to Cloudflare Workers AI using Meta Llama 3.1 8B Instruct (via Pages Function proxy)
     const aiResponse = await fetch(`/api/ai`, {
       method: 'POST',
@@ -245,14 +244,11 @@ const fetchScenarioData = async (activeTopic, chapterNum, historySummary = "") =
     });
 
     if (!aiResponse.ok) {
-      const errorData = await aiResponse.json().catch(() => ({}));
-      console.error("Cloudflare Workers AI API error:", errorData);
       throw new Error("Gagal menghubungi portal Cloudflare AI.");
     }
     
     const data = await aiResponse.json();
     if (data.success === false) {
-      console.error("Cloudflare Workers AI API error:", data.errors);
       throw new Error("Gagal menghubungi portal Cloudflare AI.");
     }
     
@@ -266,7 +262,6 @@ const fetchScenarioData = async (activeTopic, chapterNum, historySummary = "") =
     // Extract strictly the JSON part
     const jsonMatch = rawText?.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-       console.error("Invalid response format:", rawText);
        throw new Error("Gagal memproses skenario cerita.");
     }
     
@@ -274,7 +269,6 @@ const fetchScenarioData = async (activeTopic, chapterNum, historySummary = "") =
     try {
       parsedData = JSON.parse(jsonString);
     } catch (err) {
-      console.warn("Standard JSON parse failed, attempting sanitization...", err);
       try {
         // Layer 1: Flatten multiline string values by escaping literal newlines, tabs, and carriage returns inside quotes
         const escapes = { '\n': '\\n', '\r': '\\r', '\t': '\\t' };
