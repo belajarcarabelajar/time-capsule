@@ -265,7 +265,6 @@ const fetchScenarioData = async (activeTopic, chapterNum, historySummary = "") =
     // Extract strictly the JSON part
     const jsonMatch = rawText?.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-       console.error("Invalid response format:", rawText);
        throw new Error("Gagal memproses skenario cerita.");
     }
     
