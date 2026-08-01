@@ -1,5 +1,7 @@
 import React from 'react';
 
+const MOOD_PARTICLES_ARRAY = Array.from({ length: 12 });
+
 const DynamicBackground = ({ scene, currentMood }) => {
   const getMoodGradient = (mood) => {
     const m = mood || '';
@@ -42,7 +44,7 @@ const DynamicBackground = ({ scene, currentMood }) => {
           {typeof el === 'string' ? el : '🏛️'}
         </div>
       ))}
-      {[...Array(12)].map((_, i) => (
+      {MOOD_PARTICLES_ARRAY.map((_, i) => (
         <div key={`mood-p-${i}`} className="absolute text-2xl md:text-4xl opacity-30 animate-rise" style={{
            left: `${Math.random() * 100}%`,
            bottom: '-50px',
