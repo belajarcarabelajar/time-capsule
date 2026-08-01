@@ -274,7 +274,6 @@ const fetchScenarioData = async (activeTopic, chapterNum, historySummary = "") =
     try {
       parsedData = JSON.parse(jsonString);
     } catch (err) {
-      console.warn("Standard JSON parse failed, attempting sanitization...", err);
       try {
         // Layer 1: Flatten multiline string values by escaping literal newlines, tabs, and carriage returns inside quotes
         const escapes = { '\n': '\\n', '\r': '\\r', '\t': '\\t' };
