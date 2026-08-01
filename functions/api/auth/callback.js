@@ -146,7 +146,6 @@ export async function onRequestGet(context) {
 
     return response;
   } catch (err) {
-    console.error("Auth callback exception:", err);
     return Response.redirect(`${origin}/?auth_error=${encodeURIComponent(err.message)}`, 302);
   }
 }
