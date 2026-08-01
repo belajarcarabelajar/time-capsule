@@ -35,7 +35,6 @@ export async function onRequestGet(context) {
     const tokenData = await tokenResponse.json();
 
     if (!tokenResponse.ok || !tokenData.access_token) {
-      console.error("Failed to exchange code for token:", tokenData);
       return Response.redirect(`${origin}/?auth_error=${encodeURIComponent(tokenData.error_description || "Token exchange failed")}`, 302);
     }
 
