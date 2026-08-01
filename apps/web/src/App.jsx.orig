@@ -15,6 +15,7 @@ export default function App() {
     handleCopyError,
     gameData,
     idx,
+    currentScript,
     isTyping,
     setIsTyping,
     quizMode,
