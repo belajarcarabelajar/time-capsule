@@ -228,7 +228,6 @@ const fetchScenarioData = async (activeTopic, chapterNum, historySummary = "") =
     const data = await geminiResponse.json();
     rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
   } else {
-    console.warn("Gemini API proxy failed or is not configured. Falling back to Cloudflare Workers AI...", await geminiResponse.text().catch(() => ''));
     // Fallback to Cloudflare Workers AI using Meta Llama 3.1 8B Instruct (via Pages Function proxy)
     const aiResponse = await fetch(`/api/ai`, {
       method: 'POST',
