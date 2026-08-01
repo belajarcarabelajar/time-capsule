@@ -103,9 +103,14 @@ export function parseCookies(request) {
 
   const cookies = {};
   cookieHeader.split(';').forEach(cookie => {
-    const [name, ...rest] = cookie.trim().split('=');
-    if (name) {
-      cookies[name] = decodeURIComponent(rest.join('='));
+    const trimmedCookie = cookie.trim();
+    if (!trimmedCookie) return;
+    const eqIdx = trimmedCookie.indexOf('=');
+    if (eqIdx === -1) {
+      cookies[trimmedCookie] = '';
+    } else if (eqIdx > 0) {
+      const name = trimmedCookie.slice(0, eqIdx);
+      cookies[name] = decodeURIComponent(trimmedCookie.slice(eqIdx + 1));
     }
   });
   return cookies;
