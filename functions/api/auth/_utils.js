@@ -132,7 +132,10 @@ export function createClearCookieHeader(name) {
 
 export async function getUserFromRequest(request, env) {
   if (!request) return null;
-  const jwtSecret = env?.JWT_SECRET || "time-capsule-secret-jwt-key-2026-belajarcarabelajar";
+  const jwtSecret = env?.JWT_SECRET;
+  if (!jwtSecret) {
+    throw new Error("Server misconfiguration: JWT_SECRET is not set.");
+  }
   const cookies = parseCookies(request);
   let token = cookies.auth_token;
 

@@ -2,7 +2,15 @@ import { parseCookies, verifyJwt } from "./_utils.js";
 
 export async function onRequestGet(context) {
   const { request, env } = context;
-  const jwtSecret = env.JWT_SECRET || "time-capsule-secret-jwt-key-2026-belajarcarabelajar";
+  const jwtSecret = env.JWT_SECRET;
+
+  if (!jwtSecret) {
+    console.error("Server misconfiguration: JWT_SECRET is not set.");
+    return new Response(JSON.stringify({ error: "Server misconfiguration" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
 
   // Check cookie or Bearer header
   const cookies = parseCookies(request);
