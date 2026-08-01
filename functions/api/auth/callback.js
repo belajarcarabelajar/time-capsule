@@ -126,7 +126,7 @@ export async function onRequestGet(context) {
           VALUES (?, ?, ?, ?, ?)
         `).bind(userId, email, ipAddress, country, userAgent).run();
       } catch (dbErr) {
-        console.error("D1 database sync error during auth callback:", dbErr);
+        // Silently ignore database sync error to not block authentication
       }
     }
 
