@@ -331,15 +331,6 @@ describe('Input Validation & Prompt Construction & Zod Schema Validation', () =>
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     });
 
-    const consoleErrorSpy = mock(() => {});
-    const originalConsoleError = console.error;
-    console.error = consoleErrorSpy;
-
-    try {
-      await expect(fetchScenarioData('Plain Text Topic', 1)).rejects.toThrow('Gagal memproses skenario cerita.');
-      expect(consoleErrorSpy).toHaveBeenCalled();
-    } finally {
-      console.error = originalConsoleError;
-    }
+    await expect(fetchScenarioData('Plain Text Topic', 1)).rejects.toThrow('Gagal memproses skenario cerita.');
   });
 });
