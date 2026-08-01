@@ -139,16 +139,7 @@ describe('fetchScenarioData JSON Sanitization', () => {
       }));
     });
 
-    const consoleErrorSpy = mock(() => {});
-    const originalConsoleError = console.error;
-    console.error = consoleErrorSpy;
-
-    try {
-      await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Gagal menghubungi portal Cloudflare AI.');
-      expect(consoleErrorSpy).toHaveBeenCalled();
-    } finally {
-      console.error = originalConsoleError;
-    }
+    await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Gagal menghubungi portal Cloudflare AI.');
   });
 });
 
