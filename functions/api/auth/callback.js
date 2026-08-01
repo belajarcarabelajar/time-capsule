@@ -1,4 +1,4 @@
-import { signJwt, createCookieHeader } from "./_utils.js";
+import { signJwt, createCookieHeader, parseCookies, createClearCookieHeader } from "./_utils.js";
 
 async function exchangeAuthorizationCode(code, clientId, clientSecret, redirectUri) {
   const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
@@ -101,6 +101,7 @@ export async function onRequestGet(context) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const error = requestUrl.searchParams.get("error");
+  const state = requestUrl.searchParams.get("state");
 
   const origin = requestUrl.origin;
   const redirectUri = env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/callback`;
@@ -108,21 +109,36 @@ export async function onRequestGet(context) {
   const clientSecret = env.GOOGLE_CLIENT_SECRET;
   const jwtSecret = env.JWT_SECRET;
 
+  const redirectWithError = (errorMessage) => {
+    const headers = new Headers();
+    headers.set("Location", `${origin}/?auth_error=${encodeURIComponent(errorMessage)}`);
+    headers.append("Set-Cookie", createClearCookieHeader("oauth_state"));
+    return new Response(null, { status: 302, headers });
+  };
+
+  // Verify the OAuth state parameter against the stored cookie to prevent CSRF attacks
+  const cookies = parseCookies(request);
+  const storedState = cookies.oauth_state;
+
+  if (!state || !storedState || state !== storedState) {
+    return redirectWithError("Invalid OAuth state parameter. Request rejected for security.");
+  }
+
   if (error || !code) {
-    return Response.redirect(`${origin}/?auth_error=${encodeURIComponent(error || "No code provided")}`, 302);
+    return redirectWithError(error || "No code provided");
   }
 
   try {
     // 1. Exchange authorization code for tokens
     const tokenResult = await exchangeAuthorizationCode(code, clientId, clientSecret, redirectUri);
-    if (!tokenResult.ok || !tokenResult.data.access_token) {
-      return Response.redirect(`${origin}/?auth_error=${encodeURIComponent(tokenResult.data.error_description || "Token exchange failed")}`, 302);
+    if (!tokenResult.ok || !tokenResult.data?.access_token) {
+      return redirectWithError(tokenResult.data?.error_description || "Token exchange failed");
     }
 
     // 2. Fetch Google User Profile
     const userResult = await fetchGoogleUserProfile(tokenResult.data.access_token);
-    if (!userResult.ok || !userResult.data.id) {
-      return Response.redirect(`${origin}/?auth_error=Failed to fetch user profile`, 302);
+    if (!userResult.ok || !userResult.data?.id) {
+      return redirectWithError("Failed to fetch user profile");
     }
 
     const userData = userResult.data;
@@ -146,19 +162,17 @@ export async function onRequestGet(context) {
     // 5. Generate JWT session token
     const token = await signJwt(userPayload, jwtSecret);
 
-    // 6. Set session cookie and redirect home
-    const cookieHeader = createCookieHeader("auth_token", token);
+    // 6. Set session cookie, clear oauth_state cookie, and redirect home
+    const headers = new Headers();
+    headers.set("Location", `${origin}/?auth_success=1`);
+    headers.append("Set-Cookie", createCookieHeader("auth_token", token));
+    headers.append("Set-Cookie", createClearCookieHeader("oauth_state"));
 
-    const response = new Response(null, {
+    return new Response(null, {
       status: 302,
-      headers: {
-        Location: `${origin}/?auth_success=1`,
-        "Set-Cookie": cookieHeader,
-      },
+      headers,
     });
-
-    return response;
   } catch (err) {
-    return Response.redirect(`${origin}/?auth_error=${encodeURIComponent("Authentication failed")}`, 302);
+    return redirectWithError("Authentication failed");
   }
 }
