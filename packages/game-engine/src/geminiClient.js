@@ -252,7 +252,6 @@ const fetchScenarioData = async (activeTopic, chapterNum, historySummary = "") =
     
     const data = await aiResponse.json();
     if (data.success === false) {
-      console.error("Cloudflare Workers AI API error:", data.errors);
       throw new Error("Gagal menghubungi portal Cloudflare AI.");
     }
     
