@@ -20,7 +20,9 @@ export const generateHistorySummary = (pastChaptersData) => {
           quizArr.push(`- "${item.text}"`);
           hasQuiz = true;
         } else if (item.type === 'dialogue' && dialogueCount < 3) {
-          dialogueArr.push(`- ${item.speakerId}: ${item.text.slice(0, 60)}...`);
+          const speaker = item.speakerId || 'Unknown';
+          const text = item.text || '';
+          dialogueArr.push(`- ${speaker}: ${text.slice(0, 60)}...`);
           dialogueCount++;
         }
       }

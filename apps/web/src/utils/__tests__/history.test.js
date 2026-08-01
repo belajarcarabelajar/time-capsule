@@ -104,4 +104,49 @@ describe('generateHistorySummary', () => {
     expect(result).toContain('Lokasi: Museum');
     expect(result).toContain('- Guide: Welcome to the museum....');
   });
+
+  it('should handle empty objects gracefully', () => {
+    const pastChaptersData = [{}];
+    const result = generateHistorySummary(pastChaptersData);
+    expect(result).toContain('--- RINGKASAN BAGIAN 1 ---');
+    expect(result).not.toContain('Lokasi:');
+    expect(result).not.toContain('Kuis yang sudah ditanyakan:');
+    expect(result).not.toContain('Dialog/Narasi singkat:');
+  });
+
+  it('should handle missing properties on dialogue items gracefully', () => {
+    const pastChaptersData = [
+      {
+        script: [
+          { type: 'dialogue' }, // Missing text and speakerId
+          { type: 'dialogue', speakerId: 'Alice', text: null },
+          { type: 'dialogue', speakerId: 'Bob' },
+        ],
+      },
+    ];
+    const result = generateHistorySummary(pastChaptersData);
+    expect(result).toContain('Dialog/Narasi singkat:');
+  });
+
+  it('should ignore unknown script item types', () => {
+    const pastChaptersData = [
+      {
+        script: [
+          { type: 'unknown_type', text: 'Should be ignored' },
+          { type: 'dialogue', speakerId: 'Alice', text: 'Valid dialogue' },
+        ],
+      },
+    ];
+    const result = generateHistorySummary(pastChaptersData);
+    expect(result).not.toContain('Should be ignored');
+    expect(result).toContain('- Alice: Valid dialogue...');
+  });
+
+  it('should handle empty script array', () => {
+    const pastChaptersData = [{ script: [] }];
+    const result = generateHistorySummary(pastChaptersData);
+    expect(result).toContain('--- RINGKASAN BAGIAN 1 ---');
+    expect(result).not.toContain('Kuis yang sudah ditanyakan:');
+    expect(result).not.toContain('Dialog/Narasi singkat:');
+  });
 });
