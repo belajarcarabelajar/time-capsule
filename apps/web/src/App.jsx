@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { SoundEngine, fetchScenarioData } from '@time-capsule/game-engine';
-import StartScreen from './components/StartScreen';
-import GameplayScreen from './components/GameplayScreen';
-import { generateHistorySummary } from './utils/history';
+import React, { useState, useEffect, useCallback } from "react";
+import { SoundEngine, fetchScenarioData } from "@time-capsule/game-engine";
+import StartScreen from "./components/StartScreen";
+import GameplayScreen from "./components/GameplayScreen";
+import { generateHistorySummary } from "./utils/history";
 
 export default function App() {
   const [inputMode, setInputMode] = useState(true);
-  const [topic, setTopic] = useState('');
+  const [topic, setTopic] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null); // New state for errors
   const [errorDetail, setErrorDetail] = useState(null); // Detailed logs for user copying
@@ -26,7 +26,7 @@ ${errorDetail.stack || "N/A"}
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-  
+
   const [historyList, setHistoryList] = useState([]); // List of gameData for previous chapters
 
   const [gameData, setGameData] = useState(null);
@@ -56,18 +56,17 @@ ${errorDetail.stack || "N/A"}
       const data = await fetchScenarioData(topic, 1, "");
       setGameData(data);
       setChapterCount(1);
-      
+
       setInputMode(false);
-      setShowContinuePrompt(false); 
+      setShowContinuePrompt(false);
       setIdx(0);
       setIsTyping(true);
       setFeedback(null);
       setQuizMode(false);
-      
-      // Clear old preloaded data to avoid stale content
-      setNextGameData(null); 
-      preloadNextChapter(topic, 2, [data]);
 
+      // Clear old preloaded data to avoid stale content
+      setNextGameData(null);
+      preloadNextChapter(topic, 2, [data]);
     } catch (err) {
       console.error(err);
       setErrorMsg("Gagal membuka portal. Coba lagi.");
@@ -76,22 +75,30 @@ ${errorDetail.stack || "N/A"}
         stack: err.stack,
         time: new Date().toISOString(),
         topic: topic,
-        chapter: 1
+        chapter: 1,
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const preloadNextChapter = async (activeTopic, nextChapterNum, currentHistory = []) => {
+  const preloadNextChapter = async (
+    activeTopic,
+    nextChapterNum,
+    currentHistory = [],
+  ) => {
     if (isPreloading) return;
     setIsPreloading(true);
     try {
       const historySummary = generateHistorySummary(currentHistory);
-      const data = await fetchScenarioData(activeTopic, nextChapterNum, historySummary);
+      const data = await fetchScenarioData(
+        activeTopic,
+        nextChapterNum,
+        historySummary,
+      );
       setNextGameData(data);
     } catch (e) {
-      console.error("[SMART PRELOAD] Gagal:", e);
+      // Preload failures are silently ignored
     } finally {
       setIsPreloading(false);
     }
@@ -108,29 +115,39 @@ ${errorDetail.stack || "N/A"}
       setGameData(nextGameData);
       setNextGameData(null);
       setChapterCount(nextChapterNum);
-      
+
       setShowContinuePrompt(false);
       setIdx(0);
       setIsTyping(true);
       setFeedback(null);
       setQuizMode(false);
 
-      preloadNextChapter(topic, nextChapterNum + 1, [...updatedHistory, nextGameData]);
+      preloadNextChapter(topic, nextChapterNum + 1, [
+        ...updatedHistory,
+        nextGameData,
+      ]);
     } else {
       setIsLoading(true);
       try {
         const historySummary = generateHistorySummary(updatedHistory);
-        const data = await fetchScenarioData(topic, nextChapterNum, historySummary);
+        const data = await fetchScenarioData(
+          topic,
+          nextChapterNum,
+          historySummary,
+        );
         setGameData(data);
         setChapterCount(nextChapterNum);
-        
+
         setShowContinuePrompt(false);
         setIdx(0);
         setIsTyping(true);
         setFeedback(null);
         setQuizMode(false);
 
-        preloadNextChapter(topic, nextChapterNum + 1, [...updatedHistory, data]);
+        preloadNextChapter(topic, nextChapterNum + 1, [
+          ...updatedHistory,
+          data,
+        ]);
       } catch (err) {
         console.error(err);
         setErrorMsg("Koneksi terputus. Mohon coba lagi.");
@@ -139,7 +156,7 @@ ${errorDetail.stack || "N/A"}
           stack: err.stack,
           time: new Date().toISOString(),
           topic: topic,
-          chapter: nextChapterNum
+          chapter: nextChapterNum,
         });
       } finally {
         setIsLoading(false);
@@ -151,7 +168,10 @@ ${errorDetail.stack || "N/A"}
 
   const handleNext = useCallback(() => {
     if (isLoading || inputMode || showContinuePrompt) return;
-    if (isTyping) { setIsTyping(false); return; }
+    if (isTyping) {
+      setIsTyping(false);
+      return;
+    }
 
     SoundEngine.playClick();
 
@@ -162,34 +182,45 @@ ${errorDetail.stack || "N/A"}
 
     if (feedback) {
       setFeedback(null);
-      setIdx(prev => prev + 1);
+      setIdx((prev) => prev + 1);
       setIsTyping(true);
       return;
     }
 
     // Jika skrip saat ini adalah kuis, aktifkan mode kuis (popup akan muncul)
-    if (currentScript?.type === 'quiz' && !quizMode) {
+    if (currentScript?.type === "quiz" && !quizMode) {
       setQuizMode(true);
       return;
     }
 
     if (!quizMode) {
-      setIdx(prev => prev + 1);
+      setIdx((prev) => prev + 1);
       setIsTyping(true);
-    } 
-  }, [isLoading, inputMode, isTyping, feedback, currentScript, quizMode, idx, gameData, showContinuePrompt]);
+    }
+  }, [
+    isLoading,
+    inputMode,
+    isTyping,
+    feedback,
+    currentScript,
+    quizMode,
+    idx,
+    gameData,
+    showContinuePrompt,
+  ]);
 
   const handleAnswer = (choice) => {
     setQuizMode(false);
     choice.correct ? SoundEngine.playCorrect() : SoundEngine.playWrong();
-    
+
     // Feedback akan ditangani oleh render DialogueBox di bawah.
     // speakerId akan tetap mengacu pada currentScript.speakerId (NPC),
     // sehingga box yang muncul adalah box NPC.
     setFeedback({
-      text: choice.response || (choice.correct ? "Tepat sekali!" : "Kurang tepat."),
-      mood: choice.correct ? '🎉' : '🤔',
-      correct: choice.correct
+      text:
+        choice.response || (choice.correct ? "Tepat sekali!" : "Kurang tepat."),
+      mood: choice.correct ? "🎉" : "🤔",
+      correct: choice.correct,
     });
     setIsTyping(true);
   };
@@ -199,13 +230,13 @@ ${errorDetail.stack || "N/A"}
     setShowContinuePrompt(false);
     SoundEngine.playWarp();
     setTimeout(() => {
-       setIsWarpingHome(false);
-       setInputMode(true);
-       setTopic('');
-       setChapterCount(1);
-       setNextGameData(null);
-       setErrorMsg(null);
-       setHistoryList([]); // Reset history on exit
+      setIsWarpingHome(false);
+      setInputMode(true);
+      setTopic("");
+      setChapterCount(1);
+      setNextGameData(null);
+      setErrorMsg(null);
+      setHistoryList([]); // Reset history on exit
     }, 2500);
   };
 
@@ -213,13 +244,13 @@ ${errorDetail.stack || "N/A"}
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Pastikan hanya mendeteksi Enter saat tidak dalam mode input awal
-      if (e.key === 'Enter' && !inputMode) {
+      if (e.key === "Enter" && !inputMode) {
         handleNext();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleNext, inputMode]);
 
   // --- RENDER INPUT ---
