@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { onRequestPost } from "./ai.js";
+import { signJwt } from "./auth/_utils.js";
 
 describe("onRequestPost - Credentials Validation", () => {
   it("should return 500 error when env is completely empty", async () => {
@@ -67,9 +68,11 @@ describe("onRequestPost - Credentials Validation", () => {
 
 describe("onRequestPost - Error Handling", () => {
   let originalFetch;
+  let validToken;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     originalFetch = globalThis.fetch;
+    validToken = await signJwt({ sub: "test-user" }, "time-capsule-secret-jwt-key-2026-belajarcarabelajar");
   });
 
   afterEach(() => {
@@ -77,9 +80,14 @@ describe("onRequestPost - Error Handling", () => {
   });
 
   it("should return 500 when request body contains invalid JSON", async () => {
+    const headers = new Map();
+    headers.set("Authorization", `Bearer ${validToken}`);
     const context = {
       request: {
-        json: async () => { throw new Error("Invalid JSON"); }
+        json: async () => { throw new Error("Invalid JSON"); },
+        headers: {
+          get: (key) => headers.get(key)
+        }
       },
       env: {
         VITE_CF_API_TOKEN: "valid-token",
@@ -96,9 +104,14 @@ describe("onRequestPost - Error Handling", () => {
   });
 
   it("should return 500 when fetch throws an error", async () => {
+    const headers = new Map();
+    headers.set("Authorization", `Bearer ${validToken}`);
     const context = {
       request: {
-        json: async () => ({ messages: [], response_format: {} })
+        json: async () => ({ messages: [], response_format: {} }),
+        headers: {
+          get: (key) => headers.get(key)
+        }
       },
       env: {
         VITE_CF_API_TOKEN: "valid-token",
@@ -119,9 +132,14 @@ describe("onRequestPost - Error Handling", () => {
   });
 
   it("should return 500 when response.json() throws an error", async () => {
+    const headers = new Map();
+    headers.set("Authorization", `Bearer ${validToken}`);
     const context = {
       request: {
-        json: async () => ({ messages: [], response_format: {} })
+        json: async () => ({ messages: [], response_format: {} }),
+        headers: {
+          get: (key) => headers.get(key)
+        }
       },
       env: {
         VITE_CF_API_TOKEN: "valid-token",
