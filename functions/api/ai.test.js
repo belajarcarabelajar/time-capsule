@@ -91,7 +91,8 @@ describe("onRequestPost - Error Handling", () => {
       },
       env: {
         VITE_CF_API_TOKEN: "valid-token",
-        VITE_CF_ACCOUNT_ID: "valid-account"
+        VITE_CF_ACCOUNT_ID: "valid-account",
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar"
       }
     };
 
@@ -115,7 +116,8 @@ describe("onRequestPost - Error Handling", () => {
       },
       env: {
         VITE_CF_API_TOKEN: "valid-token",
-        VITE_CF_ACCOUNT_ID: "valid-account"
+        VITE_CF_ACCOUNT_ID: "valid-account",
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar"
       }
     };
 
@@ -143,7 +145,8 @@ describe("onRequestPost - Error Handling", () => {
       },
       env: {
         VITE_CF_API_TOKEN: "valid-token",
-        VITE_CF_ACCOUNT_ID: "valid-account"
+        VITE_CF_ACCOUNT_ID: "valid-account",
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar"
       }
     };
 

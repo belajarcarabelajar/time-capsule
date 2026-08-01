@@ -130,13 +130,37 @@ describe('fetchScenarioData JSON Sanitization', () => {
     await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Gagal memproses skenario cerita.');
   });
 
-  it('should throw an error if Cloudflare AI API returns success: false', async () => {
+  it('should throw detailed error message if Cloudflare AI API returns success: false with errors array', async () => {
     global.fetch = mock(async (url) => {
       if (url === '/api/gemini') return new Response('', { status: 500 });
       return new Response(JSON.stringify({
         success: false,
         errors: [{ message: 'Something went wrong with Cloudflare AI' }]
       }));
+    });
+
+    await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Something went wrong with Cloudflare AI');
+  });
+
+  it('should throw exact error message when Gemini API returns 403 (e.g., INSUFFICIENT_POINTS)', async () => {
+    global.fetch = mock(async (url) => {
+      if (url === '/api/gemini') {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'INSUFFICIENT_POINTS',
+          message: 'Poin Anda tidak mencukupi (0 poin). Diperlukan 10 poin.'
+        }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+      }
+      return new Response('', { status: 500 });
+    });
+
+    await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Poin Anda tidak mencukupi (0 poin). Diperlukan 10 poin.');
+  });
+
+  it('should throw fallback error message if Cloudflare AI returns non-ok without JSON error message', async () => {
+    global.fetch = mock(async (url) => {
+      if (url === '/api/gemini') return new Response('', { status: 500 });
+      return new Response('Internal Server Error', { status: 500 });
     });
 
     await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Gagal menghubungi portal Cloudflare AI.');

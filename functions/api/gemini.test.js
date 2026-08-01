@@ -98,12 +98,20 @@ describe("onRequestPost - Fetching and Response", () => {
   });
 
   it("should return 500 when fetch throws an error", async () => {
+    const token = await signJwt({ sub: "user-123" }, "test-secret");
+    const headers = new Map();
+    headers.set("authorization", `Bearer ${token}`);
+
     const context = {
       request: {
-        json: async () => ({ contents: [], systemInstruction: {}, generationConfig: {} })
+        json: async () => ({ contents: [], systemInstruction: {}, generationConfig: {} }),
+        headers: {
+          get: (key) => headers.get(key.toLowerCase())
+        }
       },
       env: {
-        GEMINI_API_KEY: "test-key"
+        GEMINI_API_KEY: "test-key",
+        JWT_SECRET: "test-secret"
       }
     };
 

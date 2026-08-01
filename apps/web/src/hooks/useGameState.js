@@ -1,11 +1,14 @@
 import { useState, useCallback, useEffect } from 'react';
 import { SoundEngine, fetchScenarioData } from '@time-capsule/game-engine';
 import { generateHistorySummary } from '../utils/history';
+import { useAuth } from '../context/AuthContext';
 
 export function useGameState() {
+  const { user } = useAuth();
   const [inputMode, setInputMode] = useState(true);
   const [topic, setTopic] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null); // New state for errors
   const [errorDetail, setErrorDetail] = useState(null); // Detailed logs for user copying
   const [copied, setCopied] = useState(false);
@@ -41,7 +44,7 @@ ${errorDetail.stack || "N/A"}
   const [isPreloading, setIsPreloading] = useState(false);
 
   const preloadNextChapter = async (activeTopic, nextChapterNum, currentHistory = []) => {
-    if (isPreloading) return;
+    if (isPreloading || !user) return;
     setIsPreloading(true);
     try {
       const historySummary = generateHistorySummary(currentHistory);
@@ -55,8 +58,13 @@ ${errorDetail.stack || "N/A"}
   };
 
   const handleStartAdventure = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!topic.trim()) return;
+
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
 
     setIsLoading(true);
     SoundEngine.init();
@@ -81,20 +89,30 @@ ${errorDetail.stack || "N/A"}
       preloadNextChapter(topic, 2, [data]);
 
     } catch (err) {
-      setErrorMsg("Gagal membuka portal. Coba lagi.");
-      setErrorDetail({
-        message: err.message,
-        stack: err.stack,
-        time: new Date().toISOString(),
-        topic: topic,
-        chapter: 1
-      });
+      const isAuthErr = err.message?.includes("Authentication required") || err.message?.includes("UNAUTHORIZED");
+      if (isAuthErr) {
+        setShowAuthModal(true);
+      } else {
+        setErrorMsg("Gagal membuka portal. Coba lagi.");
+        setErrorDetail({
+          message: err.message,
+          stack: err.stack,
+          time: new Date().toISOString(),
+          topic: topic,
+          chapter: 1
+        });
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleContinue = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
     const nextChapterNum = chapterCount + 1;
     setErrorMsg(null);
 
@@ -129,14 +147,19 @@ ${errorDetail.stack || "N/A"}
 
         preloadNextChapter(topic, nextChapterNum + 1, [...updatedHistory, data]);
       } catch (err) {
-        setErrorMsg("Koneksi terputus. Mohon coba lagi.");
-        setErrorDetail({
-          message: err.message,
-          stack: err.stack,
-          time: new Date().toISOString(),
-          topic: topic,
-          chapter: nextChapterNum
-        });
+        const isAuthErr = err.message?.includes("Authentication required") || err.message?.includes("UNAUTHORIZED");
+        if (isAuthErr) {
+          setShowAuthModal(true);
+        } else {
+          setErrorMsg("Koneksi terputus. Mohon coba lagi.");
+          setErrorDetail({
+            message: err.message,
+            stack: err.stack,
+            time: new Date().toISOString(),
+            topic: topic,
+            chapter: nextChapterNum
+          });
+        }
       } finally {
         setIsLoading(false);
       }
@@ -223,6 +246,8 @@ ${errorDetail.stack || "N/A"}
     topic,
     setTopic,
     isLoading,
+    showAuthModal,
+    setShowAuthModal,
     errorMsg,
     errorDetail,
     copied,

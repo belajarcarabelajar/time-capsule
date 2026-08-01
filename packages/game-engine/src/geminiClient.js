@@ -228,6 +228,17 @@ const fetchScenarioData = async (activeTopic, chapterNum, historySummary = "") =
     const data = await geminiResponse.json();
     rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
   } else {
+    // If Gemini returned a 401 (UNAUTHORIZED) or 403 (INSUFFICIENT_POINTS), propagate the exact error message directly
+    if (geminiResponse.status === 401 || geminiResponse.status === 403) {
+      let gData;
+      try {
+        gData = await geminiResponse.json();
+      } catch (e) {}
+      if (gData?.message || gData?.error) {
+        throw new Error(gData.message || gData.error);
+      }
+    }
+
     // Fallback to Cloudflare Workers AI using Meta Llama 3.1 8B Instruct (via Pages Function proxy)
     const aiResponse = await fetch(`/api/ai`, {
       method: 'POST',
@@ -243,15 +254,16 @@ const fetchScenarioData = async (activeTopic, chapterNum, historySummary = "") =
       })
     });
 
-    if (!aiResponse.ok) {
-      throw new Error("Gagal menghubungi portal Cloudflare AI.");
+    let data;
+    try {
+      data = await aiResponse.json();
+    } catch (e) {}
+
+    if (!aiResponse.ok || data?.success === false) {
+      const errorMessage = data?.message || data?.errors?.[0]?.message || data?.error || "Gagal menghubungi portal Cloudflare AI.";
+      throw new Error(errorMessage);
     }
-    
-    const data = await aiResponse.json();
-    if (data.success === false) {
-      throw new Error("Gagal menghubungi portal Cloudflare AI.");
-    }
-    
+
     rawText = data.result?.choices?.[0]?.message?.content || data.result?.response;
   }
 
