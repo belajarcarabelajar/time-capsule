@@ -19,6 +19,18 @@ export async function onRequestPost(context) {
 
   // 1. Authenticate user & check D1 point balance
   const authUser = await getUserFromRequest(request, env);
+
+  if (!authUser) {
+    return new Response(JSON.stringify({
+      success: false,
+      error: "UNAUTHORIZED",
+      message: "Authentication required"
+    }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+
   const cost = 10;
   let currentPoints = 50;
   const todayStr = new Date().toISOString().split("T")[0];

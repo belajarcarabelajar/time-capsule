@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { onRequestPost } from "./ai.js";
+import { signJwt } from "./auth/_utils.js";
 
 describe("onRequestPost - Credentials Validation", () => {
   it("should return 500 error when env is completely empty", async () => {
@@ -67,23 +68,48 @@ describe("onRequestPost - Credentials Validation", () => {
 
 describe("onRequestPost - Error Handling", () => {
   let originalFetch;
+  let validToken;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     originalFetch = globalThis.fetch;
+    validToken = await signJwt({ sub: "testuser" }, "time-capsule-secret-jwt-key-2026-belajarcarabelajar");
   });
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
   });
 
-  it("should return 500 when request body contains invalid JSON", async () => {
+  it("should return 401 when user is not authenticated", async () => {
     const context = {
       request: {
-        json: async () => { throw new Error("Invalid JSON"); }
+        json: async () => ({ messages: [], response_format: {} }),
+        headers: new Headers()
       },
       env: {
         VITE_CF_API_TOKEN: "valid-token",
-        VITE_CF_ACCOUNT_ID: "valid-account"
+        VITE_CF_ACCOUNT_ID: "valid-account",
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar"
+      }
+    };
+
+    const response = await onRequestPost(context);
+    expect(response.status).toBe(401);
+
+    const body = await response.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe("UNAUTHORIZED");
+  });
+
+  it("should return 500 when request body contains invalid JSON", async () => {
+    const context = {
+      request: {
+        json: async () => { throw new Error("Invalid JSON"); },
+        headers: new Headers({ "Cookie": `auth_token=${validToken}` })
+      },
+      env: {
+        VITE_CF_API_TOKEN: "valid-token",
+        VITE_CF_ACCOUNT_ID: "valid-account",
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar"
       }
     };
 
@@ -98,11 +124,13 @@ describe("onRequestPost - Error Handling", () => {
   it("should return 500 when fetch throws an error", async () => {
     const context = {
       request: {
-        json: async () => ({ messages: [], response_format: {} })
+        json: async () => ({ messages: [], response_format: {} }),
+        headers: new Headers({ "Cookie": `auth_token=${validToken}` })
       },
       env: {
         VITE_CF_API_TOKEN: "valid-token",
-        VITE_CF_ACCOUNT_ID: "valid-account"
+        VITE_CF_ACCOUNT_ID: "valid-account",
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar"
       }
     };
 
@@ -121,11 +149,13 @@ describe("onRequestPost - Error Handling", () => {
   it("should return 500 when response.json() throws an error", async () => {
     const context = {
       request: {
-        json: async () => ({ messages: [], response_format: {} })
+        json: async () => ({ messages: [], response_format: {} }),
+        headers: new Headers({ "Cookie": `auth_token=${validToken}` })
       },
       env: {
         VITE_CF_API_TOKEN: "valid-token",
-        VITE_CF_ACCOUNT_ID: "valid-account"
+        VITE_CF_ACCOUNT_ID: "valid-account",
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar"
       }
     };
 
