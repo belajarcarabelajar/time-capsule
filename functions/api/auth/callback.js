@@ -1,6 +1,16 @@
-import { signJwt, createCookieHeader, parseCookies, createClearCookieHeader } from "./_utils.js";
+import {
+  signJwt,
+  createCookieHeader,
+  parseCookies,
+  createClearCookieHeader,
+} from "./_utils.js";
 
-async function exchangeAuthorizationCode(code, clientId, clientSecret, redirectUri) {
+async function exchangeAuthorizationCode(
+  code,
+  clientId,
+  clientSecret,
+  redirectUri,
+) {
   const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: {
@@ -20,11 +30,14 @@ async function exchangeAuthorizationCode(code, clientId, clientSecret, redirectU
 }
 
 async function fetchGoogleUserProfile(accessToken) {
-  const userResponse = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
+  const userResponse = await fetch(
+    "https://www.googleapis.com/oauth2/v2/userinfo",
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
     },
-  });
+  );
 
   const data = await userResponse.json();
   return { ok: userResponse.ok, data };
@@ -47,26 +60,49 @@ async function syncUserProfileToDatabase(env, request, userData, userPayload) {
 
     // Check if user already exists
     const existingUser = await env.DB.prepare(
-      "SELECT id, points, last_point_reset FROM users WHERE google_id = ?"
-    ).bind(googleId).first();
+      "SELECT id, points, last_point_reset FROM users WHERE google_id = ?",
+    )
+      .bind(googleId)
+      .first();
 
     let userId = googleId;
 
     if (!existingUser) {
       // Insert new user with 50 initial welcome points
-      await env.DB.prepare(`
+      await env.DB.prepare(
+        `
         INSERT INTO users (id, google_id, email, email_verified, name, given_name, family_name, picture, locale, hd, points, max_points, last_point_reset)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 50, 50, ?)
-      `).bind(googleId, googleId, email, verifiedEmail, name, givenName, familyName, picture, locale, hd, todayStr).run();
+      `,
+      )
+        .bind(
+          googleId,
+          googleId,
+          email,
+          verifiedEmail,
+          name,
+          givenName,
+          familyName,
+          picture,
+          locale,
+          hd,
+          todayStr,
+        )
+        .run();
 
       // Log welcome bonus transaction (+50)
-      await env.DB.prepare(`
+      await env.DB.prepare(
+        `
         INSERT INTO point_transactions (user_id, amount, balance_after, type, description)
         VALUES (?, 50, 50, 'WELCOME_BONUS', 'Bonus pendaftaran awal 50 poin')
-      `).bind(googleId).run();
+      `,
+      )
+        .bind(googleId)
+        .run();
     } else {
       // Update existing user profile
-      await env.DB.prepare(`
+      await env.DB.prepare(
+        `
         UPDATE users SET
           email = ?,
           email_verified = ?,
@@ -79,19 +115,40 @@ async function syncUserProfileToDatabase(env, request, userData, userPayload) {
           updated_at = CURRENT_TIMESTAMP,
           last_login_at = CURRENT_TIMESTAMP
         WHERE google_id = ?
-      `).bind(email, verifiedEmail, name, givenName, familyName, picture, locale, hd, googleId).run();
+      `,
+      )
+        .bind(
+          email,
+          verifiedEmail,
+          name,
+          givenName,
+          familyName,
+          picture,
+          locale,
+          hd,
+          googleId,
+        )
+        .run();
     }
 
     // Insert audit log (IP, Country, User-Agent)
-    const ipAddress = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "127.0.0.1";
+    const ipAddress =
+      request.headers.get("CF-Connecting-IP") ||
+      request.headers.get("X-Forwarded-For") ||
+      "127.0.0.1";
     const country = request.headers.get("CF-IPCountry") || "UNKNOWN";
     const userAgent = request.headers.get("User-Agent") || "UNKNOWN";
 
-    await env.DB.prepare(`
+    await env.DB.prepare(
+      `
       INSERT INTO auth_audit_logs (user_id, email, ip_address, country, user_agent)
       VALUES (?, ?, ?, ?, ?)
-    `).bind(userId, email, ipAddress, country, userAgent).run();
+    `,
+    )
+      .bind(userId, email, ipAddress, country, userAgent)
+      .run();
   } catch (dbErr) {
+    console.error("Database sync error during authentication:", dbErr);
     // Silently ignore database sync error to not block authentication
   }
 }
@@ -106,12 +163,16 @@ export async function onRequestGet(context) {
   const origin = requestUrl.origin;
   const redirectUri = env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/callback`;
   const clientId = env.GOOGLE_CLIENT_ID || env.VITE_GOOGLE_CLIENT_ID;
-  const clientSecret = env.GOOGLE_CLIENT_SECRET || env.VITE_GOOGLE_CLIENT_SECRET;
+  const clientSecret =
+    env.GOOGLE_CLIENT_SECRET || env.VITE_GOOGLE_CLIENT_SECRET;
   const jwtSecret = env.JWT_SECRET;
 
   const redirectWithError = (errorMessage) => {
     const headers = new Headers();
-    headers.set("Location", `${origin}/?auth_error=${encodeURIComponent(errorMessage)}`);
+    headers.set(
+      "Location",
+      `${origin}/?auth_error=${encodeURIComponent(errorMessage)}`,
+    );
     headers.append("Set-Cookie", createClearCookieHeader("oauth_state"));
     return new Response(null, { status: 302, headers });
   };
@@ -121,7 +182,9 @@ export async function onRequestGet(context) {
   const storedState = cookies.oauth_state;
 
   if (!state || !storedState || state !== storedState) {
-    return redirectWithError("Invalid OAuth state parameter. Request rejected for security.");
+    return redirectWithError(
+      "Invalid OAuth state parameter. Request rejected for security.",
+    );
   }
 
   if (error || !code) {
@@ -130,13 +193,22 @@ export async function onRequestGet(context) {
 
   try {
     // 1. Exchange authorization code for tokens
-    const tokenResult = await exchangeAuthorizationCode(code, clientId, clientSecret, redirectUri);
+    const tokenResult = await exchangeAuthorizationCode(
+      code,
+      clientId,
+      clientSecret,
+      redirectUri,
+    );
     if (!tokenResult.ok || !tokenResult.data?.access_token) {
-      return redirectWithError(tokenResult.data?.error_description || "Token exchange failed");
+      return redirectWithError(
+        tokenResult.data?.error_description || "Token exchange failed",
+      );
     }
 
     // 2. Fetch Google User Profile
-    const userResult = await fetchGoogleUserProfile(tokenResult.data.access_token);
+    const userResult = await fetchGoogleUserProfile(
+      tokenResult.data.access_token,
+    );
     if (!userResult.ok || !userResult.data?.id) {
       return redirectWithError("Failed to fetch user profile");
     }
