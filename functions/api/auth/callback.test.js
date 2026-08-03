@@ -21,14 +21,17 @@ describe("onRequestGet - Auth Callback", () => {
     const params = new URLSearchParams(urlParams);
     params.set("state", TEST_STATE);
     return {
-      request: new Request(`http://localhost/api/auth/callback?${params.toString()}`, {
-        headers: new Headers({
-          Cookie: `oauth_state=${TEST_STATE}`,
-          "CF-Connecting-IP": "192.168.1.1",
-          "CF-IPCountry": "ID",
-          "User-Agent": "TestAgent/1.0",
-        }),
-      }),
+      request: new Request(
+        `http://localhost/api/auth/callback?${params.toString()}`,
+        {
+          headers: new Headers({
+            Cookie: `oauth_state=${TEST_STATE}`,
+            "CF-Connecting-IP": "192.168.1.1",
+            "CF-IPCountry": "ID",
+            "User-Agent": "TestAgent/1.0",
+          }),
+        },
+      ),
       env: {
         GOOGLE_CLIENT_ID: "test-client-id",
         GOOGLE_CLIENT_SECRET: "test-client-secret",
@@ -39,38 +42,52 @@ describe("onRequestGet - Auth Callback", () => {
 
   // OAuth state parameter validation (CSRF protection)
   it("should reject request when state parameter is missing from the URL", async () => {
-    const request = new Request("http://localhost/api/auth/callback?code=test-code", {
-      headers: { Cookie: `oauth_state=${TEST_STATE}` },
-    });
+    const request = new Request(
+      "http://localhost/api/auth/callback?code=test-code",
+      {
+        headers: { Cookie: `oauth_state=${TEST_STATE}` },
+      },
+    );
     const context = { request, env: {} };
 
     const response = await onRequestGet(context);
 
     expect(response.status).toBe(302);
     expect(response.headers.get("Location")).toContain("auth_error=");
-    expect(response.headers.get("Location")).toContain("Invalid%20OAuth%20state%20parameter");
+    expect(response.headers.get("Location")).toContain(
+      "Invalid%20OAuth%20state%20parameter",
+    );
   });
 
   it("should reject request when oauth_state cookie is missing", async () => {
-    const request = new Request(`http://localhost/api/auth/callback?code=test-code&state=${TEST_STATE}`);
+    const request = new Request(
+      `http://localhost/api/auth/callback?code=test-code&state=${TEST_STATE}`,
+    );
     const context = { request, env: {} };
 
     const response = await onRequestGet(context);
 
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toContain("Invalid%20OAuth%20state%20parameter");
+    expect(response.headers.get("Location")).toContain(
+      "Invalid%20OAuth%20state%20parameter",
+    );
   });
 
   it("should reject request when state does not match the oauth_state cookie (CSRF attack)", async () => {
-    const request = new Request("http://localhost/api/auth/callback?code=test-code&state=attacker-state", {
-      headers: { Cookie: `oauth_state=${TEST_STATE}` },
-    });
+    const request = new Request(
+      "http://localhost/api/auth/callback?code=test-code&state=attacker-state",
+      {
+        headers: { Cookie: `oauth_state=${TEST_STATE}` },
+      },
+    );
     const context = { request, env: {} };
 
     const response = await onRequestGet(context);
 
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toContain("Invalid%20OAuth%20state%20parameter");
+    expect(response.headers.get("Location")).toContain(
+      "Invalid%20OAuth%20state%20parameter",
+    );
   });
 
   it("should redirect with error if error param is present", async () => {
@@ -148,7 +165,11 @@ describe("onRequestGet - Auth Callback", () => {
       if (url === "https://www.googleapis.com/oauth2/v2/userinfo") {
         return {
           ok: true,
-          json: async () => ({ id: "user123", email: "test@test.com", name: "Test User" }),
+          json: async () => ({
+            id: "user123",
+            email: "test@test.com",
+            name: "Test User",
+          }),
         };
       }
     });
@@ -195,7 +216,11 @@ describe("onRequestGet - Auth Callback", () => {
       if (url === "https://www.googleapis.com/oauth2/v2/userinfo") {
         return {
           ok: true,
-          json: async () => ({ id: "user123", email: "test@test.com", name: "Test User" }),
+          json: async () => ({
+            id: "user123",
+            email: "test@test.com",
+            name: "Test User",
+          }),
         };
       }
     });
@@ -210,8 +235,14 @@ describe("onRequestGet - Auth Callback", () => {
       "http://localhost/?auth_success=1",
     );
 
-    expect(executedQueries.some((q) => q.query.includes("INSERT INTO users"))).toBe(true);
-    expect(executedQueries.some((q) => q.query.includes("INSERT INTO point_transactions"))).toBe(true);
+    expect(
+      executedQueries.some((q) => q.query.includes("INSERT INTO users")),
+    ).toBe(true);
+    expect(
+      executedQueries.some((q) =>
+        q.query.includes("INSERT INTO point_transactions"),
+      ),
+    ).toBe(true);
 
     const insertAuditCall = executedQueries.find((q) =>
       q.query.includes("INSERT INTO auth_audit_logs"),
@@ -228,7 +259,11 @@ describe("onRequestGet - Auth Callback", () => {
         bind: (...args) => ({
           first: async () => {
             if (query.includes("SELECT id, points")) {
-              return { id: "user123", points: 100, last_point_reset: "2024-01-01" };
+              return {
+                id: "user123",
+                points: 100,
+                last_point_reset: "2024-01-01",
+              };
             }
             return null;
           },
@@ -250,7 +285,11 @@ describe("onRequestGet - Auth Callback", () => {
       if (url === "https://www.googleapis.com/oauth2/v2/userinfo") {
         return {
           ok: true,
-          json: async () => ({ id: "user123", email: "test@test.com", name: "Test User Updated" }),
+          json: async () => ({
+            id: "user123",
+            email: "test@test.com",
+            name: "Test User Updated",
+          }),
         };
       }
     });
@@ -265,11 +304,21 @@ describe("onRequestGet - Auth Callback", () => {
       "http://localhost/?auth_success=1",
     );
 
-    expect(executedQueries.some((q) => q.query.includes("UPDATE users SET"))).toBe(true);
-    expect(executedQueries.some((q) => q.query.includes("INSERT INTO auth_audit_logs"))).toBe(true);
+    expect(
+      executedQueries.some((q) => q.query.includes("UPDATE users SET")),
+    ).toBe(true);
+    expect(
+      executedQueries.some((q) =>
+        q.query.includes("INSERT INTO auth_audit_logs"),
+      ),
+    ).toBe(true);
   });
 
   it("should gracefully handle DB errors and still authenticate", async () => {
+    const originalConsoleError = console.error;
+    const consoleErrorSpy = mock(() => {});
+    console.error = consoleErrorSpy;
+
     const dbMock = {
       prepare: () => {
         throw new Error("Simulated DB connection error");
@@ -301,6 +350,14 @@ describe("onRequestGet - Auth Callback", () => {
       "http://localhost/?auth_success=1",
     );
     expect(response.headers.get("Set-Cookie")).toContain("auth_token=");
+
+    // Verify error was logged
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    const loggedArgs = consoleErrorSpy.mock.calls[0];
+    expect(loggedArgs[0]).toBe("Database sync error during authentication:");
+    expect(loggedArgs[1].message).toBe("Simulated DB connection error");
+
+    console.error = originalConsoleError;
   });
 
   it("should catch general errors and redirect to error", async () => {
@@ -317,4 +374,3 @@ describe("onRequestGet - Auth Callback", () => {
     );
   });
 });
-
