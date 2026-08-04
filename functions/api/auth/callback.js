@@ -132,10 +132,7 @@ async function syncUserProfileToDatabase(env, request, userData, userPayload) {
     }
 
     // Insert audit log (IP, Country, User-Agent)
-    const ipAddress =
-      request.headers.get("CF-Connecting-IP") ||
-      request.headers.get("X-Forwarded-For") ||
-      "127.0.0.1";
+    const ipAddress = request.headers.get("CF-Connecting-IP") || "127.0.0.1";
     const country = request.headers.get("CF-IPCountry") || "UNKNOWN";
     const userAgent = request.headers.get("User-Agent") || "UNKNOWN";
 
