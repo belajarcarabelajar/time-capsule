@@ -146,7 +146,7 @@ async function syncUserProfileToDatabase(env, request, userData, userPayload) {
       .run();
   } catch (dbErr) {
     console.error("Database sync error during authentication:", dbErr);
-    // Silently ignore database sync error to not block authentication
+    // Log database sync error for security observability, but do not block authentication
   }
 }
 

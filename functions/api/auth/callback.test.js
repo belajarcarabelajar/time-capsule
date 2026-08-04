@@ -270,6 +270,10 @@ describe("onRequestGet - Auth Callback", () => {
   });
 
   it("should gracefully handle DB errors and still authenticate", async () => {
+    const originalConsoleError = console.error;
+    const consoleErrorSpy = mock(() => {});
+    console.error = consoleErrorSpy;
+
     const dbMock = {
       prepare: () => {
         throw new Error("Simulated DB connection error");
@@ -301,6 +305,14 @@ describe("onRequestGet - Auth Callback", () => {
       "http://localhost/?auth_success=1",
     );
     expect(response.headers.get("Set-Cookie")).toContain("auth_token=");
+
+    // Verify error was logged
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    const loggedArgs = consoleErrorSpy.mock.calls[0];
+    expect(loggedArgs[0]).toBe("Database sync error during authentication:");
+    expect(loggedArgs[1].message).toBe("Simulated DB connection error");
+
+    console.error = originalConsoleError;
   });
 
   it("should catch general errors and redirect to error", async () => {
