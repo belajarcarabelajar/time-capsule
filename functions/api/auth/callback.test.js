@@ -270,6 +270,10 @@ describe("onRequestGet - Auth Callback", () => {
   });
 
   it("should gracefully handle DB errors and still authenticate", async () => {
+    const originalConsoleError = console.error;
+    const consoleErrorSpy = mock(() => {});
+    console.error = consoleErrorSpy;
+
     const dbMock = {
       prepare: () => {
         throw new Error("Simulated DB connection error");
@@ -301,6 +305,14 @@ describe("onRequestGet - Auth Callback", () => {
       "http://localhost/?auth_success=1",
     );
     expect(response.headers.get("Set-Cookie")).toContain("auth_token=");
+
+    // Verify error was logged
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    const loggedArgs = consoleErrorSpy.mock.calls[0];
+    expect(loggedArgs[0]).toBe("Database sync error during authentication:");
+    expect(loggedArgs[1].message).toBe("Simulated DB connection error");
+
+    console.error = originalConsoleError;
   });
 
   it("should catch general errors and redirect to error", async () => {
@@ -315,6 +327,72 @@ describe("onRequestGet - Auth Callback", () => {
     expect(response.headers.get("Location")).toContain(
       "auth_error=Authentication%20failed",
     );
+  });
+
+  // Regression: IP spoofing via X-Forwarded-For must be ignored.
+  // CF-Connecting-IP is the only trusted source; missing it must fall back
+  // to "127.0.0.1", never to attacker-controlled X-Forwarded-For.
+  it("should ignore X-Forwarded-For and use only CF-Connecting-IP for audit log", async () => {
+    const executedQueries = [];
+    const dbMock = {
+      prepare: (query) => ({
+        bind: (...args) => {
+          executedQueries.push({ query, params: args });
+          return {
+            first: async () => null,
+            run: async () => ({ success: true }),
+            all: async () => [],
+          };
+        },
+      }),
+    };
+
+    globalThis.fetch = mock(async (url) => {
+      if (url === "https://oauth2.googleapis.com/token") {
+        return {
+          ok: true,
+          json: async () => ({ access_token: "valid_token" }),
+        };
+      }
+      if (url === "https://www.googleapis.com/oauth2/v2/userinfo") {
+        return {
+          ok: true,
+          json: async () => ({ id: "user123", email: "test@test.com" }),
+        };
+      }
+    });
+
+    // Spoofing attempt: no CF-Connecting-IP, only X-Forwarded-For.
+    const context = {
+      request: new Request(
+        `http://localhost/api/auth/callback?code=test-code&state=${TEST_STATE}`,
+        {
+          headers: new Headers({
+            Cookie: `oauth_state=${TEST_STATE}`,
+            "X-Forwarded-For": "198.51.100.66",
+            "CF-IPCountry": "ID",
+            "User-Agent": "TestAgent/1.0",
+          }),
+        },
+      ),
+      env: {
+        GOOGLE_CLIENT_ID: "test-client-id",
+        GOOGLE_CLIENT_SECRET: "test-client-secret",
+        JWT_SECRET: "test-jwt-secret",
+        DB: dbMock,
+      },
+    };
+
+    const response = await onRequestGet(context);
+
+    expect(response.status).toBe(302);
+    const auditLog = executedQueries.find((q) =>
+      q.query.includes("INSERT INTO auth_audit_logs"),
+    );
+    expect(auditLog).toBeDefined();
+    // Bound order: (userId, email, ipAddress, country, userAgent)
+    expect(auditLog.params[2]).toBe("127.0.0.1");
+    expect(auditLog.params[2]).not.toBe("198.51.100.66");
   });
 });
 

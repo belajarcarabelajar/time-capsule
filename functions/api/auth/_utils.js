@@ -2,22 +2,26 @@
 
 function base64UrlEncode(str) {
   const base64 = btoa(str);
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 function base64UrlDecode(str) {
-  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
   while (base64.length % 4) {
-    base64 += '=';
+    base64 += "=";
   }
   return atob(base64);
 }
 
 function arrayBufferToBase64Url(buffer) {
   const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
+  const CHUNK_SIZE = 8192;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    binary += String.fromCharCode.apply(
+      null,
+      bytes.subarray(i, i + CHUNK_SIZE),
+    );
   }
   return base64UrlEncode(binary);
 }
@@ -25,16 +29,20 @@ function arrayBufferToBase64Url(buffer) {
 async function getHmacKey(secret) {
   const enc = new TextEncoder();
   return await crypto.subtle.importKey(
-    'raw',
+    "raw",
     enc.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
+    { name: "HMAC", hash: "SHA-256" },
     false,
-    ['sign', 'verify']
+    ["sign", "verify"],
   );
 }
 
-export async function signJwt(payload, secret, expiresInSeconds = 7 * 24 * 3600) {
-  const header = { alg: 'HS256', typ: 'JWT' };
+export async function signJwt(
+  payload,
+  secret,
+  expiresInSeconds = 7 * 24 * 3600,
+) {
+  const header = { alg: "HS256", typ: "JWT" };
   const now = Math.floor(Date.now() / 1000);
   const fullPayload = {
     ...payload,
@@ -48,9 +56,9 @@ export async function signJwt(payload, secret, expiresInSeconds = 7 * 24 * 3600)
 
   const key = await getHmacKey(secret);
   const signatureBuffer = await crypto.subtle.sign(
-    'HMAC',
+    "HMAC",
     key,
-    new TextEncoder().encode(dataToSign)
+    new TextEncoder().encode(dataToSign),
   );
 
   const encodedSignature = arrayBufferToBase64Url(signatureBuffer);
@@ -59,15 +67,15 @@ export async function signJwt(payload, secret, expiresInSeconds = 7 * 24 * 3600)
 
 export async function verifyJwt(token, secret) {
   try {
-    if (!token || typeof token !== 'string') return null;
-    const parts = token.split('.');
+    if (!token || typeof token !== "string") return null;
+    const parts = token.split(".");
     if (parts.length !== 3) return null;
 
     const [encodedHeader, encodedPayload, encodedSignature] = parts;
     const dataToVerify = `${encodedHeader}.${encodedPayload}`;
 
     const key = await getHmacKey(secret);
-    
+
     // Convert base64url signature back to Uint8Array
     const sigString = base64UrlDecode(encodedSignature);
     const sigBytes = new Uint8Array(sigString.length);
@@ -76,10 +84,10 @@ export async function verifyJwt(token, secret) {
     }
 
     const isValid = await crypto.subtle.verify(
-      'HMAC',
+      "HMAC",
       key,
       sigBytes,
-      new TextEncoder().encode(dataToVerify)
+      new TextEncoder().encode(dataToVerify),
     );
 
     if (!isValid) return null;
@@ -97,17 +105,18 @@ export async function verifyJwt(token, secret) {
 }
 
 export function parseCookies(request) {
-  if (!request || !request.headers || typeof request.headers.get !== 'function') return {};
-  const cookieHeader = request.headers.get('Cookie');
+  if (!request || !request.headers || typeof request.headers.get !== "function")
+    return {};
+  const cookieHeader = request.headers.get("Cookie");
   if (!cookieHeader) return {};
 
   const cookies = {};
-  cookieHeader.split(';').forEach(cookie => {
+  cookieHeader.split(";").forEach((cookie) => {
     const trimmedCookie = cookie.trim();
     if (!trimmedCookie) return;
-    const eqIdx = trimmedCookie.indexOf('=');
+    const eqIdx = trimmedCookie.indexOf("=");
     if (eqIdx === -1) {
-      cookies[trimmedCookie] = '';
+      cookies[trimmedCookie] = "";
     } else if (eqIdx > 0) {
       const name = trimmedCookie.slice(0, eqIdx);
       cookies[name] = decodeURIComponent(trimmedCookie.slice(eqIdx + 1));
@@ -123,12 +132,12 @@ export function createCookieHeader(name, value, maxAgeSeconds = 7 * 24 * 3600) {
     `Path=/`,
     `HttpOnly`,
     `SameSite=Lax`,
-    `Max-Age=${maxAgeSeconds}`
+    `Max-Age=${maxAgeSeconds}`,
   ];
   if (isSecure) {
-    cookieOpts.push('Secure');
+    cookieOpts.push("Secure");
   }
-  return cookieOpts.join('; ');
+  return cookieOpts.join("; ");
 }
 
 export function createClearCookieHeader(name) {
@@ -141,7 +150,7 @@ export async function getUserFromRequest(request, env) {
   const cookies = parseCookies(request);
   let token = cookies.auth_token;
 
-  if (!token && request.headers && typeof request.headers.get === 'function') {
+  if (!token && request.headers && typeof request.headers.get === "function") {
     const authHeader = request.headers.get("Authorization");
     if (authHeader && authHeader.startsWith("Bearer ")) {
       token = authHeader.substring(7);
