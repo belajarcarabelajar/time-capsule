@@ -1,4 +1,4 @@
-import { describe, it, expect, mock } from 'bun:test';
+import { describe, it, expect, mock, afterEach } from 'bun:test';
 import React from 'react';
 import { render, act } from '@testing-library/react';
 
@@ -20,6 +20,11 @@ mock.module('@time-capsule/game-engine', () => ({
 import { Typewriter } from './src/components/Typewriter';
 
 describe('Benchmark Typewriter', () => {
+  afterEach(() => {
+    // mock.module is process-global; restore so later test files get the real module
+    mock.restore();
+  });
+
   it('measures time to type 1000 characters', async () => {
     const text = "A".repeat(1000);
     const start = performance.now();

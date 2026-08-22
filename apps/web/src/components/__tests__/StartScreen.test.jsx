@@ -8,9 +8,9 @@ if (!GlobalRegistrator.isRegistered) {
 }
 
 import { test, expect, describe, mock, afterEach } from "bun:test";
-import { render, fireEvent, cleanup, screen } from "@testing-library/react";
+import { render, fireEvent, cleanup } from "@testing-library/react";
 import StartScreen from "../StartScreen";
-import React, { useState } from "react";
+import React from "react";
 
 describe("StartScreen", () => {
   afterEach(() => {

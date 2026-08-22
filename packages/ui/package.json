@@ -10,7 +10,7 @@
     "./utils/*": "./src/utils/*.js"
   },
   "scripts": {
-    "test": "bun test"
+    "test": "find . -name '*.test.*' -not -path './node_modules/*' -print0 | xargs -0 -n1 bun test"
   },
   "dependencies": {
     "@time-capsule/game-engine": "workspace:*",
@@ -28,6 +28,8 @@
     "@types/react-dom": "^19.2.3",
     "happy-dom": "^20.11.1",
     "jsdom": "^29.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-test-renderer": "18"
   }
 }

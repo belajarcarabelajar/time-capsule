@@ -1,0 +1,4 @@
+# Deployed by Cloudflare Pages. Report-Only first: promote to enforcing
+# Content-Security-Policy once no violations appear in browser devtools.
+/*
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'

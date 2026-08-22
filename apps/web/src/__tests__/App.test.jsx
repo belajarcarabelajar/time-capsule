@@ -7,9 +7,10 @@ if (!GlobalRegistrator.isRegistered) {
   }
 }
 
-import { test, expect, describe, afterEach, mock, beforeEach } from 'bun:test';
+import { test, expect, describe, afterEach, mock, beforeEach, spyOn } from 'bun:test';
 import React, { act } from 'react';
 import App from '../App.jsx';
+import * as AuthContextModule from '../context/AuthContext.jsx';
 
 const { render, cleanup, fireEvent } = await import('@testing-library/react');
 
@@ -42,6 +43,7 @@ const createMockGameData = (chapter = 1, location = 'Test Location') => ({
 describe('App Component Integration', () => {
   let originalFetch;
   let writeTextMock;
+  let useAuthSpy;
 
   beforeEach(() => {
     originalFetch = global.fetch;
@@ -50,6 +52,18 @@ describe('App Component Integration', () => {
       value: { writeText: writeTextMock },
       configurable: true,
       writable: true
+    });
+
+    // Game start is auth-gated (useGameState.handleStartAdventure); provide a
+    // logged-in user so integration tests exercise gameplay flows.
+    useAuthSpy = spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+      user: { id: 'test-user', name: 'Tester', email: 'tester@example.com', picture: 'https://example.com/avatar.png', points: 50, maxPoints: 50 },
+      loading: false,
+      authError: null,
+      setAuthError: () => {},
+      loginWithGoogle: mock(),
+      logout: mock(),
+      checkSession: mock()
     });
 
     window.AudioContext = class {
@@ -76,6 +90,9 @@ describe('App Component Integration', () => {
 
   afterEach(() => {
     cleanup();
+    if (useAuthSpy) {
+      useAuthSpy.mockRestore();
+    }
     global.fetch = originalFetch;
   });
 
@@ -138,7 +155,7 @@ describe('App Component Integration', () => {
       return new Response(JSON.stringify({ success: false, errors: ['Error'] }), { status: 500 });
     });
 
-    const { getByPlaceholderText, getByRole, getByText } = render(<App />);
+    const { getByPlaceholderText, getByRole } = render(<App />);
 
     const input = getByPlaceholderText('Ketik Peristiwa Sejarah...');
     fireEvent.change(input, { target: { value: 'Broken Scenario' } });

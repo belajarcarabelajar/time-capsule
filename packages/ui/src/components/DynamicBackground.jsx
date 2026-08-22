@@ -2,6 +2,13 @@ import React from 'react';
 
 const MOOD_PARTICLES_ARRAY = Array.from({ length: 12 });
 
+const GRADIENT_TOKEN = /^(?:(?:from|via|to)-[a-z]+(?:-\d{2,3})?|bg-gradient-to-(?:tr|tl|br|bl|t|r|b|l))$/;
+
+const isSafeGradient = (value) =>
+  typeof value === 'string' &&
+  value.length > 0 &&
+  value.split(/\s+/).every((token) => GRADIENT_TOKEN.test(token));
+
 const DynamicBackground = ({ scene, currentMood }) => {
   const getMoodGradient = (mood) => {
     const m = mood || '';
@@ -13,7 +20,7 @@ const DynamicBackground = ({ scene, currentMood }) => {
     return null; 
   };
 
-  const activeGradient = getMoodGradient(currentMood) || (scene?.bg || 'from-stone-900 to-black');
+  const activeGradient = getMoodGradient(currentMood) || (isSafeGradient(scene?.bg) ? scene.bg : 'from-stone-900 to-black');
   
   const getMoodParticles = (mood) => {
     const m = mood || '';

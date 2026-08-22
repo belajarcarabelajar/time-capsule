@@ -31,6 +31,35 @@ describe('DynamicBackground', () => {
       expect(mainDiv.className).toContain('to-cyan-500');
     });
 
+    it('accepts full gradient string with direction and via stop', () => {
+      const scene = { bg: 'bg-gradient-to-b from-slate-900 via-red-900 to-black' };
+      const { container } = render(<DynamicBackground scene={scene} />);
+
+      const mainDiv = container.firstChild;
+      expect(mainDiv.className).toContain('bg-gradient-to-b');
+      expect(mainDiv.className).toContain('via-red-900');
+    });
+
+    it('rejects non-gradient utility classes from scene.bg', () => {
+      const scene = { bg: 'fixed inset-0 z-[9999] cursor-pointer' };
+      const { container } = render(<DynamicBackground scene={scene} />);
+
+      const mainDiv = container.firstChild;
+      expect(mainDiv.className).not.toContain('fixed inset-0');
+      expect(mainDiv.className).not.toContain('z-[9999]');
+      expect(mainDiv.className).toContain('from-stone-900');
+      expect(mainDiv.className).toContain('to-black');
+    });
+
+    it('rejects hostile strings with quotes or semicolons in scene.bg', () => {
+      const scene = { bg: 'from-red-600\\" onmouseover=\\"alert(1)' };
+      const { container } = render(<DynamicBackground scene={scene} />);
+
+      const mainDiv = container.firstChild;
+      expect(mainDiv.className).not.toContain('onmouseover');
+      expect(mainDiv.className).toContain('from-stone-900');
+    });
+
     it('overrides scene.bg with angry mood gradient', () => {
       const scene = { bg: 'from-blue-500 to-cyan-500' };
       const { container } = render(<DynamicBackground scene={scene} currentMood="😡" />);

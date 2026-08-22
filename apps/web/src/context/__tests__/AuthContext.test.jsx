@@ -30,7 +30,7 @@ function TestComponent({ onRender }) {
 
 describe('AuthContext & AuthProvider', () => {
   let originalFetch;
-  let originalLocation;
+  let _originalLocation;
   let replaceStateMock;
 
   beforeEach(() => {

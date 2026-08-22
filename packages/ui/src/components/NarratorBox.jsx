@@ -3,7 +3,6 @@ import { ChevronRight, Lightbulb } from 'lucide-react';
 import { SoundEngine } from '@time-capsule/game-engine';
 import { Typewriter } from './Typewriter.jsx';
 import { formatText } from '../utils/formatText.js';
-import DOMPurify from 'isomorphic-dompurify';
 
 const NarratorBox = ({ text, onComplete, isTyping }) => {
   useEffect(() => {
@@ -32,7 +31,7 @@ const NarratorBox = ({ text, onComplete, isTyping }) => {
         
         {/* TEXT CONTENT - Font size mobile 2x lebih kecil (text-xs vs text-2xl) */}
         <div className="text-xs md:text-2xl text-amber-50 font-serif leading-relaxed italic opacity-90">
-          {isTyping ? <Typewriter text={formatText(text)} onComplete={onComplete} speed={30} /> : <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formatText(text)) }} />}
+          {isTyping ? <Typewriter text={text} onComplete={onComplete} speed={30} /> : <span dangerouslySetInnerHTML={{ __html: formatText(text) }} />}
         </div>
 
         {!isTyping && (

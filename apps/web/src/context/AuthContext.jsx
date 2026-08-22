@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
     const error = urlParams.get('auth_error');
 
     if (error) {
-      setAuthError(decodeURIComponent(error));
+      setAuthError(error);
     }
 
     if (success || error) {

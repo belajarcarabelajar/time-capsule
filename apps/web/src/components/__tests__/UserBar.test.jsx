@@ -7,7 +7,7 @@ if (!GlobalRegistrator.isRegistered) {
   }
 }
 
-import { test, expect, describe, afterEach, mock, beforeEach, spyOn } from 'bun:test';
+import { test, expect, describe, afterEach, mock, spyOn } from 'bun:test';
 import React from 'react';
 import UserBar from '../UserBar.jsx';
 import * as AuthContextModule from '../../context/AuthContext.jsx';
@@ -45,7 +45,7 @@ describe('UserBar Component', () => {
       logout: mock()
     });
 
-    const { getByRole, getByText } = render(<UserBar />);
+    const { getByRole } = render(<UserBar />);
     const loginBtn = getByRole('button', { name: /Masuk dengan Google/i });
     expect(loginBtn).toBeTruthy();
 
@@ -78,6 +78,35 @@ describe('UserBar Component', () => {
     const { getByText } = render(<UserBar />);
     expect(getByText('Siti Rahma')).toBeTruthy();
     expect(getByText('S')).toBeTruthy();
+  });
+
+  test('rejects non-https picture URLs and falls back to initial avatar', () => {
+    useAuthSpy = spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+      user: { name: 'Ahmad Yani', email: 'ahmad@example.com', picture: 'http://example.com/avatar.jpg' },
+      loading: false,
+      loginWithGoogle: mock(),
+      logout: mock()
+    });
+
+    const { getByText, queryByAltText } = render(<UserBar />);
+    expect(queryByAltText('Ahmad Yani')).toBeNull();
+    expect(getByText('A')).toBeTruthy();
+  });
+
+  test('rejects javascript: and data: picture URLs and falls back to initial avatar', () => {
+    for (const hostilePicture of ['javascript:alert(1)', 'data:image/svg+xml;base64,PHN2Zz4=']) {
+      useAuthSpy = spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+        user: { name: 'Ahmad Yani', email: 'ahmad@example.com', picture: hostilePicture },
+        loading: false,
+        loginWithGoogle: mock(),
+        logout: mock()
+      });
+
+      const { getByText, queryByAltText, unmount } = render(<UserBar />);
+      expect(queryByAltText('Ahmad Yani')).toBeNull();
+      expect(getByText('A')).toBeTruthy();
+      unmount();
+    }
   });
 
   test('toggles dropdown on click and displays email and logout option', () => {

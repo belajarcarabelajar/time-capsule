@@ -67,7 +67,7 @@ describe('useGameState', () => {
 
     console.error = mock(() => {});
 
-    global.fetch = mock(async (url) => {
+    global.fetch = mock(async (_url) => {
       if (fetchShouldFail) {
         if (authShouldFail) throw new Error('Authentication required');
         throw new Error('Test Error');

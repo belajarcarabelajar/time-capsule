@@ -50,4 +50,30 @@ describe('formatText', () => {
     const result = formatText(malicious);
     expect(result).not.toContain('onerror');
   });
+
+  it('strips event handler attributes from injected markup', () => {
+    const result = formatText('**bold** <div onclick="alert(1)">tap</div>');
+    expect(result).toContain('<b>bold</b>');
+    expect(result).not.toContain('onclick');
+    expect(result).not.toContain('alert(1)');
+  });
+
+  it('neutralizes javascript: URLs in anchors', () => {
+    const result = formatText('<a href="javascript:alert(1)">click</a>');
+    expect(result.toLowerCase()).not.toContain('javascript:');
+  });
+
+  it('strips iframe and svg event vectors', () => {
+    const result = formatText('<iframe src="https://evil.example"></iframe><svg onload="alert(1)"></svg>');
+    expect(result).not.toContain('<iframe');
+    expect(result).not.toContain('onload');
+  });
+
+  it('keeps markdown bold/italic intact alongside hostile input', () => {
+    const result = formatText('*safe* <script>alert(1)</script> **kept**');
+    expect(result).toContain('<i>safe</i>');
+    expect(result).toContain('<b>kept</b>');
+    expect(result).not.toContain('<script');
+    expect(result).not.toContain('alert(1)');
+  });
 });

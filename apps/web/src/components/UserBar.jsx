@@ -2,6 +2,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Loader2, Zap } from 'lucide-react';
 
+const isSafeImageUrl = (url) => {
+  if (typeof url !== 'string' || url.length === 0 || url.length > 2048) return false;
+  try {
+    return new URL(url).protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
 export default function UserBar() {
   const { user, loading, loginWithGoogle, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -59,7 +68,7 @@ export default function UserBar() {
           onClick={() => setShowDropdown(!showDropdown)}
           className="flex items-center gap-2.5 bg-stone-900/90 hover:bg-stone-800 text-amber-100 px-3 py-1.5 rounded-full border border-amber-600/50 shadow-md transition-all cursor-pointer"
         >
-          {user.picture ? (
+          {isSafeImageUrl(user.picture) ? (
             <img src={user.picture} alt={user.name} className="w-6 h-6 rounded-full border border-amber-500" />
           ) : (
             <div className="w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center text-xs font-bold text-stone-900">
