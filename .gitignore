@@ -9,6 +9,7 @@ dist
 .env.local
 .env.*
 !.env.example
+.dev.vars
 .wrangler/
 
 # AI policies & notes

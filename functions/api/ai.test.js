@@ -27,33 +27,22 @@ describe("onRequestPost - Credentials Validation", () => {
 
     const body = await response.json();
     expect(body.success).toBe(false);
-    expect(body.errors[0].message).toContain("Cloudflare credentials");
+    expect(body.errors[0].message).toContain("AgentRouter API key");
   });
 
-  it("should return 500 error when only CF_API_TOKEN is missing", async () => {
+  it("should return 500 error when AGENTROUTER_API_KEY is missing", async () => {
     const context = {
       request: await authenticatedRequest(),
       env: {
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
-        CF_ACCOUNT_ID: "account-123",
+        GEMINI_API_KEY: "gemini-key-present",
       },
     };
 
     const response = await onRequestPost(context);
     expect(response.status).toBe(500);
-  });
-
-  it("should return 500 error when only CF_ACCOUNT_ID is missing", async () => {
-    const context = {
-      request: await authenticatedRequest(),
-      env: {
-        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
-        CF_API_TOKEN: "token-123",
-      },
-    };
-
-    const response = await onRequestPost(context);
-    expect(response.status).toBe(500);
+    const body = await response.json();
+    expect(body.errors[0].message).toContain("AGENTROUTER_API_KEY");
   });
 
   it("rejects unauthenticated requests before checking provider credentials", async () => {
@@ -79,7 +68,7 @@ describe("onRequestPost - Error Handling", () => {
     fixture = await createPointsDb();
   });
 
-  it("allows the verified admin to reach the fallback provider without D1 quota state", async () => {
+  it("allows the verified admin to reach the AgentRouter provider without D1 quota state", async () => {
     const adminToken = await signJwt(
       {
         sub: "admin-user",
@@ -89,10 +78,44 @@ describe("onRequestPost - Error Handling", () => {
       "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
     );
     const headers = new Map([["Authorization", `Bearer ${adminToken}`]]);
+    globalThis.fetch = async (url, init) => {
+      expect(url).toBe("https://agentrouter.org/v1/chat/completions");
+      expect(init.headers.Authorization).toBe("Bearer valid-agentrouter-key");
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [{ message: { role: "assistant", content: "{}" } }],
+        }),
+      };
+    };
+    const response = await onRequestPost({
+      request: {
+        json: async () => ({ messages: [], response_format: {} }),
+        headers: { get: (key) => headers.get(key) },
+      },
+      env: {
+        AGENTROUTER_API_KEY: "valid-agentrouter-key",
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
+      },
+    });
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({ success: true, result: { response: "{}" } });
+  });
+
+  afterEach(async () => {
+    globalThis.fetch = originalFetch;
+    await fixture.dispose();
+  });
+
+  it("propagates the provider status and body when AgentRouter responds with an error", async () => {
+    const headers = new Map();
+    headers.set("Authorization", `Bearer ${validToken}`);
     globalThis.fetch = async () => ({
-      ok: true,
-      status: 200,
-      json: async () => ({ success: true, result: { response: "{}" } }),
+      ok: false,
+      status: 502,
+      json: async () => ({ error: { message: "upstream failure" } }),
     });
     const response = await onRequestPost({
       request: {
@@ -100,17 +123,14 @@ describe("onRequestPost - Error Handling", () => {
         headers: { get: (key) => headers.get(key) },
       },
       env: {
-        CF_API_TOKEN: "valid-token",
-        CF_ACCOUNT_ID: "valid-account",
+        AGENTROUTER_API_KEY: "valid-agentrouter-key",
+        DB: fixture.db,
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
       },
     });
-    expect(response.status).toBe(200);
-  });
-
-  afterEach(async () => {
-    globalThis.fetch = originalFetch;
-    await fixture.dispose();
+    expect(response.status).toBe(502);
+    const body = await response.json();
+    expect(body.error.message).toBe("upstream failure");
   });
 
   it("should return 500 when request body contains invalid JSON", async () => {
@@ -126,9 +146,8 @@ describe("onRequestPost - Error Handling", () => {
         },
       },
       env: {
-        CF_API_TOKEN: "valid-token",
+        AGENTROUTER_API_KEY: "valid-agentrouter-key",
         DB: fixture.db,
-        CF_ACCOUNT_ID: "valid-account",
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
       },
     };
@@ -154,9 +173,8 @@ describe("onRequestPost - Error Handling", () => {
         },
       },
       env: {
-        CF_API_TOKEN: "valid-token",
+        AGENTROUTER_API_KEY: "valid-agentrouter-key",
         DB: fixture.db,
-        CF_ACCOUNT_ID: "valid-account",
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
       },
     };
@@ -186,9 +204,8 @@ describe("onRequestPost - Error Handling", () => {
         },
       },
       env: {
-        CF_API_TOKEN: "valid-token",
+        AGENTROUTER_API_KEY: "valid-agentrouter-key",
         DB: fixture.db,
-        CF_ACCOUNT_ID: "valid-account",
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
       },
     };

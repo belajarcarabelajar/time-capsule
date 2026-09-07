@@ -97,8 +97,8 @@ cp .env.example .env
 
 | Variable                         | Used by                          | Purpose                            |
 | -------------------------------- | -------------------------------- | ---------------------------------- |
-| `GEMINI_API_KEY`                 | Pages Functions                  | Google Gemini API key              |
-| `CF_ACCOUNT_ID` / `CF_API_TOKEN` | Pages Functions                  | Cloudflare Workers AI fallback     |
+| `GEMINI_API_KEY`                 | Pages Functions                  | Google Gemini API key (primary)    |
+| `AGENTROUTER_API_KEY`            | Pages Functions                  | AgentRouter OpenAI-compatible AI fallback |
 | `GOOGLE_CLIENT_ID`               | auth                             | Google OAuth client ID             |
 | `GOOGLE_CLIENT_SECRET`           | `functions/api/auth/callback.js` | Google OAuth client secret         |
 | `GOOGLE_REDIRECT_URI`            | auth                             | OAuth callback URL                 |
@@ -110,6 +110,21 @@ cp .env.example .env
 
 > [!WARNING]
 > Do not commit real keys to version control. `.env` is gitignored.
+
+### Configure production on Cloudflare Pages
+
+The `functions/api/*` Pages Functions read server-only values from the Cloudflare Pages project environment. Set these in the Cloudflare dashboard under **Settings, Environment variables** (and redeploy):
+
+| Variable | Required | If missing |
+| --- | --- | --- |
+| `GEMINI_API_KEY` | yes | `POST /api/gemini` returns `501` and the app falls back to AgentRouter |
+| `AGENTROUTER_API_KEY` | yes | `POST /api/ai` returns `500` with `AgentRouter API key (AGENTROUTER_API_KEY) is not configured...` and the user sees "Gagal membuka portal. Coba lagi." |
+| `JWT_SECRET` | yes | Authentication fails on every request |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | yes | OAuth login fails |
+
+The AI request flow is: `/api/gemini` (primary, Gemini) first; on any non-401/403/503 status the client falls back to `/api/ai` (AgentRouter, `https://agentrouter.org/v1/chat/completions`, model `gpt-5.5`). Missing secrets are surfaced as exact status codes, never as guessed messages.
+
+To verify after configuring and redeploying: start an adventure and confirm `/api/gemini` returns `200`, a story renders, and 10 points are deducted. Local dev needs the same variables in `.env` / `.dev.vars`; both files are gitignored.
 
 ### Develop
 

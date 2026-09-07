@@ -6,6 +6,9 @@ import {
   pointsErrorResponse,
 } from "./_ai_utils.js";
 
+const AGENTROUTER_MODEL = "gpt-5.5";
+const AGENTROUTER_URL = "https://agentrouter.org/v1/chat/completions";
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -26,18 +29,17 @@ export async function onRequestPost(context) {
     );
   }
 
-  // Retrieve credentials from environment variables set in Cloudflare Pages
-  const cfApiToken = env.CF_API_TOKEN;
-  const cfAccountId = env.CF_ACCOUNT_ID;
+  // Retrieve the AgentRouter credential from the Cloudflare Pages environment
+  const agentRouterKey = env.AGENTROUTER_API_KEY;
 
-  if (!cfApiToken || !cfAccountId) {
+  if (!agentRouterKey) {
     return new Response(
       JSON.stringify({
         success: false,
         errors: [
           {
             message:
-              "Cloudflare credentials (CF_API_TOKEN and CF_ACCOUNT_ID) are not configured in Cloudflare Pages project settings.",
+              "AgentRouter API key (AGENTROUTER_API_KEY) is not configured in Cloudflare Pages project settings.",
           },
         ],
       }),
@@ -59,7 +61,6 @@ export async function onRequestPost(context) {
 
   try {
     const body = await request.json();
-    const model = "@cf/meta/llama-3.1-8b-instruct";
 
     // Extract only necessary fields to prevent unvalidated input forwarding
     const safeBody = {
@@ -67,36 +68,44 @@ export async function onRequestPost(context) {
       response_format: body.response_format,
     };
 
-    const response = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/${model}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${cfApiToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(safeBody),
+    const response = await fetch(AGENTROUTER_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${agentRouterKey}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ ...safeBody, model: AGENTROUTER_MODEL }),
+    });
 
     const data = await response.json();
 
     // 2. On AI success: Deduct 10 points and save story to D1
-    if (response.ok && data.success) {
+    if (response.ok) {
+      const content =
+        data.choices?.[0]?.message?.content ||
+        data.result?.response ||
+        "";
       await deductPointsAndSaveStory({
         authUser,
         env,
         currentPoints,
         cost,
-        transactionDescription: "Generasi cerita time capsule",
-        storyTitle: "Time Capsule Chapter",
+        transactionDescription: "Generasi cerita time capsule (AgentRouter)",
+        storyTitle: "Time Capsule Chapter (AgentRouter)",
         promptSnippet: body.messages
           ? JSON.stringify(body.messages).slice(0, 500)
           : "Time Capsule Story",
-        contentStr: JSON.stringify(data.result || data),
+        contentStr: JSON.stringify(data),
         sourceName: "ai.js",
         dataObj: data,
       });
+      return new Response(
+        JSON.stringify({ success: true, result: { response: content } }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     return new Response(JSON.stringify(data), {
