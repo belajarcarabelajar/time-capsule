@@ -5,6 +5,7 @@ const secondWar = /\b(?:ww\s*2|ww\s*ii|world war (?:2|ii|two)|perang dunia (?:2|
 const westernFront = /\b(?:western front|front barat|front occidental|flanders|france|prancis|perancis|belgium|belgia|verdun|somme|ypres)\b/u;
 const london = /\b(?:london|british home front|britain|britania|inggris|england|united kingdom)\b/u;
 const marketPort = /\b(?:sriwijaya|srivijaya|sailendra|shailendra|spice (?:route|trade)|jalur rempah|rempah-?rempah|sunda kelapa|batavia|banten|malaka|malacca|melaka|pelabuhan|maritim|kapal dagang|v\.o\.c)\b/u;
+const ruralLife = /\b(?:petani|sawah|padi|ladang|panen raya|bawon|subak|irigasi|pertanian|agraris|lumbung padi|bajak)\b/u;
 const incompatible = /\b(?:tokyo|japan|jepang|pacific|pasifik|asia|indonesia|java|jawa|africa|afrika|russia|rusia|moscow|berlin|germany|jerman|italy|italia|america|amerika|pearl harbor|normandy|normandia)\b/u;
 
 export function resolveRoom({ topic, location, environmentKey } = {}) {
@@ -22,6 +23,9 @@ export function resolveRoom({ topic, location, environmentKey } = {}) {
   if (first && second) return archive('conflicting-eras');
   if (marketPort.test(all) && !first && !second) {
     return { roomId: 'market-port', reason: 'maritime-trade' };
+  }
+  if (ruralLife.test(all) && !first && !second) {
+    return { roomId: 'rural-village', reason: 'agrarian-life' };
   }
   if (incompatible.test(all)) return archive('outside-authored-scope');
   if (first && (!place || westernFront.test(place)) && !london.test(all)) {
