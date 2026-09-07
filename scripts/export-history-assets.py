@@ -183,6 +183,7 @@ def field_station():
     earth = material('Packed earth', (.22, .19, .13), 'noise')
     canvas = material('Weathered canvas', (.40, .37, .23), 'fabric')
     iron = material('Blackened iron', (.07, .08, .07), 'noise', .45)
+    ruin = material('Weathered masonry', (.25, .27, .25), 'noise')
     box('Earth foundation', (0, .7, -.15), (9, 8, .3), earth)
     for i in range(19):
         box('Duckboard', (-3.8 + i * .42, .2, .03), (.39, 6.6, .08), wood, .005)
@@ -210,6 +211,10 @@ def field_station():
             box('Canvas supply parcel', (x, 2.35, z + .23), (.43, .45, .38), canvas, .05)
     for x in [1.95, 3.65]:
         box('Supply rack post', (x, 2.5, 1.15), (.09, .1, 2.3), dark)
+    box('Distant ruined masonry', (1.08, 3.0, 1.65), (.72, .28, 1.6), ruin)
+    box('Ruin wall fragment', (1.92, 3.0, 1.35), (.56, .28, 1.1), ruin)
+    box('Broken masonry cap', (1.5, 2.96, 2.5), (1.55, .4, .16), ruin)
+    box('Rubble at ruined wall', (1.5, 2.7, .42), (1.65, .55, .4), ruin, .08)
     box('Dispatch board', (-2.5, 3.12, 2.1), (1.65, .06, 1.0), dark)
     for x in [-2.95, -2.4]:
         box('Illustrative blank notice', (x, 3.07, 2.12), (.42, .015, .65), paper, 0)

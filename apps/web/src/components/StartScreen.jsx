@@ -4,6 +4,7 @@ import { LoadingPanel } from '@time-capsule/ui';
 import UserBar from './UserBar';
 import { useAuth } from '../context/AuthContext';
 import HistoricalEnvironment from '../immersive/HistoricalEnvironment.jsx';
+import { isImmersiveEnabled } from '../immersive/featureFlag.js';
 import '../immersive/presentation.css';
 
 export default function StartScreen({
@@ -16,7 +17,7 @@ export default function StartScreen({
   setTopic,
   handleStartAdventure,
   showAuthModal = false,
-  immersiveEnabled = import.meta.env?.VITE_IMMERSIVE_ENABLED === 'true',
+  immersiveEnabled = isImmersiveEnabled(),
 }) {
   const { authError } = useAuth();
   const displayError = errorMsg || authError;

@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "bun test",
     "dev:immersive": "VITE_IMMERSIVE_ENABLED=true vite",
-    "test:immersive": "playwright test --config playwright.immersive.config.js"
+    "test:immersive": "playwright test --config playwright.immersive.config.js",
+    "test:immersive:fallback": "playwright test --config playwright.fallback.config.js"
   },
   "dependencies": {
     "@fontsource/source-serif-4": "5.3.0",

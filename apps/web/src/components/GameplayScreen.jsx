@@ -10,11 +10,12 @@ import GameplayHeader from "./gameplay/GameplayHeader";
 import ContinuePrompt from "./gameplay/ContinuePrompt";
 import WarpingOverlay from "./gameplay/WarpingOverlay";
 import HistoricalEnvironment from '../immersive/HistoricalEnvironment.jsx';
+import { isImmersiveEnabled } from '../immersive/featureFlag.js';
 
 export default function GameplayScreen({
   topic,
   showAuthModal = false,
-  immersiveEnabled = import.meta.env?.VITE_IMMERSIVE_ENABLED === 'true',
+  immersiveEnabled = isImmersiveEnabled(),
   gameData,
   idx,
   isLoading,

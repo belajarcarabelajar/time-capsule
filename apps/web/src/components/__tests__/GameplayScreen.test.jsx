@@ -32,12 +32,12 @@ describe('GameplayScreen', () => {
   };
 
   test('renders loading state when isLoading is true', () => {
-    const { getByText } = render(<GameplayScreen isLoading={true} />);
+    const { getByText } = render(<GameplayScreen immersiveEnabled={false} isLoading={true} />);
     expect(getByText('MENYIAPKAN BABAK BERIKUTNYA...')).toBeTruthy();
   });
 
   test('renders warping home state', () => {
-    const { getByText } = render(<GameplayScreen isWarpingHome={true} />);
+    const { getByText } = render(<GameplayScreen immersiveEnabled={false} isWarpingHome={true} />);
     expect(getByText('WARPING TO PRESENT DAY...')).toBeTruthy();
   });
 
@@ -47,6 +47,7 @@ describe('GameplayScreen', () => {
 
     const { getByText } = render(
       <GameplayScreen
+        immersiveEnabled={false}
         showContinuePrompt={true}
         chapterCount={2}
         handleContinue={handleContinue}
@@ -71,6 +72,7 @@ describe('GameplayScreen', () => {
     const handleCopyError = mock(() => {});
     const { getByText } = render(
       <GameplayScreen
+        immersiveEnabled={false}
         showContinuePrompt={true}
         chapterCount={1}
         errorMsg="Test Error Message"
@@ -91,6 +93,7 @@ describe('GameplayScreen', () => {
 
     const { getByText } = render(
       <GameplayScreen
+        immersiveEnabled={false}
         handleNext={handleNext}
         gameData={mockGameData}
         idx={0}
@@ -104,6 +107,7 @@ describe('GameplayScreen', () => {
   test('renders preloaded next chapter indicator and preloading state indicator', () => {
     const { getByText, rerender } = render(
       <GameplayScreen
+        immersiveEnabled={false}
         showContinuePrompt={true}
         chapterCount={1}
         nextGameData={{ meta: { location: 'Location 2' } }}
@@ -114,6 +118,7 @@ describe('GameplayScreen', () => {
 
     rerender(
       <GameplayScreen
+        immersiveEnabled={false}
         showContinuePrompt={true}
         chapterCount={1}
         isPreloading={true}
@@ -121,5 +126,15 @@ describe('GameplayScreen', () => {
     );
 
     expect(getByText(/SEDANG MENYUSUN DATA.../i)).toBeTruthy();
+  });
+
+  test('uses the contextual environment by default', () => {
+    const { container } = render(<GameplayScreen gameData={mockGameData} idx={0} />);
+    expect(container.querySelector('[data-room="archive"]')).toBeTruthy();
+  });
+
+  test('keeps the legacy background available when explicitly disabled', () => {
+    const { container } = render(<GameplayScreen immersiveEnabled={false} gameData={mockGameData} idx={0} />);
+    expect(container.querySelector('[data-room]')).toBeNull();
   });
 });

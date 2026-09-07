@@ -15,6 +15,9 @@ describe('authored history room artifacts', () => {
       const scene = JSON.parse(model.subarray(20, 20 + model.readUInt32LE(12)).toString());
       expect(scene.images.length).toBeGreaterThan(0);
       expect(scene.meshes.length).toBeLessThanOrEqual(60);
+      if (id === 'ww1-field-station') {
+        expect(scene.nodes.map(node => node.name)).toContain('Distant ruined masonry');
+      }
       expect(statSync(`${base}/poster.webp`).size).toBeLessThanOrEqual(250 * 1024);
       const provenance = JSON.parse(readFileSync(`${root}/assets/history/provenance.json`));
       expect(provenance.rooms[id].source).toBe(`assets/history/source/${id}.blend`);

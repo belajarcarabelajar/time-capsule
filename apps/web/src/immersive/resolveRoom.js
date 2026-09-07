@@ -2,8 +2,8 @@ const normalize = value => typeof value === 'string'
   ? value.slice(0, 500).normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim() : '';
 const firstWar = /\b(?:ww\s*1|ww\s*i|world war (?:1|i|one)|perang dunia (?:1|i|pertama))\b/u;
 const secondWar = /\b(?:ww\s*2|ww\s*ii|world war (?:2|ii|two)|perang dunia (?:2|ii|kedua))\b/u;
-const westernFront = /\b(?:western front|front barat|france|prancis|perancis|belgium|belgia|verdun|somme|ypres)\b/u;
-const london = /\b(?:london|britain|britania|inggris|england|united kingdom)\b/u;
+const westernFront = /\b(?:western front|front barat|front occidental|flanders|france|prancis|perancis|belgium|belgia|verdun|somme|ypres)\b/u;
+const london = /\b(?:london|british home front|britain|britania|inggris|england|united kingdom)\b/u;
 const incompatible = /\b(?:tokyo|japan|jepang|pacific|pasifik|asia|indonesia|java|jawa|africa|afrika|russia|rusia|moscow|berlin|germany|jerman|italy|italia|america|amerika|pearl harbor|normandy|normandia)\b/u;
 
 export function resolveRoom({ topic, location } = {}) {
