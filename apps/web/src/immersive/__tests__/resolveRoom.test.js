@@ -15,6 +15,13 @@ describe('conservative room selection', () => {
     ['World War II', 'Tokyo', 'archive'],
     ['World War I', 'London', 'archive'],
     ['Majapahit', 'Java', 'archive'],
+    ['Sriwijaya', 'Palembang, Sumatra', 'market-port'],
+    ['Jalur rempah', '', 'market-port'],
+    ['Perdagangan maritim', 'Batavia', 'market-port'],
+    ['Sriwijaya', 'Palembang', 'market-port'],
+    ['Pasar dan pelabuhan', 'Sunda Kelapa', 'market-port'],
+    ['Perang Dunia II', 'Sunda Kelapa', 'archive'],
+    ['Sriwijaya', 'Perang Dunia II, Tokyo', 'archive'],
     ['https://wwii.example.com', '', 'archive'],
     ['awwiiword', '', 'archive'],
     ['WWII', 'unknown island', 'archive'],
@@ -34,5 +41,8 @@ describe('conservative room selection', () => {
     expect(resolveRoom({
       topic: 'https://example.test', environmentKey: 'kingdom-court',
     }).roomId).toBe('archive');
+    expect(resolveRoom({
+      topic: 'Jalur rempah', location: '', environmentKey: 'market-port',
+    })).toEqual({ roomId: 'market-port', reason: 'environment-key' });
   });
 });
