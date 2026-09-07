@@ -19,7 +19,8 @@ describe("fetchScenarioData", () => {
       "archive",
       "ww1-field-station",
       "ww2-radio-room",
-      "kingdom-court"
+      "kingdom-court",
+      "market-port"
     ]);
     expect(GEMINI_SYSTEM_PROMPT).toContain('"environmentKey"');
     HISTORY_ENVIRONMENT_KEYS.forEach((key) => {
