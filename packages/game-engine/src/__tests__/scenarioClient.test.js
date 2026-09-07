@@ -242,7 +242,7 @@ describe('Input Validation & Prompt Construction & Zod Schema Validation', () =>
     await expect(fetchScenarioData("Topic", 1, 456)).rejects.toThrow('Invalid input types.');
   });
 
-  it('should truncate topic > 200 chars and history > 5000 chars', async () => {
+  it('should truncate topic > 200 chars and history > 3000 chars', async () => {
     let capturedBody;
     const validJsonString = JSON.stringify({
       meta: { location: "Sanitized Location", themeColor: "red" },
@@ -268,7 +268,8 @@ describe('Input Validation & Prompt Construction & Zod Schema Validation', () =>
     const promptSent = capturedBody.messages[1].content;
     
     expect(promptSent).toContain("TOPIK UTAMA: " + "A".repeat(200));
-    expect(promptSent).toContain("B".repeat(5000));
+    expect(promptSent).toContain("B".repeat(3000));
+    expect(promptSent).not.toContain("B".repeat(3001));
     expect(promptSent).toContain("KONTEKS: Ini adalah BAGIAN 2.");
   });
 

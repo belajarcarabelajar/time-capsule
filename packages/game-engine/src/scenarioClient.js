@@ -110,12 +110,13 @@ const fetchScenarioData = async (
     throw new Error("Invalid input types.");
   }
 
-  // 2. Length validation
+  // 2. Length validation (history capped so a foreground-plus-preload
+  // pair stays inside the provider per-minute token budget)
   if (activeTopic.length > 200) {
     activeTopic = activeTopic.substring(0, 200);
   }
-  if (historySummary.length > 5000) {
-    historySummary = historySummary.substring(historySummary.length - 5000);
+  if (historySummary.length > 3000) {
+    historySummary = historySummary.substring(historySummary.length - 3000);
   }
 
   // 3. Basic sanitization to prevent gross injection/breaking prompt structure
@@ -143,7 +144,8 @@ const fetchScenarioData = async (
   // Single scenario provider (Groq via the Pages Function proxy).
   // max_tokens bounds the output so a foreground-plus-preload pair stays
   // inside the provider per-minute token budget. A full 15-20 slide
-  // scenario needs roughly 1500-1800 output tokens.
+  // scenario needs roughly 2200-2800 output tokens; below that the
+  // provider cuts the JSON mid-object and rejects it (failed_generation).
   const scenarioResponse = await fetch(`/api/scenario`, {
     method: "POST",
     headers: {
@@ -160,7 +162,7 @@ const fetchScenarioData = async (
         { role: "user", content: promptText },
       ],
       response_format: { type: "json_object" },
-      max_tokens: 2200,
+      max_tokens: 3000,
     }),
   });
 
