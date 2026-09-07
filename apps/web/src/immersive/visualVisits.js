@@ -7,6 +7,7 @@ const detailViews = {
   'kingdom-court': { position: [6, 4.8, 10], target: [-0.6, 1.6, -1] },
   'market-port': { position: [7, 4.2, 11], target: [-0.5, 1.2, -2] },
   'rural-village': { position: [8, 5.4, 9.5], target: [-0.4, 1.1, -1.5] },
+  'resistance-outpost': { position: [8.5, 5.8, 10], target: [-0.4, 1.4, -1.5] },
 };
 
 const visits = Object.fromEntries(Object.values(roomManifest).map(room => {

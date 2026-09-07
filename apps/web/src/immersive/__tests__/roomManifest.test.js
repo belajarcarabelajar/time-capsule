@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { roomManifest } from '../rooms.js';
 
 test('every authored environment provides local media and accessible inspection views', () => {
-  expect(Object.keys(roomManifest)).toEqual(['archive', 'ww1-field-station', 'ww2-radio-room', 'kingdom-court', 'market-port', 'rural-village']);
+  expect(Object.keys(roomManifest)).toEqual(['archive', 'ww1-field-station', 'ww2-radio-room', 'kingdom-court', 'market-port', 'rural-village', 'resistance-outpost']);
   for (const [id, room] of Object.entries(roomManifest)) {
     expect(room.id).toBe(id);
     expect(room.modelUrl).toBe(`/history/${id}/room.glb`);
@@ -31,5 +31,10 @@ test('every authored environment provides local media and accessible inspection 
     'sawah',
     'lumbung',
     'irigasi',
+  ]);
+  expect(roomManifest['resistance-outpost'].objects.map(object => object.id)).toEqual([
+    'palisade',
+    'watch-post',
+    'signal-fire',
   ]);
 });
