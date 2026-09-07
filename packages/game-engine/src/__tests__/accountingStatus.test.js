@@ -1,5 +1,5 @@
 import { test, expect, mock, afterEach } from 'bun:test';
-import { fetchScenarioData } from '../geminiClient.js';
+import { fetchScenarioData } from '../scenarioClient.js';
 const originalFetch = global.fetch;
 afterEach(() => { global.fetch = originalFetch; });
 for (const status of [401, 403, 503]) {

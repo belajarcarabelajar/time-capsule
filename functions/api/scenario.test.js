@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { onRequestPost } from "./ai.js";
+import { onRequestPost } from "./scenario.js";
 import { signJwt } from "./auth/_utils.js";
 import { createPointsDb } from "./test-support/pointsDb.js";
 
@@ -30,12 +30,12 @@ describe("onRequestPost - Credentials Validation", () => {
     expect(body.errors[0].message).toContain("AgentRouter API key");
   });
 
-  it("should return 500 error when AGENTROUTER_API_KEY is missing", async () => {
+  it("should return 500 when only unrelated variables are present", async () => {
     const context = {
       request: await authenticatedRequest(),
       env: {
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
-        GEMINI_API_KEY: "gemini-key-present",
+        GOOGLE_CLIENT_ID: "client-id-present",
       },
     };
 

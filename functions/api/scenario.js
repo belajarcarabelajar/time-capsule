@@ -51,7 +51,7 @@ export async function onRequestPost(context) {
   }
 
   const cost = 10;
-  const pointCheck = await checkUserPoints(authUser, env, cost, "ai.js");
+  const pointCheck = await checkUserPoints(authUser, env, cost, "scenario.js");
 
   if (!pointCheck.success) {
     return pointCheck.errorResponse;
@@ -96,7 +96,7 @@ export async function onRequestPost(context) {
           ? JSON.stringify(body.messages).slice(0, 500)
           : "Time Capsule Story",
         contentStr: JSON.stringify(data),
-        sourceName: "ai.js",
+        sourceName: "scenario.js",
         dataObj: data,
       });
       return new Response(

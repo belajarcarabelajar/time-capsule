@@ -24,8 +24,8 @@ for (const [topic, location, room, object, environmentKey] of [
     await expect(page.locator('.history-object-detail')).toBeVisible();
     await page.getByRole('button', { name: object, exact: true }).press('Escape');
     await expect(page.getByRole('button', { name: 'Jelajahi ruang' })).toBeFocused();
-    expect(calls.filter(call => call === 'gemini')).toHaveLength(2);
-    expect(calls).not.toContain('fallback');
+    expect(calls.filter(call => call === 'scenario')).toHaveLength(2);
+    expect(calls).toHaveLength(2);
   });
 }
 
@@ -41,8 +41,8 @@ test('kingdom-court stays poster-first on mobile without creating extra content'
   await page.getByRole('button', { name: 'Jelajahi ruang' }).click();
   await page.getByRole('button', { name: 'Kursi upacara', exact: true }).click();
   await expect(page.locator('.history-object-detail')).toContainText('bukan salinan singgasana');
-  expect(calls.filter(call => call === 'gemini')).toHaveLength(2);
-  expect(calls).not.toContain('fallback');
+  expect(calls.filter(call => call === 'scenario')).toHaveLength(2);
+  expect(calls).toHaveLength(2);
   await page.screenshot({ path: '/tmp/time-capsule-kingdom-court-mobile.png', fullPage: true });
 });
 
@@ -89,6 +89,6 @@ test('asset failure keeps the lesson and isolated inspection usable', async ({ p
   await page.getByRole('button', { name: 'Telepon lapangan', exact: true }).press('Enter');
   await expect(page.getByText('Bagaimana kita memeriksa sebuah cerita?')).not.toBeVisible();
   await page.getByRole('button', { name: 'Kembali belajar' }).click();
-  expect(calls.filter(call => call === 'gemini')).toHaveLength(2);
-  expect(calls).not.toContain('fallback');
+  expect(calls.filter(call => call === 'scenario')).toHaveLength(2);
+  expect(calls).toHaveLength(2);
 });

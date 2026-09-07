@@ -22,18 +22,15 @@ export async function mockHistoryApi(page, location = scenario.meta.location, en
   await page.route('**/api/auth/me', route => route.fulfill({ json: {
     authenticated: true, user: { id: 'fixture', name: 'Penjelajah', points: 50, maxPoints: 50 },
   } }));
-  await page.route('**/api/gemini', route => {
-    calls.push('gemini');
+  await page.route('**/api/scenario', route => {
+    calls.push('scenario');
     return route.fulfill({ json: {
-      candidates: [{ content: { parts: [{ text: JSON.stringify({ ...scenario, meta: {
+      success: true,
+      result: { response: JSON.stringify({ ...scenario, meta: {
         ...scenario.meta, location, ...(environmentKey ? { environmentKey } : {}),
-      } }) }] } }], user_points: 40,
+      } }) },
     } });
   });
-  await page.route('**/api/ai', route => {
-    calls.push('fallback');
-    return route.fulfill({ status: 503, json: { error: 'Unexpected fixture fallback' } });
-  });
-  await page.route(/generativelanguage\.googleapis\.com|api\.cloudflare\.com/, route => route.abort());
+  await page.route(/generativelanguage\.googleapis\.com|api\.cloudflare\.com|agentrouter\.org/, route => route.abort());
   return calls;
 }

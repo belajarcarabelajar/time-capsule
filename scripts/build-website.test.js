@@ -62,8 +62,7 @@ test("deploy entry uses only explicit current-project credentials and the build-
 test("server credential paths do not use Vite-exposed variable names", () => {
   const files = [
     "apps/web/vite.config.js",
-    "functions/api/ai.js",
-    "functions/api/gemini.js",
+    "functions/api/scenario.js",
     "functions/api/auth/callback.js",
     "functions/api/auth/login.js",
   ];

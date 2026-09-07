@@ -1,7 +1,7 @@
 import { describe, it, expect, mock, beforeEach, afterEach, spyOn } from "bun:test";
-import { fetchScenarioData } from "../src/geminiClient.js";
+import { fetchScenarioData } from "../src/scenarioClient.js";
 import { HISTORY_ENVIRONMENT_KEYS } from "../src/historyEnvironmentKeys.js";
-import { GEMINI_SYSTEM_PROMPT } from "../src/systemPrompt.js";
+import { SCENARIO_SYSTEM_PROMPT } from "../src/systemPrompt.js";
 
 describe("fetchScenarioData", () => {
   let originalFetch;
@@ -22,9 +22,9 @@ describe("fetchScenarioData", () => {
       "kingdom-court",
       "market-port"
     ]);
-    expect(GEMINI_SYSTEM_PROMPT).toContain('"environmentKey"');
+    expect(SCENARIO_SYSTEM_PROMPT).toContain('"environmentKey"');
     HISTORY_ENVIRONMENT_KEYS.forEach((key) => {
-      expect(GEMINI_SYSTEM_PROMPT).toContain(key);
+      expect(SCENARIO_SYSTEM_PROMPT).toContain(key);
     });
   });
 
@@ -35,13 +35,7 @@ describe("fetchScenarioData", () => {
     }`;
 
     global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') {
-        return {
-          ok: false,
-          json: async () => ({ success: false, errors: [] }),
-          text: async () => "Not configured"
-        };
-      }
+      expect(url).toBe('/api/scenario');
       return {
         ok: true,
         json: async () => ({
@@ -84,13 +78,7 @@ describe("fetchScenarioData", () => {
     }`;
 
     global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') {
-        return {
-          ok: false,
-          json: async () => ({ success: false, errors: [] }),
-          text: async () => "Not configured"
-        };
-      }
+      expect(url).toBe('/api/scenario');
       return {
         ok: true,
         json: async () => ({
@@ -114,13 +102,7 @@ describe("fetchScenarioData", () => {
     }`;
 
     global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') {
-        return {
-          ok: false,
-          json: async () => ({ success: false, errors: [] }),
-          text: async () => "Not configured"
-        };
-      }
+      expect(url).toBe('/api/scenario');
       return {
         ok: true,
         json: async () => ({

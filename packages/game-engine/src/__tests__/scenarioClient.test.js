@@ -14,7 +14,7 @@ describe('fetchScenarioData JSON Sanitization', () => {
 
   beforeEach(async () => {
     originalFetch = global.fetch;
-    const module = await import('../geminiClient.js');
+    const module = await import('../scenarioClient.js');
     fetchScenarioData = module.fetchScenarioData;
   });
 
@@ -31,15 +31,11 @@ describe('fetchScenarioData JSON Sanitization', () => {
     });
 
     global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') {
-        return new Response(JSON.stringify({
-          candidates: [{ content: { parts: [{ text: validJsonString }] } }]
-        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      }
+      expect(url).toBe('/api/scenario');
       return new Response(JSON.stringify({
         success: true,
-        result: { choices: [{ message: { content: validJsonString } }] }
-      }));
+        result: { response: validJsonString }
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     });
 
     const result = await fetchScenarioData('Test Topic', 1);
@@ -57,15 +53,11 @@ describe('fetchScenarioData JSON Sanitization', () => {
     }`;
 
     global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') {
-        return new Response(JSON.stringify({
-          candidates: [{ content: { parts: [{ text: malformedJsonString }] } }]
-        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      }
+      expect(url).toBe('/api/scenario');
       return new Response(JSON.stringify({
         success: true,
-        result: { choices: [{ message: { content: malformedJsonString } }] }
-      }));
+        result: { response: malformedJsonString }
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     });
 
     const result = await fetchScenarioData('Test Topic', 1);
@@ -91,15 +83,11 @@ describe('fetchScenarioData JSON Sanitization', () => {
     }`;
 
     global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') {
-        return new Response(JSON.stringify({
-          candidates: [{ content: { parts: [{ text: malformedJsonString }] } }]
-        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      }
+      expect(url).toBe('/api/scenario');
       return new Response(JSON.stringify({
         success: true,
-        result: { choices: [{ message: { content: malformedJsonString } }] }
-      }));
+        result: { response: malformedJsonString }
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     });
 
     const result = await fetchScenarioData('Test Topic', 1);
@@ -116,58 +104,51 @@ describe('fetchScenarioData JSON Sanitization', () => {
     `;
 
     global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') {
-        return new Response(JSON.stringify({
-          candidates: [{ content: { parts: [{ text: malformedJsonString }] } }]
-        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      }
+      expect(url).toBe('/api/scenario');
       return new Response(JSON.stringify({
         success: true,
-        result: { choices: [{ message: { content: malformedJsonString } }] }
-      }));
+        result: { response: malformedJsonString }
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     });
 
     await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Gagal memproses skenario cerita.');
   });
 
-  it('should throw detailed error message if Cloudflare AI API returns success: false with errors array', async () => {
+  it('should throw detailed error message if the scenario API returns success: false with errors array', async () => {
     global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') return new Response('', { status: 500 });
+      expect(url).toBe('/api/scenario');
       return new Response(JSON.stringify({
         success: false,
-        errors: [{ message: 'Something went wrong with Cloudflare AI' }]
+        errors: [{ message: 'Something went wrong with the scenario provider' }]
       }));
     });
 
-    await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Something went wrong with Cloudflare AI');
+    await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Something went wrong with the scenario provider');
   });
 
-  it('should throw exact error message when Gemini API returns 403 (e.g., INSUFFICIENT_POINTS)', async () => {
+  it('should throw exact error message when the scenario API returns 403 (e.g., INSUFFICIENT_POINTS)', async () => {
     global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') {
-        return new Response(JSON.stringify({
-          success: false,
-          error: 'INSUFFICIENT_POINTS',
-          message: 'Poin Anda tidak mencukupi (0 poin). Diperlukan 10 poin.'
-        }), { status: 403, headers: { 'Content-Type': 'application/json' } });
-      }
-      return new Response('', { status: 500 });
+      expect(url).toBe('/api/scenario');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'INSUFFICIENT_POINTS',
+        message: 'Poin Anda tidak mencukupi (0 poin). Diperlukan 10 poin.'
+      }), { status: 403, headers: { 'Content-Type': 'application/json' } });
     });
 
     await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Poin Anda tidak mencukupi (0 poin). Diperlukan 10 poin.');
   });
 
-  it('should throw fallback error message if Cloudflare AI returns non-ok without JSON error message', async () => {
-    global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') return new Response('', { status: 500 });
+  it('should throw fallback error message if the scenario API returns non-ok without JSON error message', async () => {
+    global.fetch = mock(async () => {
       return new Response('Internal Server Error', { status: 500 });
     });
 
-    await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Gagal menghubungi portal Cloudflare AI.');
+    await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Gagal menghubungi portal AI.');
   });
 });
 
-describe('Cloudflare Fallback Behavior', () => {
+describe('Scenario Provider Behavior', () => {
   let originalFetch;
   let fetchScenarioData;
 
@@ -181,7 +162,7 @@ describe('Cloudflare Fallback Behavior', () => {
 
   beforeEach(async () => {
     originalFetch = global.fetch;
-    const module = await import('../geminiClient.js');
+    const module = await import('../scenarioClient.js');
     fetchScenarioData = module.fetchScenarioData;
   });
 
@@ -189,44 +170,36 @@ describe('Cloudflare Fallback Behavior', () => {
     global.fetch = originalFetch;
   });
 
-  it('should extract text from Cloudflare result.choices[0].message.content', async () => {
+  it('should extract text from the normalized result.response payload', async () => {
     const validJsonString = JSON.stringify({
-      meta: { location: "Cloudflare Choices", themeColor: "blue" },
+      meta: { location: "Scenario Response", themeColor: "blue" },
       characters: validCharacters,
       scenes: validScenes,
       script: []
     });
 
     global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') return new Response('', { status: 500 });
-      return new Response(JSON.stringify({
-        success: true,
-        result: { choices: [{ message: { content: validJsonString } }] }
-      }));
-    });
-
-    const result = await fetchScenarioData('Fallback Topic', 1);
-    expect(result.meta.location).toBe('Cloudflare Choices');
-  });
-
-  it('should extract text from Cloudflare result.response if choices array is missing', async () => {
-    const validJsonString = JSON.stringify({
-      meta: { location: "Cloudflare Response", themeColor: "green" },
-      characters: validCharacters,
-      scenes: validScenes,
-      script: []
-    });
-
-    global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') return new Response('', { status: 500 });
+      expect(url).toBe('/api/scenario');
       return new Response(JSON.stringify({
         success: true,
         result: { response: validJsonString }
       }));
     });
 
-    const result = await fetchScenarioData('Fallback Topic', 1);
-    expect(result.meta.location).toBe('Cloudflare Response');
+    const result = await fetchScenarioData('Scenario Topic', 1);
+    expect(result.meta.location).toBe('Scenario Response');
+  });
+
+  it('should throw when result.response is missing from the payload', async () => {
+    global.fetch = mock(async (url) => {
+      expect(url).toBe('/api/scenario');
+      return new Response(JSON.stringify({
+        success: true,
+        result: {}
+      }));
+    });
+
+    await expect(fetchScenarioData('Scenario Topic', 1)).rejects.toThrow('Gagal memproses skenario cerita.');
   });
 });
 
@@ -244,7 +217,7 @@ describe('Input Validation & Prompt Construction & Zod Schema Validation', () =>
 
   beforeEach(async () => {
     originalFetch = global.fetch;
-    const module = await import('../geminiClient.js');
+    const module = await import('../scenarioClient.js');
     fetchScenarioData = module.fetchScenarioData;
   });
 
@@ -268,9 +241,11 @@ describe('Input Validation & Prompt Construction & Zod Schema Validation', () =>
     });
 
     global.fetch = mock(async (url, options) => {
+      expect(url).toBe('/api/scenario');
       capturedBody = JSON.parse(options.body);
       return new Response(JSON.stringify({
-        candidates: [{ content: { parts: [{ text: validJsonString }] } }]
+        success: true,
+        result: { response: validJsonString }
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     });
 
@@ -279,7 +254,7 @@ describe('Input Validation & Prompt Construction & Zod Schema Validation', () =>
 
     await fetchScenarioData(longTopic, 2, longHistory);
 
-    const promptSent = capturedBody.contents[0].parts[0].text;
+    const promptSent = capturedBody.messages[1].content;
     
     expect(promptSent).toContain("TOPIK UTAMA: " + "A".repeat(200));
     expect(promptSent).toContain("B".repeat(5000));
@@ -296,15 +271,17 @@ describe('Input Validation & Prompt Construction & Zod Schema Validation', () =>
     });
 
     global.fetch = mock(async (url, options) => {
+      expect(url).toBe('/api/scenario');
       capturedBody = JSON.parse(options.body);
       return new Response(JSON.stringify({
-        candidates: [{ content: { parts: [{ text: validJsonString }] } }]
+        success: true,
+        result: { response: validJsonString }
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     });
 
     await fetchScenarioData("<Topic>{With}[Brackets]", 1, "<History>{With}[Brackets]");
 
-    const promptSent = capturedBody.contents[0].parts[0].text;
+    const promptSent = capturedBody.messages[1].content;
     expect(promptSent).not.toContain("<");
     expect(promptSent).not.toContain(">");
     expect(promptSent).not.toContain("{");
@@ -323,7 +300,8 @@ describe('Input Validation & Prompt Construction & Zod Schema Validation', () =>
 
     global.fetch = mock(async () => {
       return new Response(JSON.stringify({
-        candidates: [{ content: { parts: [{ text: invalidSchemaJson }] } }]
+        success: true,
+        result: { response: invalidSchemaJson }
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     });
 
@@ -342,7 +320,8 @@ describe('Input Validation & Prompt Construction & Zod Schema Validation', () =>
   it('should throw an error when rawText contains no JSON brackets', async () => {
     global.fetch = mock(async () => {
       return new Response(JSON.stringify({
-        candidates: [{ content: { parts: [{ text: "Plain text response with no brackets" }] } }]
+        success: true,
+        result: { response: "Plain text response with no brackets" }
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     });
 

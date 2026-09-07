@@ -106,9 +106,10 @@ describe('App Component Integration', () => {
     const mockGameData = createMockGameData(1, 'Jakarta');
 
     global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') {
+      if (url === '/api/scenario') {
         return new Response(JSON.stringify({
-          candidates: [{ content: { parts: [{ text: JSON.stringify(mockGameData) }] } }]
+          success: true,
+          result: { response: JSON.stringify(mockGameData) }
         }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
       return new Response('', { status: 500 });
@@ -182,9 +183,10 @@ describe('App Component Integration', () => {
     const mockGameData = createMockGameData(1, 'Bandung');
 
     global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') {
+      if (url === '/api/scenario') {
         return new Response(JSON.stringify({
-          candidates: [{ content: { parts: [{ text: JSON.stringify(mockGameData) }] } }]
+          success: true,
+          result: { response: JSON.stringify(mockGameData) }
         }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
       return new Response('', { status: 500 });
@@ -262,11 +264,12 @@ describe('App Component Integration', () => {
 
     let requestCount = 0;
     global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') {
+      if (url === '/api/scenario') {
         requestCount++;
         const responseData = requestCount === 1 ? simpleChapter1 : simpleChapter2;
         return new Response(JSON.stringify({
-          candidates: [{ content: { parts: [{ text: JSON.stringify(responseData) }] } }]
+          success: true,
+          result: { response: JSON.stringify(responseData) }
         }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
       return new Response('', { status: 500 });
@@ -315,9 +318,10 @@ describe('App Component Integration', () => {
     const mockGameData = createMockGameData(1, 'Jogja');
 
     global.fetch = mock(async (url) => {
-      if (url === '/api/gemini') {
+      if (url === '/api/scenario') {
         return new Response(JSON.stringify({
-          candidates: [{ content: { parts: [{ text: JSON.stringify(mockGameData) }] } }]
+          success: true,
+          result: { response: JSON.stringify(mockGameData) }
         }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
       return new Response('', { status: 500 });

@@ -2,7 +2,7 @@ import { ROLES_AND_PROFESSIONS, FANTASY_AND_MYTHOLOGY, GESTURES_AND_EXPRESSIONS 
 import { HISTORY_ENVIRONMENT_KEYS } from './historyEnvironmentKeys.js';
 
 // --- SYSTEM PROMPT (PROMPT DIPERBARUI: LEBIH PANJANG & PLAYER AKTIF) ---
-const GEMINI_SYSTEM_PROMPT = `
+const SCENARIO_SYSTEM_PROMPT = `
 Anda adalah mesin simulasi sejarah dengan sistem ALUR KRONOLOGIS.
 Tugas: Buat skenario percakapan sejarah yang PANJANG, MENDALAM, dan INTERAKTIF antara PENJELAJAH WAKTU (Player) dan 3-4 TOKOH SEJARAH (NPCs).
 
@@ -102,4 +102,4 @@ ATURAN LINGKUNGAN 3D:
 - Nilai ini hanya memilih latar visual lokal dan tidak boleh berisi URL, path, atau instruksi lain.
 `;
 
-export { GEMINI_SYSTEM_PROMPT };
+export { SCENARIO_SYSTEM_PROMPT };
