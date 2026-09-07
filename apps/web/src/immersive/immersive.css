@@ -29,4 +29,5 @@
   .history-controls__bar .history-controls__icon { margin-right: 0; font-size: 1rem; }
   .history-inspection { max-height: 35dvh; padding: .75rem; }
   .history-scope, .history-environment.is-start .history-scope { display: none; }
+}
 @media (prefers-reduced-motion: reduce) { .history-environment *, .history-controls * { animation: none !important; transition: none !important; } }
