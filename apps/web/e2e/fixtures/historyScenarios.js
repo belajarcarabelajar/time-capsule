@@ -17,7 +17,7 @@ export const scenario = {
   ],
 };
 
-export async function mockHistoryApi(page, location = scenario.meta.location) {
+export async function mockHistoryApi(page, location = scenario.meta.location, environmentKey) {
   const calls = [];
   await page.route('**/api/auth/me', route => route.fulfill({ json: {
     authenticated: true, user: { id: 'fixture', name: 'Penjelajah', points: 50, maxPoints: 50 },
@@ -25,7 +25,9 @@ export async function mockHistoryApi(page, location = scenario.meta.location) {
   await page.route('**/api/gemini', route => {
     calls.push('gemini');
     return route.fulfill({ json: {
-      candidates: [{ content: { parts: [{ text: JSON.stringify({ ...scenario, meta: { ...scenario.meta, location } }) }] } }], user_points: 40,
+      candidates: [{ content: { parts: [{ text: JSON.stringify({ ...scenario, meta: {
+        ...scenario.meta, location, ...(environmentKey ? { environmentKey } : {}),
+      } }) }] } }], user_points: 40,
     } });
   });
   await page.route('**/api/ai', route => {

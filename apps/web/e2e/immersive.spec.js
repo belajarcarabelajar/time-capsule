@@ -1,12 +1,13 @@
 import { expect, test } from '@playwright/test';
 import { mockHistoryApi } from './fixtures/historyScenarios.js';
 
-for (const [topic, location, room, object] of [
+for (const [topic, location, room, object, environmentKey] of [
   ['Perang Dunia I', 'Western Front, France', 'ww1-field-station', 'Telepon lapangan'],
   ['Perang Dunia II', 'London, Britain', 'ww2-radio-room', 'Penerima radio'],
+  ['Majapahit', 'Java', 'kingdom-court', 'Kursi upacara', 'kingdom-court'],
 ]) {
   test(`${room} loads authored geometry and inspection without extra generation`, async ({ page }) => {
-    const calls = await mockHistoryApi(page, location);
+    const calls = await mockHistoryApi(page, location, environmentKey);
     await page.setViewportSize({ width: 1440, height: 960 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
@@ -26,6 +27,23 @@ for (const [topic, location, room, object] of [
     expect(calls).not.toContain('fallback');
   });
 }
+
+test('kingdom-court stays poster-first on mobile without creating extra content', async ({ page }) => {
+  const calls = await mockHistoryApi(page, 'Java', 'kingdom-court');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.getByPlaceholder('Ketik Peristiwa Sejarah...').fill('Majapahit');
+  await page.getByRole('button', { name: 'Mulai Petualangan' }).click();
+  await expect(page.locator('[data-room="kingdom-court"]')).toBeVisible();
+  await expect(page.locator('canvas')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Jelajahi ruang' }).click();
+  await page.getByRole('button', { name: 'Kursi upacara', exact: true }).click();
+  await expect(page.locator('.history-object-detail')).toContainText('bukan salinan singgasana');
+  expect(calls.filter(call => call === 'gemini')).toHaveLength(2);
+  expect(calls).not.toContain('fallback');
+  await page.screenshot({ path: '/tmp/time-capsule-kingdom-court-mobile.png', fullPage: true });
+});
 
 test('archive scene renders real 3D with motion paused behind the original topic form', async ({ page }) => {
   await mockHistoryApi(page);

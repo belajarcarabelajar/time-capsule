@@ -1,4 +1,5 @@
 import { GEMINI_SYSTEM_PROMPT } from "./systemPrompt.js";
+import { HISTORY_ENVIRONMENT_KEYS } from "./historyEnvironmentKeys.js";
 import { z } from "zod";
 
 const zPlayerSchema = z.object({
@@ -37,6 +38,7 @@ const scenarioZodSchema = z.object({
   meta: z.object({
     location: z.string(),
     themeColor: z.string(),
+    environmentKey: z.string().optional(),
   }),
   characters: z.object({
     PLAYER: zPlayerSchema,
@@ -111,6 +113,7 @@ const geminiResponseSchema = {
       properties: {
         location: { type: "STRING" },
         themeColor: { type: "STRING" },
+        environmentKey: { type: "STRING", enum: HISTORY_ENVIRONMENT_KEYS },
       },
       required: ["location", "themeColor"],
     },

@@ -13,7 +13,7 @@ from mathutils import Vector
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', type=Path, required=True)
-parser.add_argument('--room', choices=['archive', 'ww1-field-station', 'ww2-radio-room'], required=True)
+parser.add_argument('--room', choices=['archive', 'ww1-field-station', 'ww2-radio-room', 'kingdom-court'], required=True)
 parser.add_argument('--input', type=Path, help='Re-export an edited blend instead of authoring.')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = args.root.resolve()
@@ -258,6 +258,37 @@ def radio_room():
     light('Domestic lamplight', (0, 1, 3.8), 400, (1, .68, .36), 3, (0, 0, 0))
 
 
+def kingdom_court():
+    stone = material('Warm courtyard stone', (.39, .31, .22), 'noise')
+    crimson = material('Ceremonial red cloth', (.39, .055, .035), 'fabric')
+    for row in range(15):
+        for col in range(13):
+            box('Courtyard paving', (-4.8 + col * .8, -1.8 + row * .55, -.07),
+                (.76, .51, .12), stone, .012)
+    box('Raised ceremonial platform', (0, 2.15, .34), (4.6, 2.15, .65), stone, .035)
+    for x in [-1.65, -1.1, -.55, 0, .55, 1.1, 1.65]:
+        box('Platform step', (x, 1.05, .10), (.5, .95, .20), stone, .02)
+    for x in [-2.0, 2.0]:
+        cylinder('Ceremonial column', (x, 2.65, 2.1), .20, 3.2, wood, 32)
+        cylinder('Column capital', (x, 2.65, 3.72), .34, .18, brass, 32)
+    box('Ceremonial seat back', (0, 2.75, 2.05), (1.45, .22, 2.1), wood, .10)
+    box('Ceremonial seat cushion', (0, 2.2, 1.18), (1.3, 1.0, .18), crimson, .06)
+    for x in [-.58, .58]:
+        box('Ceremonial seat arm', (x, 2.32, 1.62), (.16, .74, .78), wood, .05)
+    ring('Ceremonial seat halo', (0, 2.60, 2.75), .46, .035, brass, (math.pi / 2, 0, 0))
+    table(-.9, -.1)
+    box('Open courtyard backdrop', (0, 4.65, 2.7), (10, .16, 5.4), plaster)
+    for x in [-3.85, 3.85]:
+        cylinder('Gate tower', (x, 3.85, 1.75), .72, 3.5, stone, 32)
+        box('Gate tower cap', (x, 3.85, 3.58), (1.6, 1.5, .22), wood, .05)
+    box('Courtyard gate lintel', (0, 4.0, 3.35), (5.7, .5, .40), wood, .04)
+    for x in [-2.45, 2.45]:
+        cylinder('Gate post', (x, 3.92, 1.65), .18, 3.3, wood, 24)
+    for x in [-1.95, 1.95]:
+        box('Illustrative hanging banner', (x, 3.68, 2.55), (.82, .05, 1.45), crimson, .015)
+    light('Courtyard daylight', (0, -1.5, 6.7), 1500, (1, .79, .52), 5, (0, 2, 0))
+
+
 if args.input:
     bpy.ops.wm.open_mainfile(filepath=str(args.input.resolve()))
 else:
@@ -274,7 +305,8 @@ else:
     glass.node_tree.nodes.get('Principled BSDF').inputs['Emission Strength'].default_value = 1.5
     books = [material('Binding ' + str(i), c, 'fabric') for i, c in enumerate([
         (.29, .09, .055), (.13, .22, .18), (.28, .22, .12), (.12, .15, .20)])]
-    {'archive': archive, 'ww1-field-station': field_station, 'ww2-radio-room': radio_room}[args.room]()
+    {'archive': archive, 'ww1-field-station': field_station, 'ww2-radio-room': radio_room,
+     'kingdom-court': kingdom_court}[args.room]()
     light('Soft afternoon key', (2, -4, 7), 1800, (1, .80, .57), 6, (0, 1, 1))
     light('Cool fill', (-4, -2, 4), 700, (.58, .72, 1), 5, (0, 1, 1))
     bpy.ops.object.camera_add(location=(7, -10, 6))

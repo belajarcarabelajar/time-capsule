@@ -35,6 +35,16 @@
       "objects": ["radio", "curtain", "shelf"],
       "references": [],
       "review": "Authored locally. Historical source review and physical-device visual acceptance remain pending. No authentic broadcasts or recordings."
+    },
+    "kingdom-court": {
+      "source": "assets/history/source/kingdom-court.blend",
+      "model": "apps/web/public/history/kingdom-court/room.glb",
+      "poster": "apps/web/public/history/kingdom-court/poster.webp",
+      "checksums": "apps/web/public/history/kingdom-court/export-report.json",
+      "scope": "Illustrative, culturally non-specific royal court with a raised ceremonial area, manuscript table, and courtyard threshold. Not a reconstruction of a named palace or kingdom.",
+      "objects": ["ceremonial-seat", "manuscript-table", "courtyard-gate"],
+      "references": [],
+      "review": "Authored locally from procedural geometry and materials. No authentic documents, maps, or architectural claims."
     }
   }
 }

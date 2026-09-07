@@ -6,12 +6,16 @@ const westernFront = /\b(?:western front|front barat|front occidental|flanders|f
 const london = /\b(?:london|british home front|britain|britania|inggris|england|united kingdom)\b/u;
 const incompatible = /\b(?:tokyo|japan|jepang|pacific|pasifik|asia|indonesia|java|jawa|africa|afrika|russia|rusia|moscow|berlin|germany|jerman|italy|italia|america|amerika|pearl harbor|normandy|normandia)\b/u;
 
-export function resolveRoom({ topic, location } = {}) {
+export function resolveRoom({ topic, location, environmentKey } = {}) {
   const text = normalize(topic);
   const place = normalize(location);
   const all = `${text} ${place}`;
   const archive = reason => ({ roomId: 'archive', reason });
   if (/https?:|www\.|[<>]/u.test(all)) return archive('untrusted-input');
+  const hintedRoom = normalize(environmentKey);
+  if (Object.prototype.hasOwnProperty.call(roomManifest, hintedRoom)) {
+    return { roomId: hintedRoom, reason: 'environment-key' };
+  }
   const first = firstWar.test(all);
   const second = secondWar.test(all);
   if (first && second) return archive('conflicting-eras');
@@ -24,3 +28,4 @@ export function resolveRoom({ topic, location } = {}) {
   }
   return archive('no-supported-setting');
 }
+import { roomManifest } from './rooms.js';

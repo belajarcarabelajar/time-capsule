@@ -1,5 +1,7 @@
 import { describe, it, expect, mock, beforeEach, afterEach, spyOn } from "bun:test";
 import { fetchScenarioData } from "../src/geminiClient.js";
+import { HISTORY_ENVIRONMENT_KEYS } from "../src/historyEnvironmentKeys.js";
+import { GEMINI_SYSTEM_PROMPT } from "../src/systemPrompt.js";
 
 describe("fetchScenarioData", () => {
   let originalFetch;
@@ -10,6 +12,19 @@ describe("fetchScenarioData", () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
+  });
+
+  it("documents the allowed optional historical environment keys in the model prompt", () => {
+    expect(HISTORY_ENVIRONMENT_KEYS).toEqual([
+      "archive",
+      "ww1-field-station",
+      "ww2-radio-room",
+      "kingdom-court"
+    ]);
+    expect(GEMINI_SYSTEM_PROMPT).toContain('"environmentKey"');
+    HISTORY_ENVIRONMENT_KEYS.forEach((key) => {
+      expect(GEMINI_SYSTEM_PROMPT).toContain(key);
+    });
   });
 
   it("throws an error when JSON parsing and sanitization fail completely", async () => {
@@ -52,7 +67,7 @@ describe("fetchScenarioData", () => {
 
   it("parses valid JSON response successfully", async () => {
     const validJSON = `{
-      "meta": { "location": "Test", "themeColor": "red" },
+      "meta": { "location": "Test", "themeColor": "red", "environmentKey": "kingdom-court" },
       "characters": {
         "PLAYER": { "id": "PLAYER", "name": "Penjelajah", "icon": "🧑🏻‍🚀", "desc": "Masa Depan" },
         "NPC_1": { "id": "NPC_1", "name": "Test1", "icon": "1", "desc": "Desc1" },
@@ -88,6 +103,7 @@ describe("fetchScenarioData", () => {
 
     const result = await fetchScenarioData("Test Topic", 1);
     expect(result).toBeDefined();
+    expect(result.meta.environmentKey).toBe("kingdom-court");
     expect(result.script[0].text).toBe("Welcome to the game");
   });
 

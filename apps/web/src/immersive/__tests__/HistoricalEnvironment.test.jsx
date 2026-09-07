@@ -18,6 +18,11 @@ describe('poster-first historical environment', () => {
     fireEvent.click(view.getByRole('button', { name: 'Kembali belajar' }));
     expect(view.queryByRole('group', { name: 'Benda dalam ruang' })).toBeNull();
   });
+  test('uses a valid environment key for the illustrative kingdom room', () => {
+    const view = render(<HistoricalEnvironment topic="Majapahit" location="Java" environmentKey="kingdom-court" />);
+    expect(view.container.querySelector('[data-room="kingdom-court"]')).toBeTruthy();
+    expect(view.getByTestId('environment-poster').getAttribute('src')).toBe('/history/kingdom-court/poster.webp');
+  });
   test('controls never bubble learning clicks or Enter; Escape returns focus', () => {
     const advance = mock();
     const view = render(<div onClick={advance} onKeyDown={advance}><HistoricalEnvironment /></div>);

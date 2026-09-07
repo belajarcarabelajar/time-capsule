@@ -74,4 +74,29 @@ export const roomManifest = {
       },
     ],
   },
+  'kingdom-court': {
+    id: 'kingdom-court',
+    label: 'Balairung kerajaan',
+    scopeLabel: 'Ruang kerajaan ilustratif untuk pembelajaran, bukan rekonstruksi lokasi sejarah',
+    modelUrl: '/history/kingdom-court/room.glb',
+    posterUrl: '/history/kingdom-court/poster.webp',
+    camera: { position: [8, 6, 11], target: [0, 1.8, -1], yawLimit: 0.42, pitchLimit: 0.2 },
+    objects: [
+      {
+        id: 'ceremonial-seat', label: 'Kursi upacara',
+        description: 'Kursi ini menandai tempat berkumpul dan mengambil keputusan dalam balairung imajinatif. Bentuknya bukan salinan singgasana dari kerajaan atau tokoh sejarah tertentu.',
+        view: { position: [3.2, 3.2, 4.5], target: [0, 1.7, -2.4] },
+      },
+      {
+        id: 'manuscript-table', label: 'Meja naskah',
+        description: 'Meja ini mengajak kita membahas bagaimana aturan, catatan, dan pengetahuan dapat beredar di lingkungan kerajaan. Lembarannya dekoratif dan bukan dokumen sejarah asli.',
+        view: { position: [2.2, 3, 4], target: [-0.8, 1.1, -0.4] },
+      },
+      {
+        id: 'courtyard-gate', label: 'Gerbang halaman',
+        description: 'Gerbang membingkai peralihan antara halaman dan ruang pertemuan. Elemen ini membantu membicarakan akses, upacara, dan kehidupan sosial tanpa mengklaim bentuk tempat bersejarah tertentu.',
+        view: { position: [1, 2.8, 4], target: [3.6, 2.2, -2.2] },
+      },
+    ],
+  },
 };

@@ -1,0 +1,19 @@
+{
+  "room": "kingdom-court",
+  "blender": "5.2.1 LTS",
+  "triangles": 26316,
+  "files": {
+    "kingdom-court.blend": {
+      "bytes": 4446561,
+      "sha256": "6637f7312e2b445585996cfc97a603587aa910fa568931a12cdb7d8bd4e0a928"
+    },
+    "room.glb": {
+      "bytes": 1293772,
+      "sha256": "a56707eb2a0cd2f06e2615cb84ce983275750eca770b7c7cee67a3aca187c797"
+    },
+    "poster.webp": {
+      "bytes": 53494,
+      "sha256": "3468903adfe8abdabbccae74222a58ed49d64fc2330d7d76ac8252ffe2293a34"
+    }
+  }
+}

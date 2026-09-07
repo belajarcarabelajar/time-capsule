@@ -133,6 +133,12 @@ describe('GameplayScreen', () => {
     expect(container.querySelector('[data-room="archive"]')).toBeTruthy();
   });
 
+  test('passes a valid AI environment key to the immersive environment', () => {
+    const gameData = { ...mockGameData, meta: { ...mockGameData.meta, environmentKey: 'kingdom-court' } };
+    const { container } = render(<GameplayScreen gameData={gameData} idx={0} />);
+    expect(container.querySelector('[data-room="kingdom-court"]')).toBeTruthy();
+  });
+
   test('keeps the legacy background available when explicitly disabled', () => {
     const { container } = render(<GameplayScreen immersiveEnabled={false} gameData={mockGameData} idx={0} />);
     expect(container.querySelector('[data-room]')).toBeNull();

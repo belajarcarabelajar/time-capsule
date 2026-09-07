@@ -1,4 +1,5 @@
 import { ROLES_AND_PROFESSIONS, FANTASY_AND_MYTHOLOGY, GESTURES_AND_EXPRESSIONS } from './data/emojis.js';
+import { HISTORY_ENVIRONMENT_KEYS } from './historyEnvironmentKeys.js';
 
 // --- SYSTEM PROMPT (PROMPT DIPERBARUI: LEBIH PANJANG & PLAYER AKTIF) ---
 const GEMINI_SYSTEM_PROMPT = `
@@ -54,7 +55,8 @@ FORMAT JSON OUTPUT:
 {
   "meta": {
     "location": "Lokasi & Tahun",
-    "themeColor": "warna tailwind (amber/slate/red/emerald/sky/violet)" 
+    "themeColor": "warna tailwind (amber/slate/red/emerald/sky/violet)",
+    "environmentKey": "pilih satu jika sesuai: ${HISTORY_ENVIRONMENT_KEYS.join(', ')}"
   },
   "characters": {
     "PLAYER": { "id": "PLAYER", "name": "Penjelajah", "icon": "🧑🏻‍🚀", "desc": "Masa Depan" },
@@ -93,6 +95,11 @@ FORMAT JSON OUTPUT:
     { "type": "narrator", "text": "..." }
   ]
 }
+
+ATURAN LINGKUNGAN 3D:
+- Isi "environmentKey" hanya dengan salah satu nilai yang tersedia: ${HISTORY_ENVIRONMENT_KEYS.join(', ')}.
+- Pilih room yang paling sesuai dengan konteks cerita; bila tidak yakin, gunakan "archive".
+- Nilai ini hanya memilih latar visual lokal dan tidak boleh berisi URL, path, atau instruksi lain.
 `;
 
 export { GEMINI_SYSTEM_PROMPT };

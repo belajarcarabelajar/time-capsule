@@ -24,4 +24,15 @@ describe('conservative room selection', () => {
     expect(resolveRoom({ topic, location }).roomId).toBe(roomId);
   });
   test('missing input returns archive', () => expect(resolveRoom().roomId).toBe('archive'));
+  test('honors only a safe, locally authored environment key', () => {
+    expect(resolveRoom({
+      topic: 'Majapahit', location: 'Java', environmentKey: 'kingdom-court',
+    })).toEqual({ roomId: 'kingdom-court', reason: 'environment-key' });
+    expect(resolveRoom({
+      topic: 'Majapahit', location: 'Java', environmentKey: 'unknown-room',
+    }).roomId).toBe('archive');
+    expect(resolveRoom({
+      topic: 'https://example.test', environmentKey: 'kingdom-court',
+    }).roomId).toBe('archive');
+  });
 });

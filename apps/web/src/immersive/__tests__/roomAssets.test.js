@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dir, '../../../../..');
 describe('authored history room artifacts', () => {
-  for (const id of ['archive', 'ww1-field-station', 'ww2-radio-room']) {
+  for (const id of ['archive', 'ww1-field-station', 'ww2-radio-room', 'kingdom-court']) {
     test(`${id} ships editable source, textured model and lightweight poster`, () => {
       const source = readFileSync(`${root}/assets/history/source/${id}.blend`);
       expect(source.subarray(0, 7).toString()).toBe('BLENDER');

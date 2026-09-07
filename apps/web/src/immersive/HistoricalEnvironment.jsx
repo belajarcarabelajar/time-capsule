@@ -18,9 +18,13 @@ const initialMode = () => {
     && !reducedMotion() && !navigator.connection?.saveData ? '3d' : 'static';
 };
 
-export default function HistoricalEnvironment({ topic = '', location = '', mood = '',
+export default function HistoricalEnvironment({ topic = '', location = '', environmentKey = '', mood = '',
   blocked = false, startScreen = false, loadRenderer = loadCanvas }) {
-  const { roomId } = resolveRoom({ topic: startScreen ? '' : topic, location: startScreen ? '' : location });
+  const { roomId } = resolveRoom({
+    topic: startScreen ? '' : topic,
+    location: startScreen ? '' : location,
+    environmentKey: startScreen ? '' : environmentKey,
+  });
   const room = roomManifest[roomId] || roomManifest.archive;
   const [mode, setMode] = useState(initialMode);
   const [attempt, setAttempt] = useState(0);
