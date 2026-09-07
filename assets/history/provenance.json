@@ -1,0 +1,40 @@
+{
+  "license": "MIT",
+  "authorship": "Original procedural scene authored for the Time Capsule project during the approved implementation. No third-party models or textures used.",
+  "generator": "scripts/export-history-assets.py",
+  "blender": "4.5.4 LTS",
+  "seed": 1941,
+  "historicalStatus": "Illustrative environments; not exact reconstructions. No historical recordings, documents, or maps are presented as authentic.",
+  "rooms": {
+    "archive": {
+      "source": "assets/history/source/archive.blend",
+      "model": "apps/web/public/history/archive/room.glb",
+      "poster": "apps/web/public/history/archive/poster.webp",
+      "checksums": "apps/web/public/history/archive/export-report.json",
+      "scope": "Fictional time-travel archive. Textures and contour marks are original decorative patterns.",
+      "objects": ["instrument", "map", "cabinet"],
+      "references": [],
+      "review": "User instructed Continue after the first-room preview. Baked poster lighting is available; runtime asset uses textured PBR materials and direct lighting without baked ambient occlusion."
+    },
+    "ww1-field-station": {
+      "source": "assets/history/source/ww1-field-station.blend",
+      "model": "apps/web/public/history/ww1-field-station/room.glb",
+      "poster": "apps/web/public/history/ww1-field-station/poster.webp",
+      "checksums": "apps/web/public/history/ww1-field-station/export-report.json",
+      "scope": "Illustrative Western Front communications shelter: timber retaining walls, sandbags, field telephone, dispatch table and supply parcels. Not an exact site or equipment replica.",
+      "objects": ["telephone", "dispatch", "supplies"],
+      "references": [],
+      "review": "Authored locally. Historical source review and physical-device visual acceptance remain pending. No authentic documents or markings."
+    },
+    "ww2-radio-room": {
+      "source": "assets/history/source/ww2-radio-room.blend",
+      "model": "apps/web/public/history/ww2-radio-room/room.glb",
+      "poster": "apps/web/public/history/ww2-radio-room/poster.webp",
+      "checksums": "apps/web/public/history/ww2-radio-room/export-report.json",
+      "scope": "Illustrative British civilian interior with a wooden radio, blackout curtains, armchairs and household books. Not a documented person's home or a specific radio model.",
+      "objects": ["radio", "curtain", "shelf"],
+      "references": [],
+      "review": "Authored locally. Historical source review and physical-device visual acceptance remain pending. No authentic broadcasts or recordings."
+    }
+  }
+}

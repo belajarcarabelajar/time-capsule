@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -7,10 +7,16 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
 
-  const checkSession = async () => {
+  const sessionRequest = useRef(0);
+  const loggedOut = useRef(false);
+  const checkSession = useCallback(async () => {
+    if (loggedOut.current) return;
+    const requestId = ++sessionRequest.current;
     try {
       const res = await fetch('/api/auth/me');
+      if (!res.ok) throw new Error('Session unavailable');
       const data = await res.json();
+      if (requestId !== sessionRequest.current) return;
       if (data.authenticated && data.user) {
         setUser(data.user);
       } else {
@@ -18,11 +24,13 @@ export function AuthProvider({ children }) {
       }
     } catch (err) {
       console.error("Session check failed:", err);
-      setUser(null);
+      if (requestId === sessionRequest.current) {
+        setUser(previous => previous ? { ...previous, points: null, maxPoints: null, pointsAvailable: false } : null);
+      }
     } finally {
-      setLoading(false);
+      if (requestId === sessionRequest.current) setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Process URL params after OAuth callback redirect
@@ -40,18 +48,22 @@ export function AuthProvider({ children }) {
     }
 
     checkSession();
-  }, []);
+    return () => { sessionRequest.current += 1; };
+  }, [checkSession]);
 
   const loginWithGoogle = () => {
     window.location.href = '/api/auth/login';
   };
 
   const logout = async () => {
+    loggedOut.current = true;
+    sessionRequest.current += 1;
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);
     } catch (err) {
       console.error("Logout failed:", err);
+      loggedOut.current = false;
     }
   };
 

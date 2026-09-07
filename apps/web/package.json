@@ -8,11 +8,17 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "bun test"
+    "test": "bun test",
+    "dev:immersive": "VITE_IMMERSIVE_ENABLED=true vite",
+    "test:immersive": "playwright test --config playwright.immersive.config.js"
   },
   "dependencies": {
+    "@fontsource/source-serif-4": "5.3.0",
+    "@fontsource/source-sans-3": "5.3.0",
     "@time-capsule/game-engine": "workspace:*",
     "@time-capsule/ui": "workspace:*",
+    "@react-three/fiber": "8.18.0",
+    "three": "0.170.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",
@@ -20,6 +26,7 @@
     "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@babel/core": "^8.0.1",
     "@babel/preset-env": "^8.0.2",
     "@babel/preset-react": "^8.0.1",

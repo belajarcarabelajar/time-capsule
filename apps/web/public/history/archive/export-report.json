@@ -1,0 +1,19 @@
+{
+  "room": "archive",
+  "blender": "4.5.4 LTS",
+  "triangles": 26572,
+  "files": {
+    "archive.blend": {
+      "bytes": 7437049,
+      "sha256": "09b38c9a329f7dce23117ca850265f3f431104e4f7e4f87ad3c6ac45482edec9"
+    },
+    "room.glb": {
+      "bytes": 1682088,
+      "sha256": "980fbc59f11c58a859011a5673753553924c7db6a17b3e870ac50c144b271e76"
+    },
+    "poster.webp": {
+      "bytes": 101856,
+      "sha256": "00254d8ae5997b07ad0c61d10df453b4f9f5275a4f2f1058ab61150249d2debf"
+    }
+  }
+}

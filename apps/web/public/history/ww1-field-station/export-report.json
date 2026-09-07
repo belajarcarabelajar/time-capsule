@@ -1,0 +1,19 @@
+{
+  "room": "ww1-field-station",
+  "blender": "4.5.4 LTS",
+  "triangles": 23928,
+  "files": {
+    "ww1-field-station.blend": {
+      "bytes": 3625718,
+      "sha256": "82c9281acbef1e0a54445038727ad2c599a6e98a028094b1b000b94d49ae1b4d"
+    },
+    "room.glb": {
+      "bytes": 1498972,
+      "sha256": "205707929dc1602095abd2170d1383a90aa0004dc867c1e7a797a1c48fb7d75f"
+    },
+    "poster.webp": {
+      "bytes": 90324,
+      "sha256": "2be0f4acbbbf20b50bb991b56cf02c9a7bbc74785f9728b15289c8ca3cfab6cb"
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 import { onRequestPost } from "./gemini.js";
 import { signJwt } from "./auth/_utils.js";
+import { createPointsDb } from './test-support/pointsDb.js';
 
 describe("onRequestPost - D1 Error Handling", () => {
   let originalFetch;
@@ -16,16 +17,16 @@ describe("onRequestPost - D1 Error Handling", () => {
     console.error = originalConsoleError;
   });
 
-  it("should catch D1 point check error, log it, and continue to process the request", async () => {
+  it("rejects unavailable accounting before calling the provider", async () => {
     const consoleErrorSpy = mock(() => {});
     console.error = consoleErrorSpy;
 
     // Mock fetch for the Gemini API call
-    globalThis.fetch = async () => ({
+    globalThis.fetch = mock(async () => ({
       ok: true,
       status: 200,
       json: async () => ({ fake: "response" })
-    });
+    }));
 
     const token = await signJwt({ sub: "user-123" }, "test-secret");
 
@@ -57,16 +58,10 @@ describe("onRequestPost - D1 Error Handling", () => {
 
     const response = await onRequestPost(context);
 
-    // Check that it continued and returned 200 OK from Gemini mock
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(503);
     const body = await response.json();
-    expect(body.fake).toBe("response");
-
-    // Check that console.error was called with the right message
-    expect(consoleErrorSpy).toHaveBeenCalled();
-    const errorArgs = consoleErrorSpy.mock.calls[0];
-    expect(errorArgs[0]).toBe("D1 point check error in gemini.js:");
-    expect(errorArgs[1].message).toBe("Simulated D1 error");
+    expect(body.error).toBe('POINTS_UNAVAILABLE');
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 });
 
@@ -88,17 +83,20 @@ describe("onRequestPost - Credentials Validation", () => {
 
 describe("onRequestPost - Fetching and Response", () => {
   let originalFetch;
+  let fixture;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     originalFetch = globalThis.fetch;
+    fixture = await createPointsDb();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     globalThis.fetch = originalFetch;
+    await fixture.dispose();
   });
 
   it("should return 500 when fetch throws an error", async () => {
-    const token = await signJwt({ sub: "user-123" }, "test-secret");
+    const token = await signJwt({ sub: "google-user" }, "test-secret");
     const headers = new Map();
     headers.set("authorization", `Bearer ${token}`);
 
@@ -111,6 +109,7 @@ describe("onRequestPost - Fetching and Response", () => {
       },
       env: {
         GEMINI_API_KEY: "test-key",
+        DB: fixture.db,
         JWT_SECRET: "test-secret"
       }
     };

@@ -47,9 +47,12 @@ export default function App() {
           topic={topic}
           setTopic={setTopic}
           handleStartAdventure={handleStartAdventure}
+          showAuthModal={showAuthModal}
         />
       ) : (
         <GameplayScreen
+          topic={topic}
+          showAuthModal={showAuthModal}
           gameData={gameData}
           idx={idx}
           isLoading={isLoading}

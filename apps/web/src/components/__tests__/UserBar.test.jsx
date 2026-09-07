@@ -36,6 +36,16 @@ describe('UserBar Component', () => {
     expect(getByText('Memuat...')).toBeTruthy();
   });
 
+  test('unavailable quota never displays an invented 50-point balance', () => {
+    useAuthSpy = spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+      user: { name: 'Penjelajah', points: null, maxPoints: null, pointsAvailable: false },
+      loading: false, logout: mock(), loginWithGoogle: mock(),
+    });
+    const { getByText, queryByText } = render(<UserBar />);
+    expect(getByText('Saldo belum tersedia')).toBeTruthy();
+    expect(queryByText('50/50 Poin')).toBeNull();
+  });
+
   test('renders login button when user is not authenticated and triggers loginWithGoogle', () => {
     const mockLogin = mock();
     useAuthSpy = spyOn(AuthContextModule, 'useAuth').mockReturnValue({

@@ -4,7 +4,7 @@ import { generateHistorySummary } from '../utils/history';
 import { useAuth } from '../context/AuthContext';
 
 export function useGameState() {
-  const { user } = useAuth();
+  const { user, checkSession } = useAuth();
   const [inputMode, setInputMode] = useState(true);
   const [topic, setTopic] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -53,6 +53,7 @@ ${errorDetail.stack || "N/A"}
     } catch (e) {
       // Preload failed, ignore silently as main load will retry
     } finally {
+      void checkSession();
       setIsPreloading(false);
     }
   };
@@ -103,6 +104,7 @@ ${errorDetail.stack || "N/A"}
         });
       }
     } finally {
+      void checkSession();
       setIsLoading(false);
     }
   };
@@ -161,6 +163,7 @@ ${errorDetail.stack || "N/A"}
           });
         }
       } finally {
+        void checkSession();
         setIsLoading(false);
       }
     }

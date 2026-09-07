@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { onRequestPost } from "./ai.js";
 import { signJwt } from "./auth/_utils.js";
+import { createPointsDb } from './test-support/pointsDb.js';
 
 describe("onRequestPost - Credentials Validation", () => {
   it("should return 500 error when env is completely empty", async () => {
@@ -69,14 +70,17 @@ describe("onRequestPost - Credentials Validation", () => {
 describe("onRequestPost - Error Handling", () => {
   let originalFetch;
   let validToken;
+  let fixture;
 
   beforeEach(async () => {
     originalFetch = globalThis.fetch;
-    validToken = await signJwt({ sub: "test-user" }, "time-capsule-secret-jwt-key-2026-belajarcarabelajar");
+    validToken = await signJwt({ sub: "google-user" }, "time-capsule-secret-jwt-key-2026-belajarcarabelajar");
+    fixture = await createPointsDb();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     globalThis.fetch = originalFetch;
+    await fixture.dispose();
   });
 
   it("should return 500 when request body contains invalid JSON", async () => {
@@ -91,6 +95,7 @@ describe("onRequestPost - Error Handling", () => {
       },
       env: {
         VITE_CF_API_TOKEN: "valid-token",
+        DB: fixture.db,
         VITE_CF_ACCOUNT_ID: "valid-account",
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar"
       }
@@ -116,6 +121,7 @@ describe("onRequestPost - Error Handling", () => {
       },
       env: {
         VITE_CF_API_TOKEN: "valid-token",
+        DB: fixture.db,
         VITE_CF_ACCOUNT_ID: "valid-account",
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar"
       }
@@ -145,6 +151,7 @@ describe("onRequestPost - Error Handling", () => {
       },
       env: {
         VITE_CF_API_TOKEN: "valid-token",
+        DB: fixture.db,
         VITE_CF_ACCOUNT_ID: "valid-account",
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar"
       }

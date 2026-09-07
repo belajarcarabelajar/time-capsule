@@ -1,0 +1,32 @@
+.history-start.history-start, .history-gameplay.history-gameplay { font-family: 'Source Sans 3', 'Trebuchet MS', sans-serif; }
+.history-start { min-height: 100dvh; padding: clamp(1.2rem, 4vw, 4rem); isolation: isolate; }
+.history-start::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, #08101111, #08101122 30%, #081011e0); }
+.history-start .history-start__form { margin-left: auto; margin-right: clamp(0px, 5vw, 5rem); text-align: left; max-width: 25rem; padding: 1.5rem 0; }
+.history-start__form > .flex { justify-content: flex-start; }
+.history-start__form h1 { font-family: 'Source Serif 4', Georgia, serif; font-size: clamp(2.8rem, 4.5vw, 4.5rem); line-height: .98; font-weight: 500; letter-spacing: -.05em; color: #f4e9cc; text-shadow: 0 3px 30px #0008; }
+.history-start__form p { padding: 0; color: #e7dfcb; font-style: normal; font-size: 1rem; line-height: 1.6; }
+.history-start__form form { padding: 0; }
+.history-start__form form > .absolute { display: none; }
+.history-start__form input { background: #0f1b1df2; border: 1px solid #a8997366; text-align: left; color: #f8f0d8; font-weight: 400; }
+.history-start__form input::placeholder { color: #cbc4b5; }
+.history-start__form input:focus-visible { outline: 3px solid #dbc18a; outline-offset: 3px; }
+.history-start__form button[type='submit'] { background: #d9bc82; color: #192320; border-radius: .75rem; box-shadow: none; letter-spacing: .12em; }
+.history-start__form button[type='submit']:hover:not(:disabled) { background: #ead0a0; transform: none; }
+.history-start__form button[type='submit']:disabled { background: #52605b; color: #e1ded4; }
+.history-start .history-start__mark { background: none; border: 1px solid #e7d3a16e; border-radius: 50%; box-shadow: none; width: 3.7rem; height: 3.7rem; animation: none; }
+.history-start__mark svg { width: 1.7rem; height: 1.7rem; color: #e7d3a1; }
+.history-canvas { position: absolute; inset: 0; transition: opacity .4s ease; }
+.history-gameplay h1, .history-gameplay h2 { font-family: 'Source Serif 4', Georgia, serif; }
+@media (max-width: 899px) {
+  .history-start { padding: 5.5rem 1.5rem 6.5rem; }
+  .history-start::after { background: linear-gradient(180deg, #07101044, #071010c9 35%, #071010eb); }
+  .history-start .history-start__form { margin: 0 auto; padding: 0; }
+  .history-start__form > .flex { margin-bottom: 1.25rem; }
+}
+@media (max-height: 650px) { .history-start { min-height: 700px; } }
+@media (prefers-reduced-motion: reduce) {
+  .history-start *, .history-gameplay * { animation: none !important; transition: none !important; }
+}
+@font-face { font-family: 'Source Serif 4'; font-style: normal; font-weight: 500; font-display: swap; src: url('@fontsource/source-serif-4/files/source-serif-4-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Source Sans 3'; font-style: normal; font-weight: 400; font-display: swap; src: url('@fontsource/source-sans-3/files/source-sans-3-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Source Sans 3'; font-style: normal; font-weight: 600; font-display: swap; src: url('@fontsource/source-sans-3/files/source-sans-3-latin-600-normal.woff2') format('woff2'); }

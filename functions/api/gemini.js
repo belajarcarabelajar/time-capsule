@@ -1,5 +1,5 @@
 import { getUserFromRequest } from "./auth/_utils.js";
-import { checkUserPoints, deductPointsAndSaveStory } from "./_ai_utils.js";
+import { checkUserPoints, deductPointsAndSaveStory, PointsError, pointsErrorResponse } from "./_ai_utils.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -81,7 +81,7 @@ export async function onRequestPost(context) {
           errors: [data],
         }),
         {
-          status: response.status,
+          status: response.status === 503 ? 502 : response.status,
           headers: { "Content-Type": "application/json" },
         },
       );
@@ -108,6 +108,7 @@ export async function onRequestPost(context) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
+    if (err instanceof PointsError) return pointsErrorResponse(err);
     return new Response(
       JSON.stringify({
         success: false,

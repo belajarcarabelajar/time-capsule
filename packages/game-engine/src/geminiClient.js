@@ -263,7 +263,7 @@ const fetchScenarioData = async (
     rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
   } else {
     // If Gemini returned a 401 (UNAUTHORIZED) or 403 (INSUFFICIENT_POINTS), propagate the exact error message directly
-    if (geminiResponse.status === 401 || geminiResponse.status === 403) {
+    if ([401, 403, 503].includes(geminiResponse.status)) {
       let gData;
       try {
         gData = await geminiResponse.json();
@@ -271,9 +271,9 @@ const fetchScenarioData = async (
         console.error("Failed to parse Gemini error response:", e);
         gData = null;
       }
-      if (gData?.message || gData?.error) {
-        throw new Error(gData.message || gData.error);
-      }
+      const defaultMessage = geminiResponse.status === 401 ? 'Authentication required.'
+        : geminiResponse.status === 403 ? 'INSUFFICIENT_POINTS' : 'POINTS_UNAVAILABLE';
+      throw new Error(gData?.message || gData?.error || defaultMessage);
     }
 
     // Fallback to Cloudflare Workers AI using Meta Llama 3.1 8B Instruct (via Pages Function proxy)

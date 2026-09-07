@@ -1,0 +1,29 @@
+.history-environment { position: absolute; inset: 0; pointer-events: none; overflow: hidden; background: #171b1c; }
+.history-environment__scene { position: absolute; inset: 0; }
+.history-environment__poster { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+.history-environment__scene canvas { position: absolute; inset: 0; touch-action: none; }
+.history-environment__shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, #07111644, transparent 35%, #071116b8); }
+.history-environment.is-exploring .history-environment__scene { pointer-events: auto; }
+.history-controls { position: absolute; z-index: 12; top: 5.5rem; left: clamp(.75rem, 3vw, 2.5rem); pointer-events: auto; max-width: min(25rem, calc(100% - 1.5rem)); color: #f7efda; font-family: inherit; }
+.history-controls__bar, .history-controls__preferences, .history-objects { display: flex; gap: .4rem; flex-wrap: wrap; }
+.history-controls button { min-height: 44px; border: 1px solid #c1b28b66; border-radius: .5rem; padding: .55rem .8rem; color: #f7efda; background: #121d22ed; font: inherit; font-size: .8rem; line-height: 1.4; cursor: pointer; text-align: left; }
+.history-controls button:hover, .history-controls button[aria-pressed="true"] { background: #39473c; border-color: #ddc895; }
+.history-controls button:focus-visible { outline: 3px solid #f5dba2; outline-offset: 3px; }
+.history-inspection { padding: 1rem; margin-top: .5rem; border: 1px solid #b6a68155; border-radius: .75rem; background: #101b20f5; box-shadow: 0 12px 40px #0005; max-height: min(52dvh, 27rem); overflow-y: auto; overscroll-behavior: contain; }
+.history-inspection__hint { font-size: .75rem; line-height: 1.6; color: #d4d3c8; margin: 0 0 .7rem; }
+.history-object-detail { padding: .8rem 0; font-size: .86rem; line-height: 1.65; }
+.history-object-detail strong { color: #f4d99b; }
+.history-object-detail p { margin: .35rem 0 0; }
+.history-controls__preferences { margin: .75rem 0; }
+.history-environment.is-start .history-controls { top: auto; bottom: 1rem; }
+.history-environment.is-start .history-inspection { max-height: 35dvh; }
+.history-scope { position: absolute; z-index: 31; bottom: 1rem; right: 1.5rem; max-width: 24rem; padding: .35rem .65rem; margin: 0; color: #e3dfd0; background: #101b20db; border-radius: .25rem; font-size: .75rem; line-height: 1.5; }
+.history-environment.is-start .history-scope { top: 1.25rem; bottom: auto; left: 1.5rem; right: auto; max-width: 18rem; }
+@media (max-width: 600px) {
+  .history-controls { top: 5rem; max-width: calc(100% - 1.5rem); }
+  .history-controls button { font-size: .75rem; padding: .5rem .65rem; }
+  .history-inspection { max-height: 35dvh; padding: .75rem; }
+  .history-environment.is-start .history-scope { top: 4rem; left: 1.5rem; max-width: calc(100% - 3rem); }
+  .history-scope { font-size: .65rem; right: .75rem; bottom: .75rem; max-width: 55%; }
+}
+@media (prefers-reduced-motion: reduce) { .history-environment *, .history-controls * { animation: none !important; transition: none !important; } }

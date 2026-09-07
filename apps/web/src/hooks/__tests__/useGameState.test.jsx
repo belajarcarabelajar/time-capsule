@@ -27,8 +27,9 @@ let authShouldFail = false;
 const originalFetch = global.fetch;
 
 let mockUser = { id: '1', name: 'Test User' };
-mock.module('../context/AuthContext', () => ({
-  useAuth: () => ({ user: mockUser })
+const checkSession = mock(async () => {});
+mock.module('../../context/AuthContext', () => ({
+  useAuth: () => ({ user: mockUser, checkSession })
 }));
 
 mock.module('../utils/history', () => ({
@@ -59,6 +60,7 @@ describe('useGameState', () => {
   let originalClipboard;
 
   beforeEach(() => {
+    checkSession.mockClear();
     fetchShouldFail = false;
     authShouldFail = false;
     mockUser = { id: '1', name: 'Test User' };
@@ -115,6 +117,19 @@ describe('useGameState', () => {
     expect(result.current.gameData).toBeNull();
   });
 
+  test('refreshes after foreground and preload success; consuming cache only charges new preload', async () => {
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.setTopic('History'));
+    await act(async () => { await result.current.handleStartAdventure(); });
+    expect(checkSession).toHaveBeenCalledTimes(2);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(result.current.nextGameData).toBeTruthy();
+    await act(async () => { await result.current.handleContinue(); });
+    expect(checkSession).toHaveBeenCalledTimes(3);
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+    expect(result.current.chapterCount).toBe(2);
+  });
+
   test('handleStartAdventure does nothing if topic is empty', async () => {
     const { result } = renderHook(() => useGameState());
 
@@ -123,6 +138,16 @@ describe('useGameState', () => {
     });
 
     expect(result.current.inputMode).toBe(true);
+  });
+
+  test('refreshes quota even if generation fails after a possible server debit', async () => {
+    fetchShouldFail = true;
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.setTopic('History'));
+    await act(async () => { await result.current.handleStartAdventure(); });
+    expect(checkSession).toHaveBeenCalledTimes(1);
+    expect(result.current.inputMode).toBe(true);
+    expect(result.current.errorMsg).toBeTruthy();
   });
 
   test('handleStartAdventure shows auth modal if user is missing', async () => {

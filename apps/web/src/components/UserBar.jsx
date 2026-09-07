@@ -52,15 +52,15 @@ export default function UserBar() {
     );
   }
 
-  const userPoints = user.points ?? 50;
-  const maxPoints = user.maxPoints ?? 50;
+  const pointsAvailable = user.pointsAvailable !== false && Number.isInteger(user.points) && Number.isInteger(user.maxPoints);
+  const balanceLabel = pointsAvailable ? `${user.points}/${user.maxPoints}` : 'Saldo belum tersedia';
 
   return (
     <div className="flex items-center gap-3 font-sans">
       {/* Points Badge */}
       <div className="flex items-center gap-1.5 bg-amber-950/60 border border-amber-500/40 text-amber-300 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm">
         <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-        <span>{userPoints}/{maxPoints} Poin</span>
+        <span role="status">{pointsAvailable ? `${balanceLabel} Poin` : balanceLabel}</span>
       </div>
 
       <div className="relative" ref={dropdownRef}>
@@ -85,7 +85,7 @@ export default function UserBar() {
               <p className="text-[10px] text-stone-400 truncate">{user.email}</p>
               <div className="mt-1.5 pt-1.5 border-t border-stone-800/80 flex items-center justify-between text-[11px] text-amber-200/80">
                 <span>Poin Harian:</span>
-                <span className="font-bold text-amber-400">{userPoints}/{maxPoints}</span>
+                <span className="font-bold text-amber-400">{balanceLabel}</span>
               </div>
             </div>
             <button

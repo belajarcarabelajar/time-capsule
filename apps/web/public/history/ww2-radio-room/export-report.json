@@ -1,0 +1,19 @@
+{
+  "room": "ww2-radio-room",
+  "blender": "4.5.4 LTS",
+  "triangles": 12816,
+  "files": {
+    "ww2-radio-room.blend": {
+      "bytes": 3748079,
+      "sha256": "584dff9712171083c8f9a771394e85223e59c145b048ba56b6efa1a406deaf2e"
+    },
+    "room.glb": {
+      "bytes": 797144,
+      "sha256": "656b880e9abca7c38943287c8bcb980df35f14e1419ca638ace28982095e3a46"
+    },
+    "poster.webp": {
+      "bytes": 69208,
+      "sha256": "982269131d07b59ccab2ef8c4dc5e3951a5061455bb52ad5208083a68a637767"
+    }
+  }
+}

@@ -19,7 +19,8 @@
     "@testing-library/user-event": "^14.6.1",
     "happy-dom": "^20.11.1",
     "react-test-renderer": "18",
-    "turbo": "^2.3.0"
+    "turbo": "^2.3.0",
+    "miniflare": "4.20260730.0"
   },
   "packageManager": "bun@1.2.0",
   "dependencies": {

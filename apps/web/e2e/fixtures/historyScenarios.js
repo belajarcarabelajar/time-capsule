@@ -1,0 +1,37 @@
+export const scenario = {
+  meta: { location: 'Western Front, France', themeColor: '#846943' },
+  characters: {
+    PLAYER: { id: 'PLAYER', name: 'Penjelajah', icon: '🧑🏻‍🚀', desc: 'Masa Depan' },
+    NPC_1: { id: 'NPC_1', name: 'Pemandu', icon: '📖', desc: 'Teman belajar' },
+    NPC_2: { id: 'NPC_2', name: 'Pembaca', icon: '📚', desc: 'Teman belajar' },
+    NPC_3: { id: 'NPC_3', name: 'Penulis', icon: '✒️', desc: 'Teman belajar' },
+  },
+  scenes: { MAIN: { bg: 'from-stone-900 to-black', elements: [] } },
+  script: [
+    { type: 'dialogue', speakerId: 'NPC_1', mood: '🤔', text: 'Selamat datang di ruang belajar sejarah.' },
+    { type: 'quiz', speakerId: 'NPC_1', mood: '🤔', text: 'Bagaimana kita memeriksa sebuah cerita?', choices: [
+      { text: 'Membandingkan sumber', correct: true, response: 'Tepat, bandingkan sumber.' },
+      { text: 'Menebak saja', correct: false, response: 'Mari periksa sumbernya.' },
+    ] },
+    { type: 'narrator', speakerId: 'NPC_1', mood: '✨', text: 'Sumber membantu kita memahami masa lalu.' },
+  ],
+};
+
+export async function mockHistoryApi(page, location = scenario.meta.location) {
+  const calls = [];
+  await page.route('**/api/auth/me', route => route.fulfill({ json: {
+    authenticated: true, user: { id: 'fixture', name: 'Penjelajah', points: 50, maxPoints: 50 },
+  } }));
+  await page.route('**/api/gemini', route => {
+    calls.push('gemini');
+    return route.fulfill({ json: {
+      candidates: [{ content: { parts: [{ text: JSON.stringify({ ...scenario, meta: { ...scenario.meta, location } }) }] } }], user_points: 40,
+    } });
+  });
+  await page.route('**/api/ai', route => {
+    calls.push('fallback');
+    return route.fulfill({ status: 503, json: { error: 'Unexpected fixture fallback' } });
+  });
+  await page.route(/generativelanguage\.googleapis\.com|api\.cloudflare\.com/, route => route.abort());
+  return calls;
+}

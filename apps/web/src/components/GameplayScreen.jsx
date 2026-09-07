@@ -9,8 +9,12 @@ import {
 import GameplayHeader from "./gameplay/GameplayHeader";
 import ContinuePrompt from "./gameplay/ContinuePrompt";
 import WarpingOverlay from "./gameplay/WarpingOverlay";
+import HistoricalEnvironment from '../immersive/HistoricalEnvironment.jsx';
 
 export default function GameplayScreen({
+  topic,
+  showAuthModal = false,
+  immersiveEnabled = import.meta.env?.VITE_IMMERSIVE_ENABLED === 'true',
   gameData,
   idx,
   isLoading,
@@ -50,7 +54,7 @@ export default function GameplayScreen({
   const finalSpeakerDesc = speakerDesc;
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-black font-sans flex items-center justify-center select-none" onClick={handleNext}>
+    <div className={`fixed inset-0 overflow-hidden bg-black font-sans flex items-center justify-center select-none${immersiveEnabled ? ' history-gameplay' : ''}`} onClick={handleNext}>
       <div className="relative w-full h-full md:max-w-6xl md:h-[95vh] md:rounded-2xl overflow-hidden shadow-2xl bg-black border border-white/10">
 
         {isLoading && <LoadingPanel text="MENYIAPKAN BABAK BERIKUTNYA..." />}
@@ -63,7 +67,9 @@ export default function GameplayScreen({
           handleFinish={handleFinish}
         />
 
-        <DynamicBackground scene={gameData?.scenes?.MAIN} currentMood={displayMood} />
+        {immersiveEnabled ? <HistoricalEnvironment topic={topic} location={gameData?.meta?.location}
+          mood={displayMood} blocked={Boolean(isLoading || isWarpingHome || showContinuePrompt || quizMode || isNarrator || showAuthModal)} />
+          : <DynamicBackground scene={gameData?.scenes?.MAIN} currentMood={displayMood} />}
 
         {showContinuePrompt && !isWarpingHome && !isLoading && (
           <ContinuePrompt
