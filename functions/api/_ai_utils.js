@@ -6,6 +6,14 @@ export class PointsError extends Error {
   }
 }
 
+const UNLIMITED_QUOTA_EMAIL = 'kurniawaniwan7906@gmail.com';
+
+export function isUnlimitedQuotaUser(authUser) {
+  return authUser?.verified_email === true
+    && typeof authUser.email === 'string'
+    && authUser.email.trim().toLowerCase() === UNLIMITED_QUOTA_EMAIL;
+}
+
 export function pointsErrorResponse(error) {
   return new Response(JSON.stringify({
     success: false,
@@ -49,6 +57,9 @@ export async function readUserPoints(authUser, env) {
 }
 
 export async function checkUserPoints(authUser, env, cost = 10) {
+  if (isUnlimitedQuotaUser(authUser)) {
+    return { success: true, unlimited: true, currentPoints: null };
+  }
   try {
     const row = await readUserPoints(authUser, env);
     if (row.points < cost) throw new PointsError('INSUFFICIENT_POINTS', 403);
@@ -64,10 +75,24 @@ export async function deductPointsAndSaveStory({
   storyTitle = 'Time Capsule Chapter', promptSnippet = 'Time Capsule Story',
   contentStr = '{}', dataObj,
 }) {
-  if (!authUser || !env.DB) throw new PointsError();
+  const unlimited = isUnlimitedQuotaUser(authUser);
+  if (!authUser || (!env.DB && !unlimited)) throw new PointsError();
+  if (unlimited && !env.DB) return null;
   const db = env.DB;
   const storyId = crypto.randomUUID();
   try {
+    if (unlimited) {
+      await db.batch([
+        db.prepare(`INSERT INTO stories (id, user_id, title, prompt, content, points_spent)
+          SELECT ?, id, ?, ?, ?, 0 FROM users WHERE google_id = ?`)
+          .bind(storyId, storyTitle, promptSnippet, contentStr, authUser.sub),
+        db.prepare(`INSERT INTO point_transactions (user_id, amount, balance_after, type, description)
+          SELECT id, 0, points, 'ADMIN_GENERATE', ? FROM users WHERE google_id = ?
+          AND EXISTS (SELECT 1 FROM stories WHERE id = ? AND user_id = users.id)`)
+          .bind(transactionDescription, authUser.sub, storyId),
+      ]);
+      return null;
+    }
     const result = await db.batch([
       ...resetStatements(db, authUser.sub),
       db.prepare(`INSERT INTO stories (id, user_id, title, prompt, content, points_spent)
@@ -88,6 +113,10 @@ export async function deductPointsAndSaveStory({
     if (dataObj) dataObj.user_points = row.points;
     return row.points;
   } catch (error) {
+    if (unlimited) {
+      console.error('Admin story persistence unavailable');
+      return null;
+    }
     if (error instanceof PointsError) throw error;
     throw new PointsError();
   }

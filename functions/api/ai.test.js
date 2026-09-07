@@ -78,6 +78,30 @@ describe("onRequestPost - Error Handling", () => {
     fixture = await createPointsDb();
   });
 
+  it("allows the verified admin to reach the fallback provider without D1 quota state", async () => {
+    const adminToken = await signJwt({
+      sub: "admin-user", email: "kurniawaniwan7906@gmail.com", verified_email: true,
+    }, "time-capsule-secret-jwt-key-2026-belajarcarabelajar");
+    const headers = new Map([["Authorization", `Bearer ${adminToken}`]]);
+    globalThis.fetch = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ success: true, result: { response: '{}' } }),
+    });
+    const response = await onRequestPost({
+      request: {
+        json: async () => ({ messages: [], response_format: {} }),
+        headers: { get: key => headers.get(key) },
+      },
+      env: {
+        VITE_CF_API_TOKEN: "valid-token",
+        VITE_CF_ACCOUNT_ID: "valid-account",
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
+      },
+    });
+    expect(response.status).toBe(200);
+  });
+
   afterEach(async () => {
     globalThis.fetch = originalFetch;
     await fixture.dispose();

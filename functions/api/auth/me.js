@@ -1,5 +1,5 @@
 import { parseCookies, verifyJwt } from "./_utils.js";
-import { readUserPoints } from '../_ai_utils.js';
+import { isUnlimitedQuotaUser, readUserPoints } from '../_ai_utils.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -34,12 +34,15 @@ export async function onRequestGet(context) {
 
   let points = null;
   let maxPoints = null;
-  try {
-    const row = await readUserPoints(payload, env);
-    points = row.points;
-    maxPoints = row.max_points;
-  } catch {
-    console.error('Point balance unavailable');
+  const unlimitedQuota = isUnlimitedQuotaUser(payload);
+  if (!unlimitedQuota) {
+    try {
+      const row = await readUserPoints(payload, env);
+      points = row.points;
+      maxPoints = row.max_points;
+    } catch {
+      console.error('Point balance unavailable');
+    }
   }
 
   // Calculate next reset timestamp (midnight tomorrow UTC)
@@ -56,7 +59,8 @@ export async function onRequestGet(context) {
       picture: payload.picture,
       points: points,
       maxPoints: maxPoints,
-      pointsAvailable: points !== null,
+      pointsAvailable: unlimitedQuota || points !== null,
+      unlimitedQuota,
       nextResetAt: tomorrow.toISOString(),
     }
   }), {

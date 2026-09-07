@@ -76,6 +76,20 @@ describe("onRequestGet - me.js", () => {
     expect(json.user.nextResetAt).toBeDefined();
   });
 
+  it("marks the verified admin session as unlimited without D1", async () => {
+    const payload = {
+      sub: "admin-user", email: "KURNIAWANIWAN7906@GMAIL.COM", verified_email: true,
+    };
+    const token = await signJwt(payload, jwtSecret);
+    const response = await onRequestGet({
+      request: new Request("http://localhost/api/auth/me", { headers: { Cookie: `auth_token=${token}` } }),
+      env: { JWT_SECRET: jwtSecret },
+    });
+    const json = await response.json();
+    expect(json.user.unlimitedQuota).toBe(true);
+    expect(json.user.pointsAvailable).toBe(true);
+  });
+
   it("should authenticate successfully when valid token is in Authorization header", async () => {
     const payload = { sub: "user-123", email: "test@example.com", name: "Test User", picture: "pic.png" };
     const token = await signJwt(payload, jwtSecret);

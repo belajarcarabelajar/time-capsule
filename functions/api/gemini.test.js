@@ -63,6 +63,28 @@ describe("onRequestPost - D1 Error Handling", () => {
     expect(body.error).toBe('POINTS_UNAVAILABLE');
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
+
+  it("allows the verified admin to reach Gemini without D1 quota state", async () => {
+    const provider = mock(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ candidates: [{ content: { parts: [{ text: '{}' }] } }] }),
+    }));
+    globalThis.fetch = provider;
+    const token = await signJwt({
+      sub: 'admin-user', email: 'KURNIAWANIWAN7906@GMAIL.COM', verified_email: true,
+    }, 'test-secret');
+    const response = await onRequestPost({
+      request: new Request('http://localhost', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [] }),
+      }),
+      env: { GEMINI_API_KEY: 'test-key', JWT_SECRET: 'test-secret' },
+    });
+    expect(response.status).toBe(200);
+    expect(provider).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("onRequestPost - Credentials Validation", () => {
