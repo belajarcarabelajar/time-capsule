@@ -6,6 +6,7 @@ const detailViews = {
   'ww2-radio-room': { position: [5, 4.5, 9], target: [0, 1.5, -1.2] },
   'kingdom-court': { position: [6, 4.8, 10], target: [-0.6, 1.6, -1] },
   'market-port': { position: [7, 4.2, 11], target: [-0.5, 1.2, -2] },
+  'rural-village': { position: [8, 5.4, 9.5], target: [-0.4, 1.1, -1.5] },
 };
 
 const visits = Object.fromEntries(Object.values(roomManifest).map(room => {

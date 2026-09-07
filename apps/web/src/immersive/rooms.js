@@ -124,4 +124,29 @@ export const roomManifest = {
       },
     ],
   },
+  'rural-village': {
+    id: 'rural-village',
+    label: 'Desa agraris',
+    scopeLabel: 'Ilustrasi kehidupan agraris Nusantara; bukan rekonstruksi desa tertentu',
+    modelUrl: '/history/rural-village/room.glb',
+    posterUrl: '/history/rural-village/poster.webp',
+    camera: { position: [10, 6.5, 11], target: [0, 1.4, -1], yawLimit: 0.5, pitchLimit: 0.22 },
+    objects: [
+      {
+        id: 'sawah', label: 'Sawah',
+        description: 'Hamparan petak berisi padi muda menandai kerja bercocok tanam yang menjadi sumber kehidupan masyarakat agraris. Sawah ini bersifat ilustratif dan bukan penggambaran ladang atau desa bersejarah tertentu.',
+        view: { position: [3.5, 3.2, 6.5], target: [-4.5, 0.8, -2] },
+      },
+      {
+        id: 'lumbung', label: 'Lumbung padi',
+        description: 'Lumbung panggung tempat menyimpan hasil panen menggambarkan kebiasaan menjaga cadangan pangan di pedesaan. Bentuknya hanya ilustrasi kebiasaan umum, bukan bangunan asli dari desa atau masa tertentu.',
+        view: { position: [-5.5, 3.4, 1.5], target: [-3, 1.6, -4] },
+      },
+      {
+        id: 'irigasi', label: 'Saluran irigasi',
+        description: 'Saluran air dan pintu pembaginya mengingatkan bagaimana warga desa bekerja sama mengatur air untuk sawah. Penggambaran ini tidak mengklaim sistem irigasi atau tempat bersejarah tertentu.',
+        view: { position: [7, 3, 5.5], target: [4, 0.9, 3] },
+      },
+    ],
+  },
 };
