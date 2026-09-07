@@ -99,4 +99,29 @@ export const roomManifest = {
       },
     ],
   },
+  'market-port': {
+    id: 'market-port',
+    label: 'Pelabuhan niaga',
+    scopeLabel: 'Ilustrasi pelabuhan niaga Nusantara; bukan rekonstruksi pelabuhan atau kapal bersejarah tertentu',
+    modelUrl: '/history/market-port/room.glb',
+    posterUrl: '/history/market-port/poster.webp',
+    camera: { position: [9, 5, 13], target: [0, 1.5, -2], yawLimit: 0.5, pitchLimit: 0.22 },
+    objects: [
+      {
+        id: 'dock', label: 'Dermaga',
+        description: 'Pelabuhan menjadi tempat kapal singgah, memuat, dan bertukar barang. Dermaga ini menggambarkan suasana umum lalu lintas maritim, bukan salinan dermaga atau pelabuhan bersejarah tertentu.',
+        view: { position: [4, 3, 6], target: [0, 1.2, -2] },
+      },
+      {
+        id: 'market-stall', label: 'Lapak pasar',
+        description: 'Di tepi pelabuhan, lapak menjadi tempat orang menawar barang dan bertukar cerita. Tampilan lapak ini bersifat ilustratif dan tidak mengklaim jenis dagangan atau harga masa lalu.',
+        view: { position: [3, 3, 5], target: [-1, 1, -1] },
+      },
+      {
+        id: 'cargo', label: 'Muatan kapal',
+        description: 'Barang yang diangkut kapal menghubungkan satu kawasan dengan kawasan lain. Muatan yang digambarkan di sini hanya mewakili gagasan lalu lintas barang, bukan muatan kapal atau catatan dagang asli.',
+        view: { position: [1, 3, 5], target: [2.5, 1.5, -2] },
+      },
+    ],
+  },
 };
