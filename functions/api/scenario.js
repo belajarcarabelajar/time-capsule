@@ -6,8 +6,8 @@ import {
   pointsErrorResponse,
 } from "./_ai_utils.js";
 
-const AGENTROUTER_MODEL = "deepseek-v4-flash";
-const AGENTROUTER_URL = "https://agentrouter.org/v1/chat/completions";
+const DEFAULT_PROVIDER_URL = "https://api.groq.com/openai/v1/chat/completions";
+const DEFAULT_PROVIDER_MODEL = "openai/gpt-oss-120b";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -29,17 +29,21 @@ export async function onRequestPost(context) {
     );
   }
 
-  // Retrieve the AgentRouter credential from the Cloudflare Pages environment
-  const agentRouterKey = env.AGENTROUTER_API_KEY;
+  // Retrieve the provider credential from the Cloudflare Pages environment.
+  // Switching providers later is configuration-only: set PROVIDER_URL,
+  // PROVIDER_API_KEY, and PROVIDER_MODEL without touching this code.
+  const providerKey = env.PROVIDER_API_KEY;
+  const providerUrl = env.PROVIDER_URL || DEFAULT_PROVIDER_URL;
+  const providerModel = env.PROVIDER_MODEL || DEFAULT_PROVIDER_MODEL;
 
-  if (!agentRouterKey) {
+  if (!providerKey) {
     return new Response(
       JSON.stringify({
         success: false,
         errors: [
           {
             message:
-              "AgentRouter API key (AGENTROUTER_API_KEY) is not configured in Cloudflare Pages project settings.",
+              "Scenario provider API key (PROVIDER_API_KEY) is not configured in Cloudflare Pages project settings.",
           },
         ],
       }),
@@ -68,13 +72,13 @@ export async function onRequestPost(context) {
       response_format: body.response_format,
     };
 
-    const response = await fetch(AGENTROUTER_URL, {
+    const response = await fetch(providerUrl, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${agentRouterKey}`,
+        Authorization: `Bearer ${providerKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ...safeBody, model: AGENTROUTER_MODEL }),
+      body: JSON.stringify({ ...safeBody, model: providerModel }),
     });
 
     const data = await response.json();
@@ -90,8 +94,8 @@ export async function onRequestPost(context) {
         env,
         currentPoints,
         cost,
-        transactionDescription: "Generasi cerita time capsule (AgentRouter)",
-        storyTitle: "Time Capsule Chapter (AgentRouter)",
+        transactionDescription: "Generasi cerita time capsule",
+        storyTitle: "Time Capsule Chapter",
         promptSnippet: body.messages
           ? JSON.stringify(body.messages).slice(0, 500)
           : "Time Capsule Story",

@@ -27,7 +27,7 @@ describe("onRequestPost - Credentials Validation", () => {
 
     const body = await response.json();
     expect(body.success).toBe(false);
-    expect(body.errors[0].message).toContain("AgentRouter API key");
+    expect(body.errors[0].message).toContain("Scenario provider API key");
   });
 
   it("should return 500 when only unrelated variables are present", async () => {
@@ -42,7 +42,7 @@ describe("onRequestPost - Credentials Validation", () => {
     const response = await onRequestPost(context);
     expect(response.status).toBe(500);
     const body = await response.json();
-    expect(body.errors[0].message).toContain("AGENTROUTER_API_KEY");
+    expect(body.errors[0].message).toContain("PROVIDER_API_KEY");
   });
 
   it("rejects unauthenticated requests before checking provider credentials", async () => {
@@ -68,7 +68,7 @@ describe("onRequestPost - Error Handling", () => {
     fixture = await createPointsDb();
   });
 
-  it("allows the verified admin to reach the AgentRouter provider without D1 quota state", async () => {
+  it("allows the verified admin to reach the default provider without D1 quota state", async () => {
     const adminToken = await signJwt(
       {
         sub: "admin-user",
@@ -79,9 +79,9 @@ describe("onRequestPost - Error Handling", () => {
     );
     const headers = new Map([["Authorization", `Bearer ${adminToken}`]]);
     globalThis.fetch = async (url, init) => {
-      expect(url).toBe("https://agentrouter.org/v1/chat/completions");
-      expect(init.headers.Authorization).toBe("Bearer valid-agentrouter-key");
-      expect(JSON.parse(init.body).model).toBe("deepseek-v4-flash");
+      expect(url).toBe("https://api.groq.com/openai/v1/chat/completions");
+      expect(init.headers.Authorization).toBe("Bearer valid-provider-key");
+      expect(JSON.parse(init.body).model).toBe("openai/gpt-oss-120b");
       return {
         ok: true,
         status: 200,
@@ -96,7 +96,7 @@ describe("onRequestPost - Error Handling", () => {
         headers: { get: (key) => headers.get(key) },
       },
       env: {
-        AGENTROUTER_API_KEY: "valid-agentrouter-key",
+        PROVIDER_API_KEY: "valid-provider-key",
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
       },
     });
@@ -110,7 +110,41 @@ describe("onRequestPost - Error Handling", () => {
     await fixture.dispose();
   });
 
-  it("propagates the provider status and body when AgentRouter responds with an error", async () => {
+  it("honors custom PROVIDER_URL and PROVIDER_MODEL from the environment", async () => {
+    const adminToken = await signJwt(
+      {
+        sub: "admin-user",
+        email: "kurniawaniwan7906@gmail.com",
+        verified_email: true,
+      },
+      "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
+    );
+    const headers = new Map([["Authorization", `Bearer ${adminToken}`]]);
+    globalThis.fetch = async (url, init) => {
+      expect(url).toBe("https://example.test/v1/chat/completions");
+      expect(JSON.parse(init.body).model).toBe("custom-model");
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ success: true, result: { response: "{}" } }),
+      };
+    };
+    const response = await onRequestPost({
+      request: {
+        json: async () => ({ messages: [], response_format: {} }),
+        headers: { get: (key) => headers.get(key) },
+      },
+      env: {
+        PROVIDER_API_KEY: "valid-provider-key",
+        PROVIDER_URL: "https://example.test/v1/chat/completions",
+        PROVIDER_MODEL: "custom-model",
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
+      },
+    });
+    expect(response.status).toBe(200);
+  });
+
+  it("propagates the provider status and body when the provider responds with an error", async () => {
     const consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
     const headers = new Map();
     headers.set("Authorization", `Bearer ${validToken}`);
@@ -126,7 +160,7 @@ describe("onRequestPost - Error Handling", () => {
         headers: { get: (key) => headers.get(key) },
       },
       env: {
-        AGENTROUTER_API_KEY: "valid-agentrouter-key",
+        PROVIDER_API_KEY: "valid-provider-key",
         DB: fixture.db,
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
       },
@@ -157,7 +191,7 @@ describe("onRequestPost - Error Handling", () => {
         },
       },
       env: {
-        AGENTROUTER_API_KEY: "valid-agentrouter-key",
+        PROVIDER_API_KEY: "valid-provider-key",
         DB: fixture.db,
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
       },
@@ -184,7 +218,7 @@ describe("onRequestPost - Error Handling", () => {
         },
       },
       env: {
-        AGENTROUTER_API_KEY: "valid-agentrouter-key",
+        PROVIDER_API_KEY: "valid-provider-key",
         DB: fixture.db,
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
       },
@@ -215,7 +249,7 @@ describe("onRequestPost - Error Handling", () => {
         },
       },
       env: {
-        AGENTROUTER_API_KEY: "valid-agentrouter-key",
+        PROVIDER_API_KEY: "valid-provider-key",
         DB: fixture.db,
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
       },
