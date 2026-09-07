@@ -108,6 +108,11 @@ export async function onRequestPost(context) {
       );
     }
 
+    console.error(
+      "Scenario provider error:",
+      response.status,
+      data?.error?.message || data?.message,
+    );
     return new Response(JSON.stringify(data), {
       status: response.status,
       headers: { "Content-Type": "application/json" },

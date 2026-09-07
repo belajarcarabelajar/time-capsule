@@ -82,6 +82,20 @@ const scenarioZodSchema = z.object({
   ),
 });
 
+const providerErrorMessage = (data, fallback) => {
+  const candidates = [
+    data?.message,
+    data?.errors?.[0]?.message,
+    data?.error,
+    data?.error?.message,
+  ];
+  return (
+    candidates.find(
+      (message) => typeof message === "string" && message.length > 0,
+    ) || fallback
+  );
+};
+
 const fetchScenarioData = async (
   activeTopic,
   chapterNum,
@@ -159,16 +173,11 @@ const fetchScenarioData = async (
   if ([401, 403, 503].includes(scenarioResponse.status)) {
     const defaultMessage = scenarioResponse.status === 401 ? 'Authentication required.'
       : scenarioResponse.status === 403 ? 'INSUFFICIENT_POINTS' : 'POINTS_UNAVAILABLE';
-    throw new Error(data?.message || data?.error || defaultMessage);
+    throw new Error(providerErrorMessage(data, defaultMessage));
   }
 
   if (!scenarioResponse.ok || data?.success === false) {
-    const errorMessage =
-      data?.message ||
-      data?.errors?.[0]?.message ||
-      data?.error ||
-      "Gagal menghubungi portal AI.";
-    throw new Error(errorMessage);
+    throw new Error(providerErrorMessage(data, "Gagal menghubungi portal AI."));
   }
 
   rawText = data.result?.response;

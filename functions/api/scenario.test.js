@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, spyOn } from "bun:test";
 import { onRequestPost } from "./scenario.js";
 import { signJwt } from "./auth/_utils.js";
 import { createPointsDb } from "./test-support/pointsDb.js";
@@ -110,6 +110,7 @@ describe("onRequestPost - Error Handling", () => {
   });
 
   it("propagates the provider status and body when AgentRouter responds with an error", async () => {
+    const consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
     const headers = new Map();
     headers.set("Authorization", `Bearer ${validToken}`);
     globalThis.fetch = async () => ({
@@ -117,7 +118,8 @@ describe("onRequestPost - Error Handling", () => {
       status: 502,
       json: async () => ({ error: { message: "upstream failure" } }),
     });
-    const response = await onRequestPost({
+    try {
+      const response = await onRequestPost({
       request: {
         json: async () => ({ messages: [], response_format: {} }),
         headers: { get: (key) => headers.get(key) },
@@ -131,6 +133,14 @@ describe("onRequestPost - Error Handling", () => {
     expect(response.status).toBe(502);
     const body = await response.json();
     expect(body.error.message).toBe("upstream failure");
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "Scenario provider error:",
+      502,
+      "upstream failure",
+    );
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
   });
 
   it("should return 500 when request body contains invalid JSON", async () => {

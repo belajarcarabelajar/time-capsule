@@ -139,6 +139,17 @@ describe('fetchScenarioData JSON Sanitization', () => {
     await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('Poin Anda tidak mencukupi (0 poin). Diperlukan 10 poin.');
   });
 
+  it('should surface a nested provider error message instead of [object Object]', async () => {
+    global.fetch = mock(async (url) => {
+      expect(url).toBe('/api/scenario');
+      return new Response(JSON.stringify({
+        error: { message: 'unauthorized client detected', type: 'unauthorized_client_error' },
+      }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    });
+
+    await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow('unauthorized client detected');
+  });
+
   it('should throw fallback error message if the scenario API returns non-ok without JSON error message', async () => {
     global.fetch = mock(async () => {
       return new Response('Internal Server Error', { status: 500 });
