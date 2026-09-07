@@ -23,6 +23,17 @@ describe('conservative room selection', () => {
     ['Kehidupan petani', 'Pulau Jawa', 'rural-village'],
     ['Sawah dan panen', 'Majapahit', 'rural-village'],
     ['Subak', 'Bali', 'rural-village'],
+    ['Perang Diponegoro', 'Pulau Jawa', 'resistance-outpost'],
+    ['Perang Jawa', 'Jawa Tengah', 'resistance-outpost'],
+    ['Perang Padri', 'Sumatera Barat', 'resistance-outpost'],
+    ['Puputan', 'Bali', 'resistance-outpost'],
+    ['Perlawanan rakyat', 'Sumatera Barat', 'resistance-outpost'],
+    ['Proklamasi Kemerdekaan Indonesia', 'Jakarta', 'resistance-outpost'],
+    ['Pertempuran Surabaya 10 November 1945', 'Jawa Timur', 'resistance-outpost'],
+    ['Perlawanan rakyat pada masa pendudukan Jepang', 'Indonesia', 'archive'],
+    ['Perang di Pasifik', 'Tokyo', 'archive'],
+    ['Kehidupan masa kolonial', 'Pulau Jawa', 'archive'],
+    ['Perang Dunia II', 'Pulau Jawa', 'archive'],
     ['Perang Dunia II', 'desa di Prancis', 'archive'],
     ['Perang Dunia II', 'Sunda Kelapa', 'archive'],
     ['Sriwijaya', 'Perang Dunia II, Tokyo', 'archive'],
@@ -51,5 +62,8 @@ describe('conservative room selection', () => {
     expect(resolveRoom({
       topic: 'Majapahit', location: 'Java', environmentKey: 'rural-village',
     })).toEqual({ roomId: 'rural-village', reason: 'environment-key' });
+    expect(resolveRoom({
+      topic: 'Majapahit', location: 'Java', environmentKey: 'resistance-outpost',
+    })).toEqual({ roomId: 'resistance-outpost', reason: 'environment-key' });
   });
 });

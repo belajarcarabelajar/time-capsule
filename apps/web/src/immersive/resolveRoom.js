@@ -6,6 +6,8 @@ const westernFront = /\b(?:western front|front barat|front occidental|flanders|f
 const london = /\b(?:london|british home front|britain|britania|inggris|england|united kingdom)\b/u;
 const marketPort = /\b(?:sriwijaya|srivijaya|sailendra|shailendra|spice (?:route|trade)|jalur rempah|rempah-?rempah|sunda kelapa|batavia|banten|malaka|malacca|melaka|pelabuhan|maritim|kapal dagang|v\.o\.c)\b/u;
 const ruralLife = /\b(?:petani|sawah|padi|ladang|panen raya|bawon|subak|irigasi|pertanian|agraris|lumbung padi|bajak)\b/u;
+const resistanceOutpost = /\b(?:diponegoro|perang jawa|perang padri|padri|puputan|perlawanan rakyat|proklamasi|pertempuran surabaya)\b/u;
+const pacificWar = /\b(?:japan|japanese|jepang|pacific|pasifik|tokyo|hiroshima|nagasaki|japanese occupation|pendudukan jepang|perang pasifik)\b/u;
 const incompatible = /\b(?:tokyo|japan|jepang|pacific|pasifik|asia|indonesia|java|jawa|africa|afrika|russia|rusia|moscow|berlin|germany|jerman|italy|italia|america|amerika|pearl harbor|normandy|normandia)\b/u;
 
 export function resolveRoom({ topic, location, environmentKey } = {}) {
@@ -26,6 +28,9 @@ export function resolveRoom({ topic, location, environmentKey } = {}) {
   }
   if (ruralLife.test(all) && !first && !second) {
     return { roomId: 'rural-village', reason: 'agrarian-life' };
+  }
+  if (resistanceOutpost.test(all) && !pacificWar.test(all) && !first && !second) {
+    return { roomId: 'resistance-outpost', reason: 'colonial-resistance' };
   }
   if (incompatible.test(all)) return archive('outside-authored-scope');
   if (first && (!place || westernFront.test(place)) && !london.test(all)) {
