@@ -18,7 +18,7 @@ VITE_IMMERSIVE_ENABLED=false bun --filter web run dev
 
 The build gate is evaluated at build time. Only the exact string `false` disables the contextual renderer. A missing value or `true` enables it.
 
-The renderer chooses a room from topic, validated `gameData.meta.location`, and an optional `gameData.meta.environmentKey` supplied by the scenario. The finite allowed values are `archive`, `ww1-field-station`, `ww2-radio-room`, `kingdom-court`, `market-port`, and `rural-village`. The local `roomManifest` is the final authority: a valid key selects only its authored local room; missing or unknown keys continue to the existing topic and location rules. Unsafe topic or location text always selects `archive`, even if a valid key is present. AI output is never used as a URL, file path, shader, HTML, or executable configuration.
+The renderer chooses a room from topic, validated `gameData.meta.location`, and an optional `gameData.meta.environmentKey` supplied by the scenario. The finite allowed values are `archive`, `ww1-field-station`, `ww2-radio-room`, `kingdom-court`, `market-port`, `rural-village`, and `resistance-outpost`. The local `roomManifest` is the final authority: a valid key selects only its authored local room; missing or unknown keys continue to the existing topic and location rules. Unsafe topic or location text always selects `archive`, even if a valid key is present. AI output is never used as a URL, file path, shader, HTML, or executable configuration.
 
 | Input context | Room | Visual scope |
 |---|---|---|
@@ -27,6 +27,7 @@ The renderer chooses a room from topic, validated `gameData.meta.location`, and 
 | A safe scenario with `environmentKey: "kingdom-court"` | `kingdom-court` | Illustrative, culturally non-specific royal court with a ceremonial seat, manuscript table, and courtyard gate; not a reconstruction of a named palace or kingdom |
 | A maritime-trade context (such as Sriwijaya, jalur rempah, Sunda Kelapa, Batavia, or pelabuhan) with no war signal, or a safe scenario with `environmentKey: "market-port"` | `market-port` | Illustrative open-air Nusantara trading port with a wooden pier, canvas market stalls, a moored ship, and stacked cargo; not a reconstruction of a named port, ship, or cargo |
 | An agrarian-life context (such as petani, sawah, padi, panen raya, irigasi, or subak) with no war signal, or a safe scenario with `environmentKey: "rural-village"` | `rural-village` | Illustrative open-air agrarian Nusantara village with paddy terraces, a timber granary on posts, and an irrigation channel; not a reconstruction of a named village, field system, or community |
+| A colonial-era resistance context (such as Diponegoro, Perang Jawa, Perang Padri, puputan, or Proklamasi Kemerdekaan Indonesia) with no war signal and no Japan/Pacific signal, or a safe scenario with `environmentKey: "resistance-outpost"` | `resistance-outpost` | Illustrative open-air colonial-era Nusantara resistance outpost with a bamboo-timber palisade, a raised bamboo watch post, a lean-to shelter, and a low signal fire; not a reconstruction of a named field, fortress, or campaign |
 | Missing, unsupported, conflicting, malformed, oversized, or unsafe setting | `archive` | Fictional time archive used as a safe non-specific context |
 
 3D is the default background on every viewport. Save-data mode, an explicit static preference, slow lazy import, missing model, lost graphics context, and poor renderer pacing use the selected room's poster and keep the lesson controls available. The user can switch between 3D and the poster where the controls allow it.
@@ -49,7 +50,7 @@ env -u PYTHONUNBUFFERED -u PYTHONUTF8 -u PYTHONDONTWRITEBYTECODE PATH=/usr/bin:/
   blender --background --python scripts/export-history-assets.py -- --root . --room kingdom-court
 ```
 
-Author and verify a new room the same way, replacing the `--room` value. The `market-port` and `rural-village` rooms were authored and exported with the same invocation on this host; their export reports record the exact Blender version used.
+Author and verify a new room the same way, replacing the `--room` value. The `market-port`, `rural-village`, and `resistance-outpost` rooms were authored and exported with the same invocation on this host; their export reports record the exact Blender version used.
 
 Regenerate the source, GLB, poster, report, and checksum together. Do not edit generated binaries independently. Keep the GLB at or below 4 MiB, the poster at or below 250 KiB, the scene below 100,000 triangles and 60 draw primitives, and preserve the three reviewed inspection objects.
 

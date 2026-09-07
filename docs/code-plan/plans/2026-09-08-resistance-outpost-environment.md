@@ -65,7 +65,7 @@ flowchart LR
 **CI/Review Gate:** ESLint on changed JS/JSX; targeted unit suites; Chromium e2e; verify-history-assets.
 **Documentation:** `docs/history-environments.md` runtime table + authored-assets list + authoring note; checkpoint file; spec doc; this plan.
 **Definition of Done:** AC-1..AC-8 evidenced with fresh logs/exit 0; diff review only intended files; docs updated; 0 em dashes in user-visible copy; plan checkboxes/status advanced after execution.
-**Plan Status & Version:** Draft v1, 2026-09-08 (approved by user for execution, this docs commit begins T1-T5; plan finalized after execution).
+**Plan Status & Version:** Complete v1, 2026-09-08. Executed in commits c8b0148..215c675 (T1-T5) with this docs commit. All steps marked [x]; evidence re-verified fresh on 2026-09-08: immersive + game-engine suites 94 pass, scenarioClient 4 pass, resolveRoom rows pass, Chromium e2e 10 pass, verify-history-assets exit 0 for all 7 rooms, ESLint exit 0.
 **Reproducibility:** Blender 5.2.1 LTS; Bun lockfile unchanged; commands reproduce from repo root on this WSL host.
 **Test Reliability:** Deterministic fixtures; no clock/network in unit tests; e2e blocks provider domains via mock fixture.
 **Privacy & Data Governance:** No data collection; no PII; no retention changes.
@@ -98,11 +98,11 @@ flowchart LR
 **Edge Cases & Failure Behavior:** Order must match the manifest order convention; appending last keeps existing keys stable.
 **Deliberate Shortcuts & Deferrals:** None.
 **Review & Evidence:** scenarioClient test passes; prompt contains `resistance-outpost`.
-- [ ] Step 1: Write failing test [append `"resistance-outpost"` to expected key array]
-- [ ] Step 2: Run, verify fail [rtk bun test ./packages/game-engine/tests/scenarioClient.test.js]
-- [ ] Step 3: Write minimal implementation [append key to HISTORY_ENVIRONMENT_KEYS]
-- [ ] Step 4: Run, verify pass [same command]
-- [ ] Step 5: Commit [git add packages/game-engine && git commit -m "feat(game-engine): register resistance-outpost environment key"]
+- [x] Step 1: Write failing test [append `"resistance-outpost"` to expected key array]
+- [x] Step 2: Run, verify fail [rtk bun test ./packages/game-engine/tests/scenarioClient.test.js]
+- [x] Step 3: Write minimal implementation [append key to HISTORY_ENVIRONMENT_KEYS]
+- [x] Step 4: Run, verify pass [same command]
+- [x] Step 5: Commit [git add packages/game-engine && git commit -m "feat(game-engine): register resistance-outpost environment key"] (97a4292)
 
 ### Task 2: Web room manifest + visualVisits detail view
 **Files:**
@@ -113,11 +113,11 @@ flowchart LR
 **Behavior & Acceptance:** AC-2; manifest contract checks pass for resistance-outpost; visualVisits alternates chapters for the room. Object views frame each authored object; measured view adjustments during T4 update this entry in the same commit.
 **Deliberate Shortcuts & Deferrals:** None.
 **Review & Evidence:** roomManifest.test + visualVisits.test pass.
-- [ ] Step 1: Write failing test [append key + resistance-outpost object-id assertion]
-- [ ] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/roomManifest.test.js apps/web/src/immersive/__tests__/visualVisits.test.js]
-- [ ] Step 3: Write minimal implementation [rooms.js resistance-outpost entry with Indonesian copy; visualVisits detail row]
-- [ ] Step 4: Run, verify pass [same command]
-- [ ] Step 5: Commit [git add apps/web/src/immersive && git commit -m "feat(web): add resistance-outpost room manifest"]
+- [x] Step 1: Write failing test [append key + resistance-outpost object-id assertion]
+- [x] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/roomManifest.test.js apps/web/src/immersive/__tests__/visualVisits.test.js]
+- [x] Step 3: Write minimal implementation [rooms.js resistance-outpost entry with Indonesian copy; visualVisits detail row]
+- [x] Step 4: Run, verify pass [same command]
+- [x] Step 5: Commit [git add apps/web/src/immersive && git commit -m "feat(web): add resistance-outpost room manifest"] (569d9ac)
 
 ### Task 3: Conservative resolver keyword path
 **Files:**
@@ -128,11 +128,11 @@ flowchart LR
 **Edge Cases & Failure Behavior:** Maritime and agrarian precedence; war signals, Japan/Pacific signals, generic colonial text, incompatible contexts, and mixed era inputs stay per existing rules.
 **Deliberate Shortcuts & Deferrals:** None.
 **Review & Evidence:** resolveRoom test passes in full.
-- [ ] Step 1: Write failing test [add rows + environmentKey honored case]
-- [ ] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/resolveRoom.test.js]
-- [ ] Step 3: Write minimal implementation [pacificWar + resistanceOutpost regex and guarded branch]
-- [ ] Step 4: Run, verify pass [same command]
-- [ ] Step 5: Commit [git add apps/web/src/immersive && git commit -m "feat(web): route colonial resistance contexts to resistance-outpost"]
+- [x] Step 1: Write failing test [add rows + environmentKey honored case]
+- [x] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/resolveRoom.test.js]
+- [x] Step 3: Write minimal implementation [pacificWar + resistanceOutpost regex and guarded branch]
+- [x] Step 4: Run, verify pass [same command]
+- [x] Step 5: Commit [git add apps/web/src/immersive && git commit -m "feat(web): route colonial resistance contexts to resistance-outpost"] (3a31188)
 New rows: positives `['Perang Diponegoro','Pulau Jawa']`, `['Perang Jawa','Jawa Tengah']`, `['Perang Padri','Sumatera Barat']`, `['Puputan','Bali']`, `['Perlawanan rakyat','Sumatera Barat']`, `['Proklamasi Kemerdekaan Indonesia','Jakarta']`, `['Pertempuran Surabaya 10 November 1945','Jawa Timur']`; negatives `['Perlawanan rakyat pada masa pendudukan Jepang','Indonesia']`, `['Perang di Pasifik','Tokyo']`, `['Kehidupan masa kolonial','Pulau Jawa']`, `['Perang Dunia II','Pulau Jawa']`. environmentKey case Majapahit/Java -> `toEqual({ roomId: 'resistance-outpost', reason: 'environment-key' })`.
 
 ### Task 4: Asset authoring, generation, provenance
@@ -147,14 +147,14 @@ New rows: positives `['Perang Diponegoro','Pulau Jawa']`, `['Perang Jawa','Jawa 
 **Edge Cases & Failure Behavior:** Budget overruns, checksum mismatches, or missing source fail verification.
 **Deliberate Shortcuts & Deferrals:** Blender scene authoring is visual/generated work; TDD exception with verification = asset budgets + screenshot + e2e (mirroring rural-village). `defer: no baked AO, upgrade-trigger = realism acceptance pending in three-rooms checkpoint`.
 **Review & Evidence:** roomAssets test pass; verify-history-assets.mjs exit 0 for resistance-outpost.
-- [ ] Step 1: Write failing test [append `resistance-outpost` to roomAssets id list]
-- [ ] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/roomAssets.test.js]
-- [ ] Step 3: Write minimal implementation [export branch: choices, `resistance_outpost()`, dispatch, camera; enrich prop/figure + staff]
-- [ ] Step 4: Generate assets [blender export command]
-- [ ] Step 5: Update provenance.json
-- [ ] Step 6: Measure framing, adjust object view / visualVisits / exporter camera in same commit
-- [ ] Step 7: Run, verify pass [roomAssets + verify-history-assets resistance-outpost]
-- [ ] Step 8: Commit [feat(web): author resistance-outpost room assets]
+- [x] Step 1: Write failing test [append `resistance-outpost` to roomAssets id list]
+- [x] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/roomAssets.test.js]
+- [x] Step 3: Write minimal implementation [export branch: choices, `resistance_outpost()`, dispatch, camera; enrich prop/figure + staff]
+- [x] Step 4: Generate assets [blender export command]
+- [x] Step 5: Update provenance.json
+- [x] Step 6: Measure framing, adjust object view / visualVisits / exporter camera in same commit
+- [x] Step 7: Run, verify pass [roomAssets + verify-history-assets resistance-outpost]
+- [x] Step 8: Commit [feat(web): author resistance-outpost room assets] (ad88d70)
 
 ### Task 5: Browser e2e row
 **Files:**
@@ -163,9 +163,9 @@ New rows: positives `['Perang Diponegoro','Pulau Jawa']`, `['Perang Jawa','Jawa 
 **Behavior & Acceptance:** AC-6.
 **Deliberate Shortcuts & Deferrals:** None.
 **Review & Evidence:** Chromium suite passes all rows.
-- [ ] Step 1: Write the row [mirror kingdom-court row for resistance-outpost]
-- [ ] Step 2: Run, verify pass [test:immersive Chromium]
-- [ ] Step 3: Commit [test(e2e): cover resistance-outpost rendering and inspection]
+- [x] Step 1: Write the row [mirror kingdom-court row for resistance-outpost]
+- [x] Step 2: Run, verify pass [test:immersive Chromium]
+- [x] Step 3: Commit [test(e2e): cover resistance-outpost rendering and inspection] (215c675)
 
 ### Task 6: Docs, lint, final verification, plan finalize
 **Files:**
@@ -174,10 +174,10 @@ New rows: positives `['Perang Diponegoro','Pulau Jawa']`, `['Perang Jawa','Jawa 
 - Modify: this plan doc (checkboxes + status)
 **Behavior & Acceptance:** AC-7, AC-8.
 **Review & Evidence:** Lint exit 0; full focused suite pass; checkpoint with AC-1..AC-8 evidence mapping; em-dash scan 0 hits.
-- [ ] Step 1: Update docs/history-environments.md
-- [ ] Step 2: Lint changed files + em-dash scan
-- [ ] Step 3: Full focused suite + asset verification
-- [ ] Step 4: Diff review, write checkpoint, update plan status, commit [docs: document resistance-outpost environment]
+- [x] Step 1: Update docs/history-environments.md
+- [x] Step 2: Lint changed files + em-dash scan
+- [x] Step 3: Full focused suite + asset verification
+- [x] Step 4: Diff review, write checkpoint, update plan status, commit [docs: document resistance-outpost environment] (this docs commit)
 
 ## Plan lifecycle
-Status: Draft v1, 2026-09-08 (user approved execution inline). Decisions: `resistance-outpost` chosen as the scoped resolution of the open `war-front` bullet; conservative resistance predicate (strong signals only) with a Pacific/Japan negative guard; bare Majapahit/Java, generic colonial text, and incompatible contexts stay archive unless `environmentKey`. Superseded: none. Visual acceptance of the poster and Chromium screenshot is the remaining human review step (see checkpoint).
+Status: Complete (verified 2026-09-08; plan doc finalized after execution). Decisions: `resistance-outpost` chosen as the scoped resolution of the open `war-front` bullet; conservative resistance predicate (strong signals only) with a Pacific/Japan negative guard; bare Majapahit/Java, generic colonial text, Japanese-occupation topics, and incompatible contexts stay archive unless `environmentKey`. Superseded: none. Visual acceptance of the poster and Chromium screenshot is the remaining human review step (see checkpoint).
