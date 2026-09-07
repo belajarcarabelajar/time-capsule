@@ -11,6 +11,9 @@ import bpy
 import numpy as np
 from mathutils import Vector
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from history_asset_details import enrich, merge_material_groups
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', type=Path, required=True)
 parser.add_argument('--room', choices=['archive', 'ww1-field-station', 'ww2-radio-room', 'kingdom-court', 'market-port'], required=True)
@@ -362,6 +365,7 @@ else:
         (.29, .09, .055), (.13, .22, .18), (.28, .22, .12), (.12, .15, .20)])]
     {'archive': archive, 'ww1-field-station': field_station, 'ww2-radio-room': radio_room,
      'kingdom-court': kingdom_court, 'market-port': market_port}[args.room]()
+    enrich(args.room, box, cylinder, finish, material, wood, paper)
     light('Soft afternoon key', (2, -4, 7), 1800, (1, .80, .57), 6, (0, 1, 1))
     light('Cool fill', (-4, -2, 4), 700, (.58, .72, 1), 5, (0, 1, 1))
     bpy.ops.object.camera_add(location=(7, -10, 6))
@@ -384,16 +388,18 @@ scene.render.image_settings.quality = 83
 scene.render.filepath = str(out / 'poster.webp')
 bpy.ops.wm.save_as_mainfile(filepath=str(source), compress=False)
 bpy.ops.render.render(write_still=True)
-for mat in list(bpy.data.materials):
-    objs = [o for o in scene.objects if o.type == 'MESH' and o.data.materials and o.data.materials[0] == mat]
-    if not objs:
-        continue
-    bpy.ops.object.select_all(action='DESELECT')
-    for obj in objs:
-        obj.select_set(True)
-    bpy.context.view_layer.objects.active = objs[0]
-    bpy.ops.object.convert(target='MESH')
-    bpy.ops.object.join()
+detail_position, detail_target = {
+    'archive': ((6, -9, 5), (-.6, 1, 1.6)),
+    'ww1-field-station': ((5.5, -9, 4.7), (-.5, 1, 1.5)),
+    'ww2-radio-room': ((5, -9, 4.5), (0, 1.2, 1.5)),
+    'kingdom-court': ((6, -10, 4.8), (-.6, 1, 1.6)),
+    'market-port': ((7, -11, 4.2), (-.5, 2, 1.2)),
+}[args.room]
+scene.camera.location = detail_position
+scene.camera.rotation_euler = (Vector(detail_target) - scene.camera.location).to_track_quat('-Z', 'Y').to_euler()
+scene.render.filepath = str(out / 'poster-detail.webp')
+bpy.ops.render.render(write_still=True)
+merge_material_groups(scene)
 bpy.ops.export_scene.gltf(filepath=str(out / 'room.glb'), export_format='GLB',
                           export_cameras=False, export_lights=False, export_apply=True,
                           export_yup=True, export_image_format='JPEG', export_jpeg_quality=82)
@@ -403,6 +409,6 @@ for obj in scene.objects:
 summary = {'room': args.room, 'blender': bpy.app.version_string,
            'triangles': sum(len(o.data.loop_triangles) for o in scene.objects if o.type == 'MESH'),
            'files': {p.name: {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
-                     for p in [source, out / 'room.glb', out / 'poster.webp']}}
+                     for p in [source, out / 'room.glb', out / 'poster.webp', out / 'poster-detail.webp']}}
 (out / 'export-report.json').write_text(json.dumps(summary, indent=2) + '\n')
 print('HISTORY_EXPORT ' + json.dumps(summary))

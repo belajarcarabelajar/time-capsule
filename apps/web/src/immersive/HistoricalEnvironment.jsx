@@ -5,6 +5,7 @@ import EnvironmentBoundary from './EnvironmentBoundary.jsx';
 import EnvironmentControls from './EnvironmentControls.jsx';
 import useAmbientAudio from './useAmbientAudio.js';
 import { clampView } from './renderPolicy.js';
+import { resolveVisit } from './visualVisits.js';
 import './immersive.css';
 
 const loadCanvas = () => import('./RoomCanvas.jsx');
@@ -20,13 +21,16 @@ const initialMode = () => {
 };
 
 export default function HistoricalEnvironment({ topic = '', location = '', environmentKey = '', mood = '',
-  blocked = false, startScreen = false, loadRenderer = loadCanvas }) {
+  blocked = false, startScreen = false, chapterCount = 1, storyStep = 0, loadRenderer = loadCanvas }) {
   const { roomId } = resolveRoom({
     topic: startScreen ? '' : topic,
     location: startScreen ? '' : location,
     environmentKey: startScreen ? '' : environmentKey,
   });
   const room = roomManifest[roomId] || roomManifest.archive;
+  const visit = resolveVisit(room.id, startScreen ? 1 : chapterCount);
+  const visitKey = `${topic}:${chapterCount}:${visit.id}`;
+  const [finishedVisit, setFinishedVisit] = useState(null);
   const [mode, setMode] = useState(initialMode);
   const [attempt, setAttempt] = useState(0);
   const [renderer, setRenderer] = useState(null);
@@ -39,6 +43,9 @@ export default function HistoricalEnvironment({ topic = '', location = '', envir
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [visible, setVisible] = useState(() => !document.hidden);
   const exploreRef = useRef(null);
+  const allowMotion = motionEnabled && !motionLocked && visible && !blocked;
+  const finishArrival = useCallback(() => setFinishedVisit(visitKey), [visitKey]);
+  const arriving = !startScreen && status === 'ready' && mode === '3d' && allowMotion && !exploring && finishedVisit !== visitKey;
   const audioFailed = useAmbientAudio(room.audioUrl, audioEnabled, visible && !blocked);
 
   const leaveExplore = useCallback(() => {
@@ -51,7 +58,25 @@ export default function HistoricalEnvironment({ topic = '', location = '', envir
   useEffect(() => {
     setExploring(false);
     setSelectedObject(null);
-  }, [room.id, blocked]);
+    setViewOffset({ yaw: 0, pitch: 0 });
+  }, [visitKey, blocked]);
+  const prevArriving = useRef(false);
+  useEffect(() => {
+    // Persistent motion-off states consume the arrival: no replay when motion
+    // returns. Transient states (blocked/loading/quiz/narrator, hidden tab)
+    // only defer it; cancelling happens only if the arrival actually started.
+    if (!motionEnabled || motionLocked || mode !== '3d') finishArrival();
+  }, [motionEnabled, motionLocked, mode, finishArrival]);
+  useEffect(() => {
+    if (arriving) prevArriving.current = true;
+    else if (prevArriving.current && (blocked || exploring)) {
+      prevArriving.current = false;
+      finishArrival();
+    }
+  }, [arriving, blocked, exploring, finishArrival]);
+  useEffect(() => {
+    if (storyStep > 0) finishArrival();
+  }, [storyStep, finishArrival]);
   useEffect(() => {
     const query = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     const preference = () => setMotionLocked(Boolean(query?.matches));
@@ -96,20 +121,28 @@ export default function HistoricalEnvironment({ topic = '', location = '', envir
   };
   const Component = renderer?.roomId === room.id ? renderer.Component : null;
   return <div className={`history-environment${exploring && !blocked ? ' is-exploring' : ''}${startScreen ? ' is-start' : ''}`}
-    data-room={room.id} data-render-state={status}>
+    data-room={room.id} data-visit={visit.id} data-journey={arriving ? 'arrival' : 'reading'} data-render-state={status}>
     <div className="history-environment__scene" aria-hidden="true"
       onClick={event => { if (exploring) event.stopPropagation(); }}
       onKeyDown={event => { if (exploring) { event.stopPropagation(); if (event.key === 'Escape') leaveExplore(); } }}>
-      <img key={room.id} data-testid="environment-poster" className="history-environment__poster"
-        src={room.posterUrl} alt="" onError={event => { event.currentTarget.style.visibility = 'hidden'; }} />
+      <img key={visit.id} data-testid="environment-poster" className="history-environment__poster"
+        src={visit.posterUrl} alt="" onError={event => {
+          if (event.currentTarget.getAttribute('src') !== room.posterUrl) event.currentTarget.src = room.posterUrl;
+          else event.currentTarget.style.visibility = 'hidden';
+        }} />
       {mode === '3d' && Component && <EnvironmentBoundary key={`${room.id}-${attempt}`} onError={renderer.fail}>
-        <Component room={room} mood={mood} motionEnabled={motionEnabled && !motionLocked && visible}
+        <Component room={room} visit={visit} arriving={arriving} onArrivalComplete={finishArrival}
+          mood={mood} motionEnabled={allowMotion}
           exploring={exploring && !blocked} selectedObject={selectedObject}
           viewOffset={viewOffset}
           onReady={renderer.ready} onError={renderer.fail} onExitExplore={leaveExplore} />
       </EnvironmentBoundary>}
       <div className="history-environment__shade" />
     </div>
+    {arriving && <div className="history-arrival history-controls" onClick={event => event.stopPropagation()}
+      onKeyDown={event => event.stopPropagation()}>
+      <button type="button" onClick={() => { finishArrival(); exploreRef.current?.focus(); }}>Lewati perjalanan</button>
+    </div>}
     {!blocked && <p className="history-scope">{room.scopeLabel}</p>}
     {!blocked && <EnvironmentControls exploring={exploring} onExploreChange={value => value ? setExploring(true) : leaveExplore()}
       motionEnabled={motionEnabled} onMotionChange={setMotionEnabled} audioEnabled={audioEnabled}

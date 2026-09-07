@@ -69,7 +69,7 @@ export default function GameplayScreen({
         />
 
         {immersiveEnabled ? <HistoricalEnvironment topic={topic} location={gameData?.meta?.location}
-          environmentKey={gameData?.meta?.environmentKey}
+          environmentKey={gameData?.meta?.environmentKey} chapterCount={chapterCount} storyStep={idx}
           mood={displayMood} blocked={Boolean(isLoading || isWarpingHome || showContinuePrompt || quizMode || isNarrator || showAuthModal)} />
           : <DynamicBackground scene={gameData?.scenes?.MAIN} currentMood={displayMood} />}
 

@@ -1,19 +1,23 @@
 {
   "room": "ww1-field-station",
-  "blender": "4.5.4 LTS",
-  "triangles": 24360,
+  "blender": "5.2.1 LTS",
+  "triangles": 25164,
   "files": {
     "ww1-field-station.blend": {
-      "bytes": 3768400,
-      "sha256": "e78986e7fe670ff86f394e0218e8af51b7715bd13af7581103a07d1894d2250e"
+      "bytes": 4463208,
+      "sha256": "47fdb265ffc01cef0a885428f3813f239afdb12153dcc614384e026b87e1deb8"
     },
     "room.glb": {
-      "bytes": 1524932,
-      "sha256": "9342b35b84bff9617b00443d59fe9104f441e0ba50ffa86e4d93577f6b318057"
+      "bytes": 1593488,
+      "sha256": "c228a5610c7534f61d409c34568e13da85c30e8a5cb26cb284a7c73ce9fb3144"
     },
     "poster.webp": {
-      "bytes": 89270,
-      "sha256": "f63fa0118b8fefb9585768b4588bf31a0fe44dcdd51523dcc24b112704aa2f37"
+      "bytes": 89926,
+      "sha256": "133d8a07d866dbb2df46ec16a158edccacd0620ad9eab5e9fce256697efd4c08"
+    },
+    "poster-detail.webp": {
+      "bytes": 107428,
+      "sha256": "7a45096749416b78433ca56c6fb17e1364019f441f48b3bc84ba1c53dfaf4616"
     }
   }
 }

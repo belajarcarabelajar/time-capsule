@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { disposeRoomResources } from "./roomResources.js";
+import AmbientActivity from './AmbientActivity.jsx';
 
 export default function RoomModel({
   url,
   onReady,
   onError,
+  roomId,
+  motionEnabled = false,
   loader: Loader = GLTFLoader,
 }) {
   const [scene, setScene] = useState(null);
@@ -44,5 +47,8 @@ export default function RoomModel({
   useEffect(() => {
     if (scene) onReady();
   }, [scene, onReady]);
-  return scene ? <primitive object={scene} dispose={null} /> : null;
+  return scene ? <>
+    <primitive object={scene} dispose={null} />
+    {roomId && <AmbientActivity scene={scene} roomId={roomId} enabled={motionEnabled} />}
+  </> : null;
 }

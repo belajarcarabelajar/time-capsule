@@ -44,7 +44,7 @@ function AmbientDust({ enabled }) {
   </points>;
 }
 
-export default function RoomCanvas({ room, mood, motionEnabled, exploring, selectedObject, onReady, onError, viewOffset }) {
+export default function RoomCanvas({ room, visit, arriving, onArrivalComplete, mood, motionEnabled, exploring, selectedObject, onReady, onError, viewOffset }) {
   const [ready, setReady] = useState(false);
   const loaded = useCallback(() => { setReady(true); onReady(); }, [onReady]);
   const muted = /😢|😭|🌧/.test(mood || '');
@@ -62,8 +62,10 @@ export default function RoomCanvas({ room, mood, motionEnabled, exploring, selec
       <directionalLight position={[2, 7, 4]} color={muted ? '#d5dbe5' : '#ffe0ae'} intensity={3} />
       <directionalLight position={[-4, 4, 2]} color="#b0c9eb" intensity={1} />
       <pointLight position={[1, 2.2, 0]} color="#ffca76" intensity={8} distance={8} decay={2} />
-      <RoomModel key={room.id} url={room.modelUrl} onReady={loaded} onError={onError} />
-      <RoomCamera room={room} exploring={exploring} selectedObject={selectedObject}
+      <RoomModel key={room.id} url={room.modelUrl} roomId={room.id} motionEnabled={motionEnabled && !exploring}
+        onReady={loaded} onError={onError} />
+      <RoomCamera room={room} visit={visit} arriving={ready && arriving} onArrivalComplete={onArrivalComplete}
+        exploring={exploring} selectedObject={selectedObject}
         motionEnabled={motionEnabled} viewOffset={viewOffset} />
       <AmbientDust enabled={motionEnabled && !exploring} />
       <RenderHealth active={motionEnabled && ready} onError={onError} />

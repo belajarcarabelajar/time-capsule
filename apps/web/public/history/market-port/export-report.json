@@ -1,19 +1,23 @@
 {
   "room": "market-port",
   "blender": "5.2.1 LTS",
-  "triangles": 5428,
+  "triangles": 6232,
   "files": {
     "market-port.blend": {
-      "bytes": 2757537,
-      "sha256": "a4b8f8b4c085e2b5bda1f7326b8c544ba3c029724e7356af41537a2d7fa6468d"
+      "bytes": 3229330,
+      "sha256": "bfb86484aaecd5e6d99d3d724fdb7d9b41452985ee604d0071529ac3540beeb1"
     },
     "room.glb": {
-      "bytes": 318924,
-      "sha256": "60a541e8db3ce8e69a955ab995ff365651c69d90b1c6ec8d12fa9da66d56acac"
+      "bytes": 398320,
+      "sha256": "38b026606ceb6c598da944516d516472d1c741726eba499aaff98610630fdf5a"
     },
     "poster.webp": {
-      "bytes": 40036,
-      "sha256": "6ab900360f4a682792cbb30e78374a4d1f503879681d14c7f0c66249c0d580e7"
+      "bytes": 40774,
+      "sha256": "f698ca4d4d8e5aa1ae0ab0e9c1f5285305fb54f8be5e5ff3a422ac25bfebbd7d"
+    },
+    "poster-detail.webp": {
+      "bytes": 34942,
+      "sha256": "4156912d76fbddd2f54c9d405e2ed7a7308888fd6116c50b677e7b07ce527f9d"
     }
   }
 }

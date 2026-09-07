@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 
 const root = resolve(import.meta.dir, '../../../../..');
 describe('authored history room artifacts', () => {
@@ -22,6 +23,33 @@ describe('authored history room artifacts', () => {
       const provenance = JSON.parse(readFileSync(`${root}/assets/history/provenance.json`));
       expect(provenance.rooms[id].source).toBe(`assets/history/source/${id}.blend`);
       expect(provenance.rooms[id].objects).toHaveLength(3);
+    });
+    test(`${id} preserves local motion pivots and verifies both authored views`, () => {
+      const base = `${root}/apps/web/public/history/${id}`;
+      const model = readFileSync(`${base}/room.glb`);
+      const scene = JSON.parse(model.subarray(20, 20 + model.readUInt32LE(12)).toString());
+      for (const name of ['ambient_figure', 'ambient_prop']) {
+        const node = scene.nodes.find(candidate => candidate.name === name);
+        expect(node).toBeDefined();
+        expect(node.children.length).toBeGreaterThan(0);
+      }
+      expect(scene.skins ?? []).toHaveLength(0);
+      const primitives = scene.meshes.flatMap(mesh => mesh.primitives);
+      expect(primitives.length).toBeLessThanOrEqual(60);
+      expect(primitives.reduce((sum, primitive) => sum + scene.accessors[primitive.indices].count / 3, 0))
+        .toBeLessThanOrEqual(100000);
+      expect([...(scene.images ?? []), ...(scene.buffers ?? [])].every(resource => !resource.uri)).toBe(true);
+      const report = JSON.parse(readFileSync(`${base}/export-report.json`));
+      for (const name of ['room.glb', 'poster.webp', 'poster-detail.webp']) {
+        const file = readFileSync(`${base}/${name}`);
+        expect(report.files[name].sha256).toBe(createHash('sha256').update(file).digest('hex'));
+        if (name.endsWith('.webp')) expect(file.length).toBeLessThanOrEqual(250 * 1024);
+      }
+      expect(readFileSync(`${base}/poster-detail.webp`).equals(readFileSync(`${base}/poster.webp`))).toBe(false);
+      const provenance = JSON.parse(readFileSync(`${root}/assets/history/provenance.json`));
+      expect(provenance.enrichment.figureLabel).toContain('ilustratif');
+      expect(provenance.enrichment.figureRoles[id]).toContain('Anonymous');
+      expect(provenance.enrichment.license).toBe('MIT');
     });
   }
 });
