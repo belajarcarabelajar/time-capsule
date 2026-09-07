@@ -62,7 +62,7 @@ flowchart LR
 **CI/Review Gate:** ESLint on changed JS/JSX; targeted unit suites; Chromium e2e; verify-history-assets.
 **Documentation:** `docs/history-environments.md` runtime table + authored-assets list; checkpoint file; spec doc.
 **Definition of Done:** AC-1..AC-8 evidenced; fresh log/exit-0 per check; diff review only intended files; docs updated; no em dashes or buzzwords in user-visible copy; plan checkboxes updated and status advanced after execution.
-**Plan Status & Version:** Approved v1, 2026-09-08.
+**Plan Status & Version:** Complete v1, 2026-09-08. Executed in commits 40dccf3..e152120 (T1-T5) with this docs commit. All steps marked [x]; evidence re-verified fresh on 2026-09-08: immersive + game-engine suites 81 pass, roomAssets 12 pass, resolveRoom 30 pass, scenarioClient 4 pass, Chromium e2e 9 pass, verify-history-assets exit 0 for all 6 rooms.
 **Reproducibility:** Blender 5.2.1 LTS; Bun lockfile unchanged; commands reproduce from repo root on this WSL host.
 **Test Reliability:** Deterministic fixtures; no clock/network in unit tests; e2e blocks provider domains via mock fixture.
 **Privacy & Data Governance:** No data collection; no PII; no retention changes.
@@ -81,8 +81,8 @@ flowchart LR
 **Files:**
 - Create: docs/code-plan/specs/2026-09-08-rural-village-environment-design.md
 **Behavior & Acceptance:** Records the design decisions: contract, resolver rule, rejected `war-front`/`urban-poor` with reasons, boundaries.
-- [ ] Step 1: Write spec doc
-- [ ] Step 2: Commit [git add docs/code-plan/specs && git commit -m "docs: add rural-village environment design spec"]
+- [x] Step 1: Write spec doc
+- [x] Step 2: Commit [git add docs/code-plan/specs && git commit -m "docs: add rural-village environment design spec"] (a37ea8a)
 
 ### Task 1: Game-engine environment keys
 **Files:**
@@ -93,11 +93,11 @@ flowchart LR
 **Edge Cases & Failure Behavior:** Order must match the manifest order convention; appending last keeps existing keys stable.
 **Deliberate Shortcuts & Deferrals:** None.
 **Review & Evidence:** scenarioClient test passes; prompt contains `rural-village`.
-- [ ] Step 1: Write failing test [append `"rural-village"` to expected key array]
-- [ ] Step 2: Run, verify fail [rtk bun test ./packages/game-engine/tests/scenarioClient.test.js]
-- [ ] Step 3: Write minimal implementation [append key to HISTORY_ENVIRONMENT_KEYS]
-- [ ] Step 4: Run, verify pass [same command]
-- [ ] Step 5: Commit [git add packages/game-engine && git commit -m "feat(game-engine): register rural-village environment key"]
+- [x] Step 1: Write failing test [append `"rural-village"` to expected key array]
+- [x] Step 2: Run, verify fail [rtk bun test ./packages/game-engine/tests/scenarioClient.test.js]
+- [x] Step 3: Write minimal implementation [append key to HISTORY_ENVIRONMENT_KEYS]
+- [x] Step 4: Run, verify pass [same command]
+- [x] Step 5: Commit [git add packages/game-engine && git commit -m "feat(game-engine): register rural-village environment key"] (40dccf3)
 
 ### Task 2: Web room manifest entry
 **Files:**
@@ -107,11 +107,11 @@ flowchart LR
 **Behavior & Acceptance:** AC-2; manifest contract checks pass for rural-village. Object views frame each authored object; measured view adjustments during T4 update this entry in the same commit.
 **Deliberate Shortcuts & Deferrals:** None.
 **Review & Evidence:** roomManifest test passes.
-- [ ] Step 1: Write failing test [append key + rural-village object-id assertion]
-- [ ] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/roomManifest.test.js]
-- [ ] Step 3: Write minimal implementation [rooms.js rural-village entry with Indonesian copy]
-- [ ] Step 4: Run, verify pass [same command]
-- [ ] Step 5: Commit [git add apps/web/src/immersive && git commit -m "feat(web): add rural-village room manifest"]
+- [x] Step 1: Write failing test [append key + rural-village object-id assertion]
+- [x] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/roomManifest.test.js]
+- [x] Step 3: Write minimal implementation [rooms.js rural-village entry with Indonesian copy]
+- [x] Step 4: Run, verify pass [same command]
+- [x] Step 5: Commit [git add apps/web/src/immersive && git commit -m "feat(web): add rural-village room manifest"] (46605bf)
 
 ### Task 3: Conservative resolver keyword path
 **Files:**
@@ -122,11 +122,11 @@ flowchart LR
 **Edge Cases & Failure Behavior:** War signals, maritime-only signals (market-port precedence), incompatible contexts, and mixed era inputs stay per existing rules.
 **Deliberate Shortcuts & Deferrals:** None.
 **Review & Evidence:** resolveRoom test passes in full.
-- [ ] Step 1: Write failing test [add rural-village rows + environmentKey honored case]
-- [ ] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/resolveRoom.test.js]
-- [ ] Step 3: Write minimal implementation [ruralLife regex + guarded branch]
-- [ ] Step 4: Run, verify pass [same command]
-- [ ] Step 5: Commit [git add apps/web/src/immersive && git commit -m "feat(web): route agrarian-life contexts to rural-village"]
+- [x] Step 1: Write failing test [add rural-village rows + environmentKey honored case]
+- [x] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/resolveRoom.test.js]
+- [x] Step 3: Write minimal implementation [ruralLife regex + guarded branch]
+- [x] Step 4: Run, verify pass [same command]
+- [x] Step 5: Commit [git add apps/web/src/immersive && git commit -m "feat(web): route agrarian-life contexts to rural-village"] (fbf2de0)
 
 ### Task 4: Asset authoring, generation, provenance
 **Files:**
@@ -139,13 +139,13 @@ flowchart LR
 **Edge Cases & Failure Behavior:** Budget overruns, checksum mismatches, or missing source fail verification.
 **Deliberate Shortcuts & Deferrals:** Blender scene authoring is visual/generated work; TDD exception with verification = asset budgets + screenshot + e2e (mirroring market-port). `ponytail: no baked AO, upgrade-trigger = realism acceptance pending in three-rooms checkpoint`.
 **Review & Evidence:** roomAssets test pass; verify-history-assets.mjs exit 0 for rural-village.
-- [ ] Step 1: Write failing test [append `rural-village` to roomAssets id list]
-- [ ] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/roomAssets.test.js]
-- [ ] Step 3: Write minimal implementation [export branch: choices, `rural_village()`, dispatch, camera]
-- [ ] Step 4: Generate assets [blender export command]
-- [ ] Step 5: Update provenance.json
-- [ ] Step 6: Run, verify pass [roomAssets + verify-history-assets rural-village]
-- [ ] Step 7: Commit [feat(web): author rural-village room assets]
+- [x] Step 1: Write failing test [append `rural-village` to roomAssets id list]
+- [x] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/roomAssets.test.js]
+- [x] Step 3: Write minimal implementation [export branch: choices, `rural_village()`, dispatch, camera]
+- [x] Step 4: Generate assets [blender export command]
+- [x] Step 5: Update provenance.json
+- [x] Step 6: Run, verify pass [roomAssets + verify-history-assets rural-village]
+- [x] Step 7: Commit [feat(web): author rural-village room assets] (33640d4)
 
 ### Task 5: Browser e2e row
 **Files:**
@@ -154,9 +154,9 @@ flowchart LR
 **Behavior & Acceptance:** AC-6.
 **Deliberate Shortcuts & Deferrals:** None.
 **Review & Evidence:** Chromium suite passes all rows.
-- [ ] Step 1: Write the row [mirror kingdom-court row for rural-village]
-- [ ] Step 2: Run, verify pass [test:immersive Chromium]
-- [ ] Step 3: Commit [test(e2e): cover rural-village rendering and inspection]
+- [x] Step 1: Write the row [mirror kingdom-court row for rural-village]
+- [x] Step 2: Run, verify pass [test:immersive Chromium]
+- [x] Step 3: Commit [test(e2e): cover rural-village rendering and inspection] (e152120)
 
 ### Task 6: Docs, lint, final verification, plan finalize
 **Files:**
@@ -165,10 +165,10 @@ flowchart LR
 - Modify: this plan doc (checkboxes + status)
 **Behavior & Acceptance:** AC-7, AC-8.
 **Review & Evidence:** Lint exit 0; full focused suite pass; checkpoint with AC-1..AC-8 evidence mapping; em-dash scan 0 hits.
-- [ ] Step 1: Update docs/history-environments.md
-- [ ] Step 2: Lint changed files + em-dash scan
-- [ ] Step 3: Full focused suite + asset verification
-- [ ] Step 4: Diff review, write checkpoint, update plan status, commit [docs: document rural-village environment]
+- [x] Step 1: Update docs/history-environments.md
+- [x] Step 2: Lint changed files + em-dash scan
+- [x] Step 3: Full focused suite + asset verification
+- [x] Step 4: Diff review, write checkpoint, update plan status, commit [docs: document rural-village environment] (this docs commit)
 
 ## Plan lifecycle
-Status: Approved v1, 2026-09-08 (user approved all). Decisions: rural-village selected over `war-front` and `urban-poor`; conservative agrarian predicate (strong signals only); bare `Majapahit`/`Java` without farming words stay archive unless `environmentKey`. Superseded: none.
+Status: Complete (verified 2026-09-08; plan doc finalized after execution). Decisions: rural-village selected over `war-front` and `urban-poor`; conservative agrarian predicate (strong signals only); bare `Majapahit`/`Java` without farming words stay archive unless `environmentKey`. Superseded: none. Visual acceptance of the poster and Chromium screenshot is the remaining human review step (see checkpoint).
