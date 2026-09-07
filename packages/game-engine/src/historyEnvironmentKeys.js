@@ -4,7 +4,8 @@ const HISTORY_ENVIRONMENT_KEYS = Object.freeze([
   "ww2-radio-room",
   "kingdom-court",
   "market-port",
-  "rural-village"
+  "rural-village",
+  "resistance-outpost"
 ]);
 
 export { HISTORY_ENVIRONMENT_KEYS };
