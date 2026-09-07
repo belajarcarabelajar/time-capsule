@@ -81,6 +81,7 @@ describe("onRequestPost - Error Handling", () => {
     globalThis.fetch = async (url, init) => {
       expect(url).toBe("https://agentrouter.org/v1/chat/completions");
       expect(init.headers.Authorization).toBe("Bearer valid-agentrouter-key");
+      expect(JSON.parse(init.body).model).toBe("deepseek-v4-flash");
       return {
         ok: true,
         status: 200,

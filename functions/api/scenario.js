@@ -6,7 +6,7 @@ import {
   pointsErrorResponse,
 } from "./_ai_utils.js";
 
-const AGENTROUTER_MODEL = "gpt-5.5";
+const AGENTROUTER_MODEL = "deepseek-v4-flash";
 const AGENTROUTER_URL = "https://agentrouter.org/v1/chat/completions";
 
 export async function onRequestPost(context) {

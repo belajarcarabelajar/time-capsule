@@ -12,7 +12,7 @@
 
 **Time Capsule** is an open-source educational adventure app. You enter a historical topic (for example a battle, kingdom, or figure), and the app generates a multi-chapter dialogue scenario: you are a time traveler talking with 3–4 NPCs, making diplomacy/quiz choices, and unlocking narrator "history insights" at the end of each section.
 
-Scenarios are generated **server-side** through a Cloudflare Pages Function proxy: the client never holds the API key. The client (`fetchScenarioData` in `@time-capsule/game-engine`) POSTs to `/api/scenario`, which calls an OpenAI-compatible provider (AgentRouter, model `gpt-5.5`) using a fixed system prompt (`SCENARIO_SYSTEM_PROMPT`) and a JSON response object.
+Scenarios are generated **server-side** through a Cloudflare Pages Function proxy: the client never holds the API key. The client (`fetchScenarioData` in `@time-capsule/game-engine`) POSTs to `/api/scenario`, which calls an OpenAI-compatible provider (AgentRouter, model `deepseek-v4-flash`) using a fixed system prompt (`SCENARIO_SYSTEM_PROMPT`) and a JSON response object.
 
 Signed-in users get a **points economy** backed by Cloudflare D1: each generation costs points, balances reset daily, and generated stories are persisted. Sign-in is **Google OAuth** with a JWT session cookie.
 
@@ -66,7 +66,7 @@ time-capsule/
 - **Backend:** Cloudflare Pages Functions (`functions/api`)
 - **Database:** Cloudflare D1 (SQLite)
 - **Auth:** Google OAuth 2.0 + JWT session cookie
-- **AI:** AgentRouter OpenAI-compatible API (`gpt-5.5`)
+- **AI:** AgentRouter OpenAI-compatible API (`deepseek-v4-flash`)
 - **Sanitization:** `isomorphic-dompurify`
 
 Tailwind `content` scans both `apps/web/src` and `packages/ui/src` so utility classes used in the UI package are not purged.
@@ -118,7 +118,7 @@ The `functions/api/*` Pages Functions read server-only values from the Cloudflar
 | `JWT_SECRET` | yes | Authentication fails on every request |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | yes | OAuth login fails |
 
-The AI request flow is a single call: the client POSTs to `/api/scenario`, which calls AgentRouter (`https://agentrouter.org/v1/chat/completions`, model `gpt-5.5`). Missing secrets are surfaced as exact status codes, never as guessed messages.
+The AI request flow is a single call: the client POSTs to `/api/scenario`, which calls AgentRouter (`https://agentrouter.org/v1/chat/completions`, model `deepseek-v4-flash`). Missing secrets are surfaced as exact status codes, never as guessed messages.
 
 To verify after configuring and redeploying: start an adventure and confirm `/api/scenario` returns `200`, a story renders, and 10 points are deducted. Local dev needs the same variables in `.env` / `.dev.vars`; both files are gitignored.
 
