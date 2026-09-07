@@ -18,13 +18,14 @@ VITE_IMMERSIVE_ENABLED=false bun --filter web run dev
 
 The build gate is evaluated at build time. Only the exact string `false` disables the contextual renderer. A missing value or `true` enables it.
 
-The renderer chooses a room from topic, validated `gameData.meta.location`, and an optional `gameData.meta.environmentKey` supplied by the scenario. The finite allowed values are `archive`, `ww1-field-station`, `ww2-radio-room`, and `kingdom-court`. The local `roomManifest` is the final authority: a valid key selects only its authored local room; missing or unknown keys continue to the existing topic and location rules. Unsafe topic or location text always selects `archive`, even if a valid key is present. AI output is never used as a URL, file path, shader, HTML, or executable configuration.
+The renderer chooses a room from topic, validated `gameData.meta.location`, and an optional `gameData.meta.environmentKey` supplied by the scenario. The finite allowed values are `archive`, `ww1-field-station`, `ww2-radio-room`, `kingdom-court`, and `market-port`. The local `roomManifest` is the final authority: a valid key selects only its authored local room; missing or unknown keys continue to the existing topic and location rules. Unsafe topic or location text always selects `archive`, even if a valid key is present. AI output is never used as a URL, file path, shader, HTML, or executable configuration.
 
 | Input context | Room | Visual scope |
 |---|---|---|
 | World War I with a supported Western Front label such as France, Flanders, Verdun, Somme, Ypres, or Front occidental | `ww1-field-station` | Illustrative field communications shelter with packed earth, duckboards, sandbags, field equipment, and a restrained ruined masonry cue |
 | World War II with a supported British home-front label such as London, Britain, England, United Kingdom, or British home front | `ww2-radio-room` | Illustrative civilian radio room with blackout curtains, period receiver, furniture, and household shelves |
 | A safe scenario with `environmentKey: "kingdom-court"` | `kingdom-court` | Illustrative, culturally non-specific royal court with a ceremonial seat, manuscript table, and courtyard gate; not a reconstruction of a named palace or kingdom |
+| A maritime-trade context (such as Sriwijaya, jalur rempah, Sunda Kelapa, Batavia, or pelabuhan) with no war signal, or a safe scenario with `environmentKey: "market-port"` | `market-port` | Illustrative open-air Nusantara trading port with a wooden pier, canvas market stalls, a moored ship, and stacked cargo; not a reconstruction of a named port, ship, or cargo |
 | Missing, unsupported, conflicting, malformed, oversized, or unsafe setting | `archive` | Fictional time archive used as a safe non-specific context |
 
 Mobile, reduced-motion, save-data, static preference, slow lazy import, missing model, lost graphics context, and poor renderer pacing use the selected room's poster and keep the lesson controls available. The user can retry 3D where the controls allow it.
@@ -46,6 +47,8 @@ In this WSL environment, export with Blender's system-Python environment so the 
 env -u PYTHONUNBUFFERED -u PYTHONUTF8 -u PYTHONDONTWRITEBYTECODE PATH=/usr/bin:/bin \
   blender --background --python scripts/export-history-assets.py -- --root . --room kingdom-court
 ```
+
+Author and verify a new room the same way, replacing the `--room` value. The `market-port` room was authored and exported with the same invocation on this host; its export report records the exact Blender version used.
 
 Regenerate the source, GLB, poster, report, and checksum together. Do not edit generated binaries independently. Keep the GLB at or below 4 MiB, the poster at or below 250 KiB, the scene below 100,000 triangles and 60 draw primitives, and preserve the three reviewed inspection objects.
 
