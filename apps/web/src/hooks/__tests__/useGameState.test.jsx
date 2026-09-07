@@ -15,8 +15,10 @@ class MockAudioContext {
   currentTime = 0;
   destination = {};
 }
-window.AudioContext = window.AudioContext || MockAudioContext;
-window.webkitAudioContext = window.webkitAudioContext || MockAudioContext;
+// happy-dom ships an incomplete AudioContext stub, so always override it:
+// SoundEngine.init() news this up and playWarp needs the full node API.
+window.AudioContext = MockAudioContext;
+window.webkitAudioContext = MockAudioContext;
 
 import { test, expect, describe, afterEach, mock, beforeEach } from 'bun:test';
 import { renderHook, act } from '@testing-library/react';
@@ -76,14 +78,10 @@ describe('useGameState', () => {
       }
       return {
         ok: true,
+        status: 200,
         json: async () => ({
-            candidates: [{
-                content: {
-                    parts: [{
-                        text: JSON.stringify(validMockGameData)
-                    }]
-                }
-            }]
+            success: true,
+            result: { response: JSON.stringify(validMockGameData) },
         })
       };
     });
