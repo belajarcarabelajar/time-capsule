@@ -65,7 +65,7 @@ Accounting findings, including stale UI, fail-open checks, races, and partial wr
 - Preserve AI text, system prompt, schema, narration, quiz answers, chapter/preload behavior, authentication routes, daily reset, and generation prices.
 - No React migration, free-roaming game, combat simulation, multiplayer, VR, runtime Blender, runtime asset-generation service, new rewards, or paid asset procurement.
 - User delegates creative direction. First launch is a representative collection, not coverage of all history. A neutral archive is mandatory for unsupported or contradictory settings.
-- `ponytail: three authored rooms at launch; expand only after the first-room quality gate and measured demand for unsupported settings`. Unknown input never silently downloads an unrelated historical room.
+- `defer: three authored rooms at launch; expand only after the first-room quality gate and measured demand for unsupported settings`. Unknown input never silently downloads an unrelated historical room.
 - No new code file reaches 500 lines. Do not split existing unrelated code or run mass lint/format fixes.
 
 **Visual implementation map**
@@ -163,7 +163,7 @@ Produces the first manifest entry and a finished source/export pair. Start with 
 - [ ] Render and review the first room on desktop and mobile with the real dialogue/quiz overlay after T4 integration. Obtain the user's visual approval before authoring both historical rooms to final detail.
 - [ ] Record approved camera/material screenshots and remaining defects in this plan. Do not claim a passing metadata test proves visual quality. Review/authorized commit checkpoint.
 
-Dependency: compatible local Blender and asset-authoring capability. If absent, establish them before T2, or report a specific authoring blocker; a primitive-only mockup is not an equivalent completed room. `ponytail: no realtime shadows in the first slice; introduce only if baked lighting fails visual review within the measured budget`.
+Dependency: compatible local Blender and asset-authoring capability. If absent, establish them before T2, or report a specific authoring blocker; a primitive-only mockup is not an equivalent completed room. `defer: no realtime shadows in the first slice; introduce only if baked lighting fails visual review within the measured budget`.
 
 **T3: deterministic room selection and resilient shell**
 
@@ -191,7 +191,7 @@ Consumes manifest/camera inputs. Produces a visible model with bounded view, lig
 - [ ] Review all nine descriptions against credible museum/archive sources and record exact references in provenance. Verify regional scope and avoid invented historical measurements, slogans, or recordings. Assets are illustrative unless exact reconstruction evidence exists.
 - [ ] Measure draw calls, triangles, model size, and steady-state resources in the real renderer. Record browser evidence before accepting AC2/9/10. Review/authorized commit checkpoint.
 
-Risk: test DOMs cannot provide actual WebGL fidelity. Browser measurements are mandatory. `ponytail: only the active room stays resident; add a bounded two-room cache only after measured chapter-swap latency justifies its memory cost`.
+Risk: test DOMs cannot provide actual WebGL fidelity. Browser measurements are mandatory. `defer: only the active room stays resident; add a bounded two-room cache only after measured chapter-swap latency justifies its memory cost`.
 
 **T5: preserve learning while adding optional interaction**
 

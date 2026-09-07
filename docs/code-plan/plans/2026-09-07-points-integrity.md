@@ -67,7 +67,7 @@ Recommended narrow interface: continue using `checkSession()` after successful g
 - [ ] Run `rtk bun test apps/web/src/context/__tests__/PointsRefresh.test.jsx && rtk bun test apps/web/src/hooks/__tests__/useGameState.test.jsx && rtk bun test apps/web/src/components/__tests__/UserBar.test.jsx`.
 - [ ] Review primary, fallback, preload, return-home, logout, and midnight behavior. Commit only with explicit authorization and the required sole author.
 
-Tradeoff: one extra session read per completed generation uses existing contracts. `ponytail: use session refresh for this repair; replace with versioned accounting metadata only if measured request overhead or cross-tab staleness warrants a separately reviewed interface`.
+Tradeoff: one extra session read per completed generation uses existing contracts. `defer: use session refresh for this repair; replace with versioned accounting metadata only if measured request overhead or cross-tab staleness warrants a separately reviewed interface`.
 
 **P-T3: conditional accounting/reset repair after local evidence**
 

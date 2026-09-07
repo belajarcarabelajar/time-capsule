@@ -198,7 +198,7 @@ flowchart TD
 
 **Edge Cases & Failure Behavior:** Empty/undefined flag enables; only exact `false` disables; a failed 3D renderer still uses poster fallback and never falls back to AI or blocks the lesson.
 
-**Deliberate Shortcuts & Deferrals:** `ponytail: one global build-time gate, upgrade-trigger: a measured need for remote runtime rollout control after production telemetry and ownership are approved.`
+**Deliberate Shortcuts & Deferrals:** `defer: one global build-time gate, upgrade-trigger: a measured need for remote runtime rollout control after production telemetry and ownership are approved.`
 
 **Dependencies & Risks:** Existing tests that assume the old default may need explicit `immersiveEnabled={false}` to test the legacy path. Do not change test intent silently.
 
@@ -231,7 +231,7 @@ flowchart TD
 
 **Edge Cases & Failure Behavior:** Keep URL/HTML-like input, mixed eras, oversized values, incompatible regions, unknown islands, and location/topic contradictions on `archive`.
 
-**Deliberate Shortcuts & Deferrals:** `ponytail: allowlisted aliases only, upgrade-trigger: a reviewed source-backed room catalog for additional eras or regions.`
+**Deliberate Shortcuts & Deferrals:** `defer: allowlisted aliases only, upgrade-trigger: a reviewed source-backed room catalog for additional eras or regions.`
 
 **Dependencies & Risks:** More aliases can create false positives. Each new alias needs a test for the intended room and a nearby negative case.
 
@@ -264,7 +264,7 @@ flowchart TD
 
 **Edge Cases & Failure Behavior:** If the new cue exceeds 4 MiB, 100,000 triangles, 60 primitives, or 250 KiB poster budget, reduce geometry/material complexity before acceptance. If visual review finds no missing cue, do not re-author the asset.
 
-**Deliberate Shortcuts & Deferrals:** `ponytail: authored diorama rather than photorealistic battlefield, upgrade-trigger: user-approved asset collection expansion with source review, budget measurement, and a separate visual plan.`
+**Deliberate Shortcuts & Deferrals:** `defer: authored diorama rather than photorealistic battlefield, upgrade-trigger: user-approved asset collection expansion with source review, budget measurement, and a separate visual plan.`
 
 **Dependencies & Risks:** Blender availability, target-browser lighting, screenshot scale, and historical interpretation. Generated binaries must be regenerated together so hashes and provenance remain consistent.
 
@@ -296,7 +296,7 @@ flowchart TD
 
 **Edge Cases & Failure Behavior:** No WebGL, slow/lost context, failed lazy import, missing model/poster, visibility changes, room transitions, and `sessionStorage` unavailability must preserve the lesson and expose recovery where applicable.
 
-**Deliberate Shortcuts & Deferrals:** `ponytail: one authored camera and poster per room, upgrade-trigger: measured evidence that separate scene variants materially improve comprehension without violating mobile budgets.`
+**Deliberate Shortcuts & Deferrals:** `defer: one authored camera and poster per room, upgrade-trigger: measured evidence that separate scene variants materially improve comprehension without violating mobile budgets.`
 
 **Dependencies & Risks:** Browser binaries and WebKit host libraries are external prerequisites. A missing browser is a verification blocker, not a passing E2E result.
 

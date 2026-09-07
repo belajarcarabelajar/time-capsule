@@ -62,7 +62,7 @@ flowchart TD
 **Edge Cases & Failure Behavior:**
 - Start screen (`is-start`) bottom bar must not overlap the `Mulai Petualangan` form on 360px; gameplay arrival banner (`.history-arrival`) must not cover location pill; reduced-motion media query stays intact; landscape 600px height keeps inspection `max-height 35dvh`.
 **Deliberate Shortcuts & Deferrals:**
-- None (pure CSS; `ponytail: none`).
+- None (pure CSS; `defer: none`).
 **Dependencies & Risks:**
 - Risk of removing mobile explore affordance; decision at gate picks hide-vs-collapse. Rollback is one CSS block revert.
 **Review & Evidence:**
@@ -116,7 +116,7 @@ flowchart TD
 **Edge Cases & Failure Behavior:**
 - Mixed-language topic follows topic language, not forced ID; proper nouns (e.g. `Gavrilo Princip`) stay untranslated; JSON keys/values `environmentKey`, `themeColor`, `bg` stay English enums; rule must not inflate output or break JSON parsing.
 **Deliberate Shortcuts & Deferrals:**
-- Single-sentence rule over per-field language tags or post-generation translation (deferred: `ponytail: translation pass, trigger = recurring wrong-language output after rule lands`).
+- Single-sentence rule over per-field language tags or post-generation translation (deferred: `defer: translation pass, trigger = recurring wrong-language output after rule lands`).
 **Dependencies & Risks:**
 - Risk: weak model still drifts to English — accepted; rule is cheapest lever within TPM budget. No schema/accounting impact.
 **Review & Evidence:**

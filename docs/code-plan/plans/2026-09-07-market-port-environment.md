@@ -137,7 +137,7 @@ flowchart LR
 **Interfaces:** Scene branch under `args.room == "market-port"`; three named inspection node groups (`dock`, `market-stall`, `cargo`); provenance record matching the manifest.
 **Behavior & Acceptance:** AC-5.
 **Edge Cases & Failure Behavior:** Budget overruns, checksum mismatches, or missing source fail verification.
-**Deliberate Shortcuts & Deferrals:** Blender scene authoring is visual/generated work; TDD exception with verification = asset budgets + screenshot + e2e. `ponytail: no baked AO, upgrade-trigger = realism acceptance pending in three-rooms checkpoint`.
+**Deliberate Shortcuts & Deferrals:** Blender scene authoring is visual/generated work; TDD exception with verification = asset budgets + screenshot + e2e. `defer: no baked AO, upgrade-trigger = realism acceptance pending in three-rooms checkpoint`.
 **Dependencies & Risks:** Highest-effort task; verify assets before e2e.
 **Review & Evidence:** roomAssets test pass; verify-history-assets.mjs exit 0 for market-port.
 **Test Data & Determinism:** Fixed seed 1941 in authoring script; deterministic output.

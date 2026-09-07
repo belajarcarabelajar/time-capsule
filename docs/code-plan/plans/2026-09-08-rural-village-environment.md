@@ -137,7 +137,7 @@ flowchart LR
 **Interfaces:** Scene branch under `args.room == "rural-village"`; three named inspection node groups (`sawah`, `lumbung`, `irigasi`); provenance record matching the manifest.
 **Behavior & Acceptance:** AC-5. Scene: paddy terraces with bund paths and water, timber granary on posts, irrigation channel with gate, low-poly trees, sky backdrop; motion pivots `ambient_figure`/`ambient_prop` preserved.
 **Edge Cases & Failure Behavior:** Budget overruns, checksum mismatches, or missing source fail verification.
-**Deliberate Shortcuts & Deferrals:** Blender scene authoring is visual/generated work; TDD exception with verification = asset budgets + screenshot + e2e (mirroring market-port). `ponytail: no baked AO, upgrade-trigger = realism acceptance pending in three-rooms checkpoint`.
+**Deliberate Shortcuts & Deferrals:** Blender scene authoring is visual/generated work; TDD exception with verification = asset budgets + screenshot + e2e (mirroring market-port). `defer: no baked AO, upgrade-trigger = realism acceptance pending in three-rooms checkpoint`.
 **Review & Evidence:** roomAssets test pass; verify-history-assets.mjs exit 0 for rural-village.
 - [x] Step 1: Write failing test [append `rural-village` to roomAssets id list]
 - [x] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/roomAssets.test.js]
