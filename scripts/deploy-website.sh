@@ -1,81 +1,52 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# --- Time Capsule Deploy Script ---
-# Script ini mengotomatiskan proses build dan deployment ke Cloudflare Pages secara aman.
+set -euo pipefail
 
-set -e
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_FILE="${TIME_CAPSULE_CLOUDFLARE_ENV_FILE:-$ROOT_DIR/.env.cloudflare}"
 
-# Warna output
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # Reset warna
+cd "$ROOT_DIR"
 
-echo -e "${BLUE}=== Memulai Proses Deployment Time Capsule ===${NC}"
-
-# 1. Memuat Variabel Lingkungan Cloudflare
-CF_ENV_FILE="/home/belajarcarabelajar/cloudflare/.env"
-if [ ! -f "$CF_ENV_FILE" ] && [ -f "/root/.env" ]; then
-    CF_ENV_FILE="/root/.env"
+if [[ -e "$ENV_FILE" && ! -f "$ENV_FILE" ]]; then
+  echo "[ERROR] Cloudflare credential path is not a regular file: $ENV_FILE" >&2
+  exit 1
 fi
 
-if [ -f "$CF_ENV_FILE" ]; then
-    echo -e "${GREEN}[OK]${NC} Memuat kredensial Cloudflare dari $CF_ENV_FILE"
-    # Memuat variabel dari berkas env Cloudflare
-    while IFS='=' read -r key value || [ -n "$key" ]; do
-        [[ -z "$key" || "$key" == \#* ]] && continue
-        # Remove single and double quotes at the boundaries
+if [[ -f "$ENV_FILE" ]]; then
+  echo "[OK] Loading current-project Cloudflare credentials"
+  while IFS='=' read -r key value || [[ -n "$key" ]]; do
+    [[ -z "$key" || "$key" == \#* ]] && continue
+    case "$key" in
+      CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID)
         value="${value%\"}"
         value="${value#\"}"
         value="${value%\'}"
         value="${value#\'}"
         export "$key=$value"
-    done < "$CF_ENV_FILE"
-else
-    echo -e "${RED}[ERROR]${NC} Berkas kredensial Cloudflare tidak ditemukan."
-    exit 1
+        ;;
+    esac
+  done < "$ENV_FILE"
 fi
 
-# Terjemahkan variabel jika menggunakan format CF_API_TOKEN / CF_ACCOUNT_ID atau VITE_CF_API_TOKEN / VITE_CF_ACCOUNT_ID
-if [ ! -z "$CF_API_TOKEN" ]; then
-    export CLOUDFLARE_API_TOKEN="$CF_API_TOKEN"
-elif [ ! -z "$VITE_CF_API_TOKEN" ]; then
-    export CLOUDFLARE_API_TOKEN="$VITE_CF_API_TOKEN"
-fi
+: "${CLOUDFLARE_API_TOKEN:?Set CLOUDFLARE_API_TOKEN or provide TIME_CAPSULE_CLOUDFLARE_ENV_FILE}"
+: "${CLOUDFLARE_ACCOUNT_ID:?Set CLOUDFLARE_ACCOUNT_ID or provide TIME_CAPSULE_CLOUDFLARE_ENV_FILE}"
 
-if [ ! -z "$CF_ACCOUNT_ID" ]; then
-    export CLOUDFLARE_ACCOUNT_ID="$CF_ACCOUNT_ID"
-elif [ ! -z "$VITE_CF_ACCOUNT_ID" ]; then
-    export CLOUDFLARE_ACCOUNT_ID="$VITE_CF_ACCOUNT_ID"
-fi
-
-# Validasi kredensial minimal
-if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-    echo -e "${RED}[ERROR]${NC} Kredensial Cloudflare (API Token / Account ID) tidak lengkap."
-    exit 1
-fi
-
-# 2. Penyesuaian PATH untuk Kompatibilitas Node.js (Wrangler)
-# Memprioritaskan /usr/bin agar wrangler berjalan di bawah Node v22, bukan pembungkus Bun (v24)
 export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
-# 3. Proses Build Aplikasi Web
-echo -e "\n${BLUE}=== Langkah 1: Membangun Aplikasi (Build) ===${NC}"
-if command -v bun &> /dev/null; then
-    echo -e "Menjalankan build dengan Bun..."
-    bun run build
-else
-    echo -e "${YELLOW}[WARNING]${NC} Bun tidak terdeteksi. Mencoba menggunakan npm..."
-    npm run build
+echo "=== Building Time Capsule ==="
+bash "$ROOT_DIR/scripts/build-website.sh"
+
+if [[ ! -d "$ROOT_DIR/apps/web/dist" ]]; then
+  echo "[ERROR] Build output apps/web/dist was not created" >&2
+  exit 1
 fi
 
-# 4. Proses Deployment ke Cloudflare Pages
-echo -e "\n${BLUE}=== Langkah 2: Mengunggah Aset ke Cloudflare Pages ===${NC}"
-if [ -d "apps/web/dist" ]; then
-    npx -y wrangler pages deploy apps/web/dist --project-name time-capsule
-    echo -e "\n${GREEN}=== SUCCESS: Aplikasi berhasil dideploy! ===${NC}"
-else
-    echo -e "${RED}[ERROR]${NC} Folder build 'apps/web/dist' tidak ditemukan. Harap pastikan proses build berhasil."
-    exit 1
+echo "=== Deploying Time Capsule to Cloudflare Pages ==="
+WRANGLER_BIN="$ROOT_DIR/node_modules/.bin/wrangler"
+if [[ ! -x "$WRANGLER_BIN" ]]; then
+  echo "[ERROR] Local Wrangler is missing. Run bun install before deploying." >&2
+  exit 1
 fi
+
+"$WRANGLER_BIN" pages deploy apps/web/dist --project-name time-capsule
+echo "[SUCCESS] Time Capsule deployed"

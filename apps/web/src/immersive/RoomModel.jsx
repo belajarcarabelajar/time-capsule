@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { disposeRoomResources } from './roomResources.js';
+import React, { useEffect, useState } from "react";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { disposeRoomResources } from "./roomResources.js";
 
-export default function RoomModel({ url, onReady, onError }) {
+export default function RoomModel({
+  url,
+  onReady,
+  onError,
+  loader: Loader = GLTFLoader,
+}) {
   const [scene, setScene] = useState(null);
   useEffect(() => {
     const controller = new AbortController();
@@ -12,10 +17,13 @@ export default function RoomModel({ url, onReady, onError }) {
     async function load() {
       try {
         const response = await fetch(url, { signal: controller.signal });
-        if (!response.ok) throw new Error('Room asset unavailable');
+        if (!response.ok) throw new Error("Room asset unavailable");
         const bytes = await response.arrayBuffer();
         if (!active) return;
-        const model = await new GLTFLoader().parseAsync(bytes, new URL('.', new URL(url, window.location.href)).href);
+        const model = await new Loader().parseAsync(
+          bytes,
+          new URL(".", new URL(url, window.location.href)).href,
+        );
         if (!active) {
           disposeRoomResources(model.scene);
           return;
@@ -33,6 +41,8 @@ export default function RoomModel({ url, onReady, onError }) {
       if (ownedScene) disposeRoomResources(ownedScene);
     };
   }, [url, onError]);
-  useEffect(() => { if (scene) onReady(); }, [scene, onReady]);
+  useEffect(() => {
+    if (scene) onReady();
+  }, [scene, onReady]);
   return scene ? <primitive object={scene} dispose={null} /> : null;
 }

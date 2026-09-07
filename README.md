@@ -95,17 +95,18 @@ Copy the template and fill in your values:
 cp .env.example .env
 ```
 
-| Variable                                     | Used by                              | Purpose                                     |
-| -------------------------------------------- | ------------------------------------ | ------------------------------------------- |
-| `VITE_GEMINI_API_KEY`                        | dev proxy, `functions/api/gemini.js` | Google Gemini API key                       |
-| `VITE_CF_ACCOUNT_ID` / `VITE_CF_API_TOKEN`   | dev proxy (`/api/ai`)                | Cloudflare Workers AI fallback in local dev |
-| `GOOGLE_CLIENT_ID` / `VITE_GOOGLE_CLIENT_ID` | auth                                 | Google OAuth client ID                      |
-| `GOOGLE_CLIENT_SECRET`                       | `functions/api/auth/callback.js`     | Google OAuth client secret                  |
-| `GOOGLE_REDIRECT_URI`                        | auth                                 | OAuth callback URL                          |
-| `JWT_SECRET`                                 | auth                                 | Signs the `auth_token` session JWT          |
+| Variable                         | Used by                          | Purpose                            |
+| -------------------------------- | -------------------------------- | ---------------------------------- |
+| `GEMINI_API_KEY`                 | Pages Functions                  | Google Gemini API key              |
+| `CF_ACCOUNT_ID` / `CF_API_TOKEN` | Pages Functions                  | Cloudflare Workers AI fallback     |
+| `GOOGLE_CLIENT_ID`               | auth                             | Google OAuth client ID             |
+| `GOOGLE_CLIENT_SECRET`           | `functions/api/auth/callback.js` | Google OAuth client secret         |
+| `GOOGLE_REDIRECT_URI`            | auth                             | OAuth callback URL                 |
+| `JWT_SECRET`                     | auth                             | Signs the `auth_token` session JWT |
+| `TIME_CAPSULE_FUNCTIONS_ORIGIN`  | Vite dev proxy                   | Local Pages Functions origin       |
 
 > [!NOTE]
-> In **local dev**, Vite proxies `/api/gemini` and `/api/ai` directly to Google/Cloudflare (see `apps/web/vite.config.js`): no key is bundled into the client. In **production**, the `functions/api/*` Pages Functions read the same values from the Cloudflare environment. There is no client-side `apiKey` constant.
+> In **local dev**, Vite proxies `/api/*` to the local Pages Functions host at `http://127.0.0.1:8788` by default. Start it with `bun run dev:pages` in a second terminal, then run `bun --filter web run dev`. Set `TIME_CAPSULE_FUNCTIONS_ORIGIN` only when the local Functions host uses another origin. In **production**, the `functions/api/*` Pages Functions read server-only values from the Cloudflare environment. There is no client-side `apiKey` constant.
 
 > [!WARNING]
 > Do not commit real keys to version control. `.env` is gitignored.
@@ -200,19 +201,21 @@ Deployment targets **Cloudflare Pages** (static assets in `apps/web/dist` + the 
 bash scripts/deploy-website.sh
 ```
 
-The script loads credentials from `/home/belajarcarabelajar/cloudflare/.env` (falling back to `/root/.env`), then runs `wrangler pages deploy apps/web/dist --project-name time-capsule`. Provide `CF_API_TOKEN`/`CLOUDFLARE_API_TOKEN` and `CF_ACCOUNT_ID`/`CLOUDFLARE_ACCOUNT_ID` in that env file.
+The script never reads a neighboring project's credentials. Export `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, or provide a current-project file through `TIME_CAPSULE_CLOUDFLARE_ENV_FILE`. That file may contain only those two credential names. The script runs the build-only helper first, then executes `wrangler pages deploy apps/web/dist --project-name time-capsule`.
 
 > Configure the Gemini key, OAuth secrets, `JWT_SECRET`, and the D1 binding (`DB`) in your Cloudflare Pages project settings so the Functions can read them at runtime.
 
 ## Scripts (root)
 
-| Script           | Description                               |
-| ---------------- | ----------------------------------------- |
-| `bun run dev`    | `turbo dev`: start workspace dev tasks   |
-| `bun run build`  | `turbo build`: build in dependency order |
-| `bun run lint`   | `turbo lint`                              |
-| `bun run test`   | `turbo test`                              |
-| `bun run format` | `prettier --write "**/*.{ts,tsx,md}"`     |
+| Script                 | Description                                        |
+| ---------------------- | -------------------------------------------------- |
+| `bun run dev`          | `turbo dev`: start workspace dev tasks             |
+| `bun run build`        | `turbo build`: build in dependency order           |
+| `bun run lint`         | `turbo lint`                                       |
+| `bun run test`         | `turbo test`                                       |
+| `bun run test:quality` | Web, engine, UI, backend, script, and asset checks |
+| `bun run dev:pages`    | Build and serve local Pages Functions on port 8788 |
+| `bun run format`       | `prettier --write "**/*.{ts,tsx,md}"`              |
 
 > Deployment is **not** a package script. Run `bash scripts/deploy-website.sh` directly.
 

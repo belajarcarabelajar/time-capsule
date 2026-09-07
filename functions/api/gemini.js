@@ -1,29 +1,13 @@
 import { getUserFromRequest } from "./auth/_utils.js";
-import { checkUserPoints, deductPointsAndSaveStory, PointsError, pointsErrorResponse } from "./_ai_utils.js";
+import {
+  checkUserPoints,
+  deductPointsAndSaveStory,
+  PointsError,
+  pointsErrorResponse,
+} from "./_ai_utils.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
-
-  // Retrieve credentials from environment variables set in Cloudflare Pages
-  const apiKey = env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY;
-
-  if (!apiKey) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        errors: [
-          {
-            message:
-              "Gemini API key is not configured in Cloudflare Pages project settings.",
-          },
-        ],
-      }),
-      {
-        status: 501, // Not Implemented / Configured
-        headers: { "Content-Type": "application/json" },
-      },
-    );
-  }
 
   // 1. Authenticate user & check D1 point balance
   const authUser = await getUserFromRequest(request, env);
@@ -37,6 +21,27 @@ export async function onRequestPost(context) {
       }),
       {
         status: 401,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+
+  // Retrieve credentials from environment variables set in Cloudflare Pages
+  const apiKey = env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        errors: [
+          {
+            message:
+              "Gemini API key is not configured in Cloudflare Pages project settings.",
+          },
+        ],
+      }),
+      {
+        status: 501,
         headers: { "Content-Type": "application/json" },
       },
     );

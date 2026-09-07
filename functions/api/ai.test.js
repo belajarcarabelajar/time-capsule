@@ -1,13 +1,25 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { onRequestPost } from "./ai.js";
 import { signJwt } from "./auth/_utils.js";
-import { createPointsDb } from './test-support/pointsDb.js';
+import { createPointsDb } from "./test-support/pointsDb.js";
+
+async function authenticatedRequest() {
+  const token = await signJwt(
+    { sub: "credential-test-user" },
+    "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
+  );
+  return new Request("http://localhost", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
 
 describe("onRequestPost - Credentials Validation", () => {
   it("should return 500 error when env is completely empty", async () => {
     const context = {
-      request: new Request("http://localhost"),
-      env: {}
+      request: await authenticatedRequest(),
+      env: {
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
+      },
     };
 
     const response = await onRequestPost(context);
@@ -18,36 +30,13 @@ describe("onRequestPost - Credentials Validation", () => {
     expect(body.errors[0].message).toContain("Cloudflare credentials");
   });
 
-  it("should return 500 error when only VITE_CF_API_TOKEN is missing", async () => {
-    const context = {
-      request: new Request("http://localhost"),
-      env: {
-        VITE_CF_ACCOUNT_ID: "account-123"
-      }
-    };
-
-    const response = await onRequestPost(context);
-    expect(response.status).toBe(500);
-  });
-
-  it("should return 500 error when only VITE_CF_ACCOUNT_ID is missing", async () => {
-    const context = {
-      request: new Request("http://localhost"),
-      env: {
-        VITE_CF_API_TOKEN: "token-123"
-      }
-    };
-
-    const response = await onRequestPost(context);
-    expect(response.status).toBe(500);
-  });
-
   it("should return 500 error when only CF_API_TOKEN is missing", async () => {
     const context = {
-      request: new Request("http://localhost"),
+      request: await authenticatedRequest(),
       env: {
-        CF_ACCOUNT_ID: "account-123"
-      }
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
+        CF_ACCOUNT_ID: "account-123",
+      },
     };
 
     const response = await onRequestPost(context);
@@ -56,14 +45,23 @@ describe("onRequestPost - Credentials Validation", () => {
 
   it("should return 500 error when only CF_ACCOUNT_ID is missing", async () => {
     const context = {
-      request: new Request("http://localhost"),
+      request: await authenticatedRequest(),
       env: {
-        CF_API_TOKEN: "token-123"
-      }
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
+        CF_API_TOKEN: "token-123",
+      },
     };
 
     const response = await onRequestPost(context);
     expect(response.status).toBe(500);
+  });
+
+  it("rejects unauthenticated requests before checking provider credentials", async () => {
+    const response = await onRequestPost({
+      request: new Request("http://localhost"),
+      env: {},
+    });
+    expect(response.status).toBe(401);
   });
 });
 
@@ -74,28 +72,36 @@ describe("onRequestPost - Error Handling", () => {
 
   beforeEach(async () => {
     originalFetch = globalThis.fetch;
-    validToken = await signJwt({ sub: "google-user" }, "time-capsule-secret-jwt-key-2026-belajarcarabelajar");
+    validToken = await signJwt(
+      { sub: "google-user" },
+      "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
+    );
     fixture = await createPointsDb();
   });
 
   it("allows the verified admin to reach the fallback provider without D1 quota state", async () => {
-    const adminToken = await signJwt({
-      sub: "admin-user", email: "kurniawaniwan7906@gmail.com", verified_email: true,
-    }, "time-capsule-secret-jwt-key-2026-belajarcarabelajar");
+    const adminToken = await signJwt(
+      {
+        sub: "admin-user",
+        email: "kurniawaniwan7906@gmail.com",
+        verified_email: true,
+      },
+      "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
+    );
     const headers = new Map([["Authorization", `Bearer ${adminToken}`]]);
     globalThis.fetch = async () => ({
       ok: true,
       status: 200,
-      json: async () => ({ success: true, result: { response: '{}' } }),
+      json: async () => ({ success: true, result: { response: "{}" } }),
     });
     const response = await onRequestPost({
       request: {
         json: async () => ({ messages: [], response_format: {} }),
-        headers: { get: key => headers.get(key) },
+        headers: { get: (key) => headers.get(key) },
       },
       env: {
-        VITE_CF_API_TOKEN: "valid-token",
-        VITE_CF_ACCOUNT_ID: "valid-account",
+        CF_API_TOKEN: "valid-token",
+        CF_ACCOUNT_ID: "valid-account",
         JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
       },
     });
@@ -112,17 +118,19 @@ describe("onRequestPost - Error Handling", () => {
     headers.set("Authorization", `Bearer ${validToken}`);
     const context = {
       request: {
-        json: async () => { throw new Error("Invalid JSON"); },
+        json: async () => {
+          throw new Error("Invalid JSON");
+        },
         headers: {
-          get: (key) => headers.get(key)
-        }
+          get: (key) => headers.get(key),
+        },
       },
       env: {
-        VITE_CF_API_TOKEN: "valid-token",
+        CF_API_TOKEN: "valid-token",
         DB: fixture.db,
-        VITE_CF_ACCOUNT_ID: "valid-account",
-        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar"
-      }
+        CF_ACCOUNT_ID: "valid-account",
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
+      },
     };
 
     const response = await onRequestPost(context);
@@ -130,7 +138,9 @@ describe("onRequestPost - Error Handling", () => {
 
     const body = await response.json();
     expect(body.success).toBe(false);
-    expect(body.errors[0].message).toContain("Failed to process AI request: Invalid JSON");
+    expect(body.errors[0].message).toContain(
+      "Failed to process AI request: Invalid JSON",
+    );
   });
 
   it("should return 500 when fetch throws an error", async () => {
@@ -140,15 +150,15 @@ describe("onRequestPost - Error Handling", () => {
       request: {
         json: async () => ({ messages: [], response_format: {} }),
         headers: {
-          get: (key) => headers.get(key)
-        }
+          get: (key) => headers.get(key),
+        },
       },
       env: {
-        VITE_CF_API_TOKEN: "valid-token",
+        CF_API_TOKEN: "valid-token",
         DB: fixture.db,
-        VITE_CF_ACCOUNT_ID: "valid-account",
-        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar"
-      }
+        CF_ACCOUNT_ID: "valid-account",
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
+      },
     };
 
     globalThis.fetch = async () => {
@@ -160,7 +170,9 @@ describe("onRequestPost - Error Handling", () => {
 
     const body = await response.json();
     expect(body.success).toBe(false);
-    expect(body.errors[0].message).toContain("Failed to process AI request: Network failure");
+    expect(body.errors[0].message).toContain(
+      "Failed to process AI request: Network failure",
+    );
   });
 
   it("should return 500 when response.json() throws an error", async () => {
@@ -170,20 +182,22 @@ describe("onRequestPost - Error Handling", () => {
       request: {
         json: async () => ({ messages: [], response_format: {} }),
         headers: {
-          get: (key) => headers.get(key)
-        }
+          get: (key) => headers.get(key),
+        },
       },
       env: {
-        VITE_CF_API_TOKEN: "valid-token",
+        CF_API_TOKEN: "valid-token",
         DB: fixture.db,
-        VITE_CF_ACCOUNT_ID: "valid-account",
-        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar"
-      }
+        CF_ACCOUNT_ID: "valid-account",
+        JWT_SECRET: "time-capsule-secret-jwt-key-2026-belajarcarabelajar",
+      },
     };
 
     globalThis.fetch = async () => ({
       status: 200,
-      json: async () => { throw new Error("Failed to parse response body"); }
+      json: async () => {
+        throw new Error("Failed to parse response body");
+      },
     });
 
     const response = await onRequestPost(context);
@@ -191,6 +205,8 @@ describe("onRequestPost - Error Handling", () => {
 
     const body = await response.json();
     expect(body.success).toBe(false);
-    expect(body.errors[0].message).toContain("Failed to process AI request: Failed to parse response body");
+    expect(body.errors[0].message).toContain(
+      "Failed to process AI request: Failed to parse response body",
+    );
   });
 });

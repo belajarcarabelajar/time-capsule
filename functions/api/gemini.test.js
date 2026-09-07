@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 import { onRequestPost } from "./gemini.js";
 import { signJwt } from "./auth/_utils.js";
-import { createPointsDb } from './test-support/pointsDb.js';
+import { createPointsDb } from "./test-support/pointsDb.js";
 
 describe("onRequestPost - D1 Error Handling", () => {
   let originalFetch;
@@ -25,7 +25,7 @@ describe("onRequestPost - D1 Error Handling", () => {
     globalThis.fetch = mock(async () => ({
       ok: true,
       status: 200,
-      json: async () => ({ fake: "response" })
+      json: async () => ({ fake: "response" }),
     }));
 
     const token = await signJwt({ sub: "user-123" }, "test-secret");
@@ -33,14 +33,14 @@ describe("onRequestPost - D1 Error Handling", () => {
     const request = new Request("http://localhost", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         contents: [],
         systemInstruction: {},
-        generationConfig: {}
-      })
+        generationConfig: {},
+      }),
     });
 
     const context = {
@@ -51,36 +51,54 @@ describe("onRequestPost - D1 Error Handling", () => {
         DB: {
           prepare: () => {
             throw new Error("Simulated D1 error");
-          }
-        }
-      }
+          },
+        },
+      },
     };
 
     const response = await onRequestPost(context);
 
     expect(response.status).toBe(503);
     const body = await response.json();
-    expect(body.error).toBe('POINTS_UNAVAILABLE');
+    expect(body.error).toBe("POINTS_UNAVAILABLE");
     expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects unauthenticated requests before checking provider credentials", async () => {
+    const response = await onRequestPost({
+      request: new Request("http://localhost"),
+      env: {},
+    });
+    expect(response.status).toBe(401);
   });
 
   it("allows the verified admin to reach Gemini without D1 quota state", async () => {
     const provider = mock(async () => ({
       ok: true,
       status: 200,
-      json: async () => ({ candidates: [{ content: { parts: [{ text: '{}' }] } }] }),
+      json: async () => ({
+        candidates: [{ content: { parts: [{ text: "{}" }] } }],
+      }),
     }));
     globalThis.fetch = provider;
-    const token = await signJwt({
-      sub: 'admin-user', email: 'KURNIAWANIWAN7906@GMAIL.COM', verified_email: true,
-    }, 'test-secret');
+    const token = await signJwt(
+      {
+        sub: "admin-user",
+        email: "KURNIAWANIWAN7906@GMAIL.COM",
+        verified_email: true,
+      },
+      "test-secret",
+    );
     const response = await onRequestPost({
-      request: new Request('http://localhost', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      request: new Request("http://localhost", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ contents: [] }),
       }),
-      env: { GEMINI_API_KEY: 'test-key', JWT_SECRET: 'test-secret' },
+      env: { GEMINI_API_KEY: "test-key", JWT_SECRET: "test-secret" },
     });
     expect(response.status).toBe(200);
     expect(provider).toHaveBeenCalledTimes(1);
@@ -89,9 +107,12 @@ describe("onRequestPost - D1 Error Handling", () => {
 
 describe("onRequestPost - Credentials Validation", () => {
   it("should return 501 error when API key is missing", async () => {
+    const token = await signJwt({ sub: "credential-test-user" }, "test-secret");
     const context = {
-      request: new Request("http://localhost"),
-      env: {}
+      request: new Request("http://localhost", {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      env: { JWT_SECRET: "test-secret" },
     };
 
     const response = await onRequestPost(context);
@@ -99,7 +120,9 @@ describe("onRequestPost - Credentials Validation", () => {
 
     const body = await response.json();
     expect(body.success).toBe(false);
-    expect(body.errors[0].message).toContain("Gemini API key is not configured");
+    expect(body.errors[0].message).toContain(
+      "Gemini API key is not configured",
+    );
   });
 });
 
@@ -124,16 +147,20 @@ describe("onRequestPost - Fetching and Response", () => {
 
     const context = {
       request: {
-        json: async () => ({ contents: [], systemInstruction: {}, generationConfig: {} }),
+        json: async () => ({
+          contents: [],
+          systemInstruction: {},
+          generationConfig: {},
+        }),
         headers: {
-          get: (key) => headers.get(key.toLowerCase())
-        }
+          get: (key) => headers.get(key.toLowerCase()),
+        },
       },
       env: {
         GEMINI_API_KEY: "test-key",
         DB: fixture.db,
-        JWT_SECRET: "test-secret"
-      }
+        JWT_SECRET: "test-secret",
+      },
     };
 
     globalThis.fetch = async () => {
@@ -145,6 +172,8 @@ describe("onRequestPost - Fetching and Response", () => {
 
     const body = await response.json();
     expect(body.success).toBe(false);
-    expect(body.errors[0].message).toContain("Failed to process Gemini request: Network failure");
+    expect(body.errors[0].message).toContain(
+      "Failed to process Gemini request: Network failure",
+    );
   });
 });

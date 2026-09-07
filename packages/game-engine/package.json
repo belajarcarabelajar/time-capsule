@@ -8,7 +8,7 @@
     ".": "./src/index.js"
   },
   "scripts": {
-    "build": "echo \"@time-capsule/game-engine: no build step\""
+    "test": "bun test src"
   },
   "dependencies": {
     "zod": "^3.23.8"

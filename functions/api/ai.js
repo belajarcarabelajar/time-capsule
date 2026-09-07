@@ -1,30 +1,13 @@
 import { getUserFromRequest } from "./auth/_utils.js";
-import { checkUserPoints, deductPointsAndSaveStory, PointsError, pointsErrorResponse } from "./_ai_utils.js";
+import {
+  checkUserPoints,
+  deductPointsAndSaveStory,
+  PointsError,
+  pointsErrorResponse,
+} from "./_ai_utils.js";
 
 export async function onRequestPost(context) {
   const { request, env } = context;
-
-  // Retrieve credentials from environment variables set in Cloudflare Pages
-  const cfApiToken = env.VITE_CF_API_TOKEN || env.CF_API_TOKEN;
-  const cfAccountId = env.VITE_CF_ACCOUNT_ID || env.CF_ACCOUNT_ID;
-
-  if (!cfApiToken || !cfAccountId) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        errors: [
-          {
-            message:
-              "Cloudflare credentials (VITE_CF_API_TOKEN and VITE_CF_ACCOUNT_ID) are not configured in Cloudflare Pages project settings.",
-          },
-        ],
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
-  }
 
   // 1. Authenticate user & check D1 point balance
   const authUser = await getUserFromRequest(request, env);
@@ -38,6 +21,28 @@ export async function onRequestPost(context) {
       }),
       {
         status: 401,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+
+  // Retrieve credentials from environment variables set in Cloudflare Pages
+  const cfApiToken = env.CF_API_TOKEN;
+  const cfAccountId = env.CF_ACCOUNT_ID;
+
+  if (!cfApiToken || !cfAccountId) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        errors: [
+          {
+            message:
+              "Cloudflare credentials (CF_API_TOKEN and CF_ACCOUNT_ID) are not configured in Cloudflare Pages project settings.",
+          },
+        ],
+      }),
+      {
+        status: 500,
         headers: { "Content-Type": "application/json" },
       },
     );

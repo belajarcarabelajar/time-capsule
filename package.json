@@ -4,9 +4,15 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "dev:pages": "bash scripts/build-website.sh && ./node_modules/.bin/wrangler pages dev apps/web/dist --port 8788",
     "lint": "turbo lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "test": "turbo test"
+    "format": "prettier --write \"**/*.{js,jsx,json,md,ts,tsx,yaml,yml,css}\"",
+    "test": "turbo test",
+    "test:backend": "bun test functions/api",
+    "test:client-assets": "bun scripts/verify-client-assets.mjs",
+    "test:script": "bun test scripts/build-website.test.js",
+    "test:assets": "bun scripts/verify-history-assets.mjs",
+    "test:quality": "bun run test && bun run test:backend && bun run test:script && bun run test:assets"
   },
   "workspaces": [
     "apps/*",
@@ -18,11 +24,13 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "happy-dom": "^20.11.1",
+    "miniflare": "4.20260730.0",
+    "prettier": "3.5.3",
     "react-test-renderer": "18",
     "turbo": "^2.3.0",
-    "miniflare": "4.20260730.0"
+    "wrangler": "4.129.0"
   },
-  "packageManager": "bun@1.2.0",
+  "packageManager": "bun@1.4.2",
   "dependencies": {
     "isomorphic-dompurify": "^3.19.0"
   }

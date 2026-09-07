@@ -10,7 +10,7 @@
     "./utils/*": "./src/utils/*.js"
   },
   "scripts": {
-    "test": "find . -name '*.test.*' -not -path './node_modules/*' -print0 | xargs -0 -n1 bun test"
+    "test": "bun test src"
   },
   "dependencies": {
     "@time-capsule/game-engine": "workspace:*",

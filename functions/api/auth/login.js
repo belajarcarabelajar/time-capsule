@@ -4,11 +4,15 @@ export async function onRequestGet(context) {
   const { request, env } = context;
   const requestUrl = new URL(request.url);
   const origin = requestUrl.origin;
-  const clientId = env.GOOGLE_CLIENT_ID || env.VITE_GOOGLE_CLIENT_ID;
+  const clientId = env.GOOGLE_CLIENT_ID;
 
   if (!clientId || clientId.includes("your-google-client-id")) {
-    const errorMsg = "Google OAuth Client ID belum dikonfigurasi di Cloudflare Pages project settings.";
-    return Response.redirect(`${origin}/?auth_error=${encodeURIComponent(errorMsg)}`, 302);
+    const errorMsg =
+      "Google OAuth Client ID belum dikonfigurasi di Cloudflare Pages project settings.";
+    return Response.redirect(
+      `${origin}/?auth_error=${encodeURIComponent(errorMsg)}`,
+      302,
+    );
   }
 
   const redirectUri = env.GOOGLE_REDIRECT_URI || `${origin}/api/auth/callback`;
@@ -16,7 +20,9 @@ export async function onRequestGet(context) {
   // Generate a cryptographically random state parameter to prevent CSRF attacks
   const state = crypto.randomUUID
     ? crypto.randomUUID()
-    : Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
+    : Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) =>
+        b.toString(16).padStart(2, "0"),
+      ).join("");
 
   const googleAuthUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   googleAuthUrl.searchParams.set("client_id", clientId);
