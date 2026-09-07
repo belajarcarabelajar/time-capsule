@@ -16,7 +16,7 @@ from history_asset_details import enrich, merge_material_groups
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', type=Path, required=True)
-parser.add_argument('--room', choices=['archive', 'ww1-field-station', 'ww2-radio-room', 'kingdom-court', 'market-port', 'rural-village'], required=True)
+parser.add_argument('--room', choices=['archive', 'ww1-field-station', 'ww2-radio-room', 'kingdom-court', 'market-port', 'rural-village', 'resistance-outpost'], required=True)
 parser.add_argument('--input', type=Path, help='Re-export an edited blend instead of authoring.')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = args.root.resolve()
@@ -411,6 +411,91 @@ def rural_village():
     light('Village morning light', (3, -4, 6), 1700, (1, .80, .55), 6, (0, 1, 1))
 
 
+def resistance_outpost():
+    soil = material('Clearing soil', (.30, .25, .15), 'noise')
+    timber = material('Rough palisade timber', (.33, .22, .10), 'grain')
+    thatch = material('Dry grass thatch', (.37, .31, .14), 'fabric')
+    foliage = material('Dense forest green', (.08, .17, .10), 'noise')
+    sky = material('Open sky daylight', (.47, .66, .92), 'noise', .05, .95)
+    sky.node_tree.nodes.get('Principled BSDF').inputs['Emission Color'].default_value = (.44, .64, .92, 1)
+    sky.node_tree.nodes.get('Principled BSDF').inputs['Emission Strength'].default_value = 1.2
+    box('Clearing ground', (0, 0, -.1), (16, 16, .2), soil, 0)
+    # Bamboo-timber palisade line along the back of the clearing; inspection group 'Pagar bambu'.
+    palisade_y = 4.0
+    for i in range(27):
+        px = -6.5 + i * .5
+        tilt = .12 * math.sin(i * .9)
+        post = box('Pagar bambu', (px, palisade_y - tilt, 1.0), (.3, .22, 2.0), timber, .03)
+        post.rotation_euler.z = tilt * .4
+        for j in range(2):
+            cylinder('Pagar bambu', (px, palisade_y - tilt + .25 + j * .5, .7 + j), .045, 2.2, timber, 10)
+    for xr in [-6.2, -4.6, -3.0, -1.4, .2, 1.8, 3.4, 5.0, 6.2]:
+        for zr in [.45, 1.75]:
+            box('Pagar bambu', (xr, palisade_y, zr), (.16, 6.4, .12), timber, .015)
+    # Gap opening in the middle of the palisade line, framed by two sturdy gate posts.
+    for gx in [-.9, .9]:
+        cylinder('Pagar bambu', (gx, palisade_y + .1, 1.15), .13, 2.3, timber, 14)
+        for z in [.5, 1.8]:
+            box('Pagar bambu', (gx, palisade_y - .35, z), (.14, .5, .1), timber, .01)
+    # Raised bamboo watch post; inspection group 'Menara jaga'.
+    watch_x, watch_y = -4.2, .4
+    for dx in [-.6, .6]:
+        for dy in [-.6, .6]:
+            cylinder('Menara jaga', (watch_x + dx, watch_y + dy, 1.35), .09, 2.7, timber, 12)
+            cylinder('Menara jaga', (watch_x + dx, watch_y + dy, 2.9), .12, .16, dark, 12)
+    box('Menara jaga', (watch_x, watch_y, 2.55), (1.5, 1.5, .14), timber, .02)
+    for dx in [-.55, .55]:
+        for dy in [-.55, .55]:
+            for z in [2.72, 3.3]:
+                cylinder('Menara jaga', (watch_x + dx, watch_y + dy, z), .05, .5, timber, 10)
+    for dy in [-.55, .55]:
+        box('Menara jaga', (watch_x, watch_y + dy, 3.05), (1.35, .09, .09), dark, .01)
+    for dx in [-.55, .55]:
+        box('Menara jaga', (watch_x + dx, watch_y, 3.05), (.09, 1.35, .09), dark, .01)
+    for dz in [2.0, 2.2]:
+        box('Menara jaga', (watch_x + .7, watch_y, dz), (.09, 1.1, .09), dark, .01)
+    roof = box('Menara jaga', (watch_x, watch_y, 3.62), (1.7, 1.7, .12), thatch, .03)
+    roof.rotation_euler.x = .1
+    # Lean-to shelter between the signal fire and the palisade, roofed with dry grass.
+    for px in [-1.1, 1.1]:
+        cylinder('Lean-to post', (px, 2.5, 1.0), .07, 2.0, timber, 10)
+    for px in [-1.1, 1.1]:
+        cylinder('Lean-to brace', (px, 3.7, .7), .06, 1.4, timber, 10)
+    for z in [1.4, 1.9]:
+        roof_slope = box('Lean-to roof', (0, 3.15, z), (2.8, 1.5, .1), thatch, .02)
+        roof_slope.rotation_euler.x = -.32
+    # Low signal fire; inspection group 'Api isyarat'.
+    for dx, dy in [(-.5, -.5), (.5, -.5), (-.5, .5), (.5, .5), (0, .72), (0, -.72), (-.72, 0), (.72, 0)]:
+        box('Api isyarat', (dx, dy + 1.2, .12), (.3, .3, .24), dark, .05)
+    for i, ang in enumerate([.4, 1.4, 2.4]):
+        log = box('Api isyarat', (math.sin(ang) * .3, math.cos(ang) * .3 + 1.2, .42),
+                  (1.1, .12, .12), dark, .05)
+        log.rotation_euler.z = ang
+    bpy.ops.mesh.primitive_cone_add(vertices=10, radius1=.16, radius2=.05, depth=.6,
+                                    location=(0, 1.2, .95))
+    finish(bpy.context.object, 'Api isyarat', brass)
+    # Woven storage baskets beside the lean-to.
+    for i, bs in enumerate([.46, .58, .4]):
+        bx = 1.8 + i * .75
+        basket = cylinder('Storage basket', (bx, 3.1, .42), bs, .8, thatch, 20)
+        basket.scale.z = .6
+        cylinder('Storage basket', (bx, 3.1, .85), bs * .9, .16, green, 20)
+    # Grass tufts at the clearing edge form the swaying ambient prop.
+    for gx, gy in [(-2.9, 1.4), (-2.5, .9), (-2.1, 1.2), (-2.7, .5), (-1.7, .8), (-2.3, 1.7)]:
+        cylinder('Grass tuft', (gx, gy, .12), .03, .5, green, 8)
+    # Forest fringe and a sky backdrop bound the clearing.
+    box('Distant forest line', (-6.4, 4.0, 2.2), (1.6, 6.0, 4.4), foliage, .06)
+    box('Distant forest line', (6.4, 4.0, 2.4), (1.6, 6.0, 4.8), foliage, .06)
+    for tx, ty in [(-5.4, 2.6), (5.6, 2.4)]:
+        cylinder('Forest trunk', (tx, ty, .6), .16, 1.2, wood, 10)
+        bpy.ops.mesh.primitive_cone_add(vertices=10, radius1=.9, radius2=.15,
+                                        depth=2.2, location=(tx, ty, 2.1))
+        finish(bpy.context.object, 'Forest crown', foliage)
+    box('Open sky backdrop', (0, 6.6, 4.6), (15.5, .2, 9.2), sky, 0)
+    box('Open sky canopy', (0, 7.4, 7.0), (15.5, 9.4, .2), sky, 0)
+    light('Clearing warm light', (0, 1.2, 2.2), 260, (1, .56, .2), 2, (0, 1.2, .6))
+
+
 if args.input:
     bpy.ops.wm.open_mainfile(filepath=str(args.input.resolve()))
 else:
@@ -429,7 +514,7 @@ else:
         (.29, .09, .055), (.13, .22, .18), (.28, .22, .12), (.12, .15, .20)])]
     {'archive': archive, 'ww1-field-station': field_station, 'ww2-radio-room': radio_room,
      'kingdom-court': kingdom_court, 'market-port': market_port,
-     'rural-village': rural_village}[args.room]()
+     'rural-village': rural_village, 'resistance-outpost': resistance_outpost}[args.room]()
     enrich(args.room, box, cylinder, finish, material, wood, paper)
     light('Soft afternoon key', (2, -4, 7), 1800, (1, .80, .57), 6, (0, 1, 1))
     light('Cool fill', (-4, -2, 4), 700, (.58, .72, 1), 5, (0, 1, 1))
@@ -460,6 +545,7 @@ detail_position, detail_target = {
     'kingdom-court': ((6, -10, 4.8), (-.6, 1, 1.6)),
     'market-port': ((7, -11, 4.2), (-.5, 2, 1.2)),
     'rural-village': ((8, -11, 5.4), (-.4, 1, 1.1)),
+    'resistance-outpost': ((8.5, -10, 5.8), (-.4, 1.5, 1.4)),
 }[args.room]
 scene.camera.location = detail_position
 scene.camera.rotation_euler = (Vector(detail_target) - scene.camera.location).to_track_quat('-Z', 'Y').to_euler()

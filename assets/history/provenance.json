@@ -14,7 +14,8 @@
       "ww1-field-station": "Anonymous dispatch reader, no rank or insignia",
       "ww2-radio-room": "Anonymous civilian listener holding a folio",
       "kingdom-court": "Anonymous court attendant, no royal identity",
-      "rural-village": "Anonymous village farmer, no personal identity"
+      "rural-village": "Anonymous village farmer, no personal identity",
+      "resistance-outpost": "Anonymous colonial resistance sentry, no rank or insignia"
     },
     "motionNodes": ["ambient_figure", "ambient_prop"],
     "animation": "Rigid transform groups; no skins, clips, external textures or third-party assets. Runtime applies bounded motion relative to authored pivots and pauses it during reading and reduced-motion mode.",
@@ -83,6 +84,16 @@
       "objects": ["sawah", "lumbung", "irigasi"],
       "references": [],
       "review": "Authored locally from procedural geometry and materials. Generated with Blender 5.2.1 LTS on this host. No authentic documents, maps, or agricultural records."
+    },
+    "resistance-outpost": {
+      "source": "assets/history/source/resistance-outpost.blend",
+      "model": "apps/web/public/history/resistance-outpost/room.glb",
+      "poster": "apps/web/public/history/resistance-outpost/poster.webp",
+      "checksums": "apps/web/public/history/resistance-outpost/export-report.json",
+      "scope": "Illustrative colonial-era Nusantara resistance outpost with a bamboo-timber palisade, a raised bamboo watch post, a lean-to shelter, and a low signal fire. Not a reconstruction of a named field, fortress, campaign, or historical community.",
+      "objects": ["palisade", "watch-post", "signal-fire"],
+      "references": [],
+      "review": "Authored locally from procedural geometry and materials. Generated with Blender 5.2.1 LTS on this host. Japanese-occupation-era topics are intentionally outside this room's scope. No authentic documents, maps, or campaign records."
     }
   }
 }

@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 
 const root = resolve(import.meta.dir, '../../../../..');
 describe('authored history room artifacts', () => {
-  for (const id of ['archive', 'ww1-field-station', 'ww2-radio-room', 'kingdom-court', 'market-port', 'rural-village']) {
+  for (const id of ['archive', 'ww1-field-station', 'ww2-radio-room', 'kingdom-court', 'market-port', 'rural-village', 'resistance-outpost']) {
     test(`${id} ships editable source, textured model and lightweight poster`, () => {
       const source = readFileSync(`${root}/assets/history/source/${id}.blend`);
       expect(source.subarray(0, 7).toString()).toBe('BLENDER');

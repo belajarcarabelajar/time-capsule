@@ -160,17 +160,17 @@ export const roomManifest = {
       {
         id: 'palisade', label: 'Pagar bambu',
         description: 'Deretan pagar bambu dan kayu menandai tepi perkemahan tempat para pejuang berkumpul. Penggambaran ini bersifat ilustratif dan bukan salinan benteng atau pagar pertahanan bersejarah tertentu.',
-        view: { position: [-6, 3.6, 7], target: [-2.5, 1.2, -1] },
+        view: { position: [2.5, 3.6, 1.8], target: [1.8, 1.4, -3.6] },
       },
       {
         id: 'watch-post', label: 'Menara jaga',
         description: 'Menara pengawas dari bambu membantu membayangkan bagaimana orang mengamati sekitar perkemahan. Struktur ini hanya ilustrasi kegiatan berjaga, bukan tiruan menara dari lokasi atau masa tertentu.',
-        view: { position: [3, 3.4, 6], target: [1.5, 1.8, -1] },
+        view: { position: [-1.6, 3.2, 3.6], target: [-4.2, 1.8, -0.4] },
       },
       {
         id: 'signal-fire', label: 'Api isyarat',
         description: 'Api kecil di tengah lahan lapang menjadi cara sederhana untuk menyampaikan isyarat dari kejauhan. Gambaran ini adalah ilustrasi kegiatan penjagaan, bukan dokumentasi peristiwa atau lokasi nyata.',
-        view: { position: [-0.5, 2.8, 5], target: [0, 0.8, -1] },
+        view: { position: [2.6, 2.4, 1.6], target: [0.2, 0.6, -1.2] },
       },
     ],
   },

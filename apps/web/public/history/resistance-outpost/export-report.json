@@ -1,0 +1,23 @@
+{
+  "room": "resistance-outpost",
+  "blender": "5.2.1 LTS",
+  "triangles": 12180,
+  "files": {
+    "resistance-outpost.blend": {
+      "bytes": 4103482,
+      "sha256": "f9abb10046a35a8798c70e19c88c2371344de3eeaa70afc7d80d87904ad49b77"
+    },
+    "room.glb": {
+      "bytes": 707988,
+      "sha256": "3384515c3ddf40506f0cf80e1e3fa980bc9238c93e5eb1f31ef0063c2fd3c1ed"
+    },
+    "poster.webp": {
+      "bytes": 49330,
+      "sha256": "94e66652b1e234541b570ee82d8936b484b3c1597bd8ec0d56d1bcf3e6dbc0c5"
+    },
+    "poster-detail.webp": {
+      "bytes": 45736,
+      "sha256": "8dc8b2555c84ac563e7a945bec2fa11b5ebcb7a0aa1807b2025d58b8dc5372c3"
+    }
+  }
+}

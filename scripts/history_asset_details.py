@@ -23,6 +23,7 @@ def enrich(room, box, cylinder, finish, material, wood, paper):
         'ww2-radio-room': (('Blackout curtain fold',), (-2.5, 3.08, 3.8)),
         'kingdom-court': (('Illustrative hanging banner',), (0, 3.68, 3.27)),
         'rural-village': (('Paddy tuft',), (-4.5, 2.6, .35)),
+        'resistance-outpost': (('Grass tuft',), (-2.3, 1.1, .12)),
     }[room]
     motion_group('ambient_prop', [obj for obj in bpy.context.scene.objects
                                  if obj.type == 'MESH' and obj.name.startswith(prop_names)], pivot)
@@ -33,6 +34,7 @@ def enrich(room, box, cylinder, finish, material, wood, paper):
         'ww2-radio-room': (2.8, .55, .05),
         'kingdom-court': (2.9, 1.2, 0),
         'rural-village': (2.6, .5, .06),
+        'resistance-outpost': (1.0, .3, .08),
     }[room]
     coat = material('Illustrative figure indigo cloth', (.12, .20, .25), 'fabric')
     skin = material('Illustrative figure warm clay', (.49, .29, .17), 'noise')
@@ -69,9 +71,15 @@ def enrich(room, box, cylinder, finish, material, wood, paper):
         segment('Figure lower sleeve', elbow, hand, .065, coat)
         bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=.068, location=hand)
         finish(bpy.context.object, 'Figure hand', skin)
-    carried = box('Figure illustrative blank folio', (x, y - .32, floor + 1.04),
-                  (.40, .28, .045), paper, .008)
-    carried.rotation_euler.x = .22
+    if room == 'resistance-outpost':
+        staff = cylinder('Figure plain bamboo staff', (x + .14, y - .34, floor + .82),
+                         .035, 1.5, wood, 10)
+        staff.rotation_euler.x = .2
+        staff.rotation_euler.z = .1
+    else:
+        carried = box('Figure illustrative blank folio', (x, y - .32, floor + 1.04),
+                      (.40, .28, .045), paper, .008)
+        carried.rotation_euler.x = .22
     group = motion_group('ambient_figure', list(set(bpy.context.scene.objects) - before), (x, y, floor))
     group.rotation_euler.z = -.22 if room != 'market-port' else .20
 
