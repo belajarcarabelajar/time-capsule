@@ -13,7 +13,7 @@ from mathutils import Vector
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', type=Path, required=True)
-parser.add_argument('--room', choices=['archive', 'ww1-field-station', 'ww2-radio-room', 'kingdom-court'], required=True)
+parser.add_argument('--room', choices=['archive', 'ww1-field-station', 'ww2-radio-room', 'kingdom-court', 'market-port'], required=True)
 parser.add_argument('--input', type=Path, help='Re-export an edited blend instead of authoring.')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = args.root.resolve()
@@ -289,6 +289,61 @@ def kingdom_court():
     light('Courtyard daylight', (0, -1.5, 6.7), 1500, (1, .79, .52), 5, (0, 2, 0))
 
 
+def market_port():
+    sea = material('Harbor water', (.035, .15, .16), 'noise', .1, .28)
+    canvas = material('Sailing canvas', (.47, .42, .31), 'fabric')
+    shore = material('Sandy shore', (.40, .35, .23), 'noise')
+    sky = material('Open sky daylight', (.47, .66, .92), 'noise', .05, .95)
+    sky.node_tree.nodes.get('Principled BSDF').inputs['Emission Color'].default_value = (.44, .64, .92, 1)
+    sky.node_tree.nodes.get('Principled BSDF').inputs['Emission Strength'].default_value = 1.2
+    box('Harbor water', (0, .5, -.3), (13, 13, .5), sea, 0)
+    box('Sandy shore bank', (0, 4.4, -.1), (11, 3.2, .6), shore, .02)
+    # Pier deck: planks over posts, named for the dock inspection object.
+    box('Dermaga', (0, .7, .2), (3.4, 6.8, .22), wood, .01)
+    for i in range(8):
+        box('Dermaga', (-1.35 + i * .385, .7, .315), (.32, 6.5, .035), wood, .004)
+    for x in [-1.45, 0, 1.45]:
+        for y in [-1.9, .7, 3.2]:
+            cylinder('Dermaga', (x, y, -.95), .09, 2.2, dark, 12)
+    for x in [-1.62, 1.62]:
+        box('Dermaga', (x, .7, .68), (.08, 6.6, .12), dark)
+        for y in [-2.2, -.6, 1.0, 2.6, 3.9]:
+            cylinder('Dermaga', (x, y, .5), .04, .4, dark, 10)
+    # Three market stalls under canvas awnings, named for the market inspection object.
+    def stall(x, y, facing):
+        box('Lapak pasar', (x, y, .78), (.95, .5, .95), wood, .05)
+        box('Lapak pasar', (x, y, 1.18), (.55, .2, .18), canvas, .04)
+        for dx in [-.4, .4]:
+            cylinder('Lapak pasar', (x + dx, y, 1.45), .05, 1.05, dark, 12)
+        awning = box('Lapak pasar', (x, y + facing * .13, 1.78), (1.2, 1.0, .07), canvas, .03)
+        awning.rotation_euler.x = facing * .14
+        for dx in [-.5, 0, .5]:
+            box('Lapak pasar', (x + dx * .7, y, 1.36), (.17, .2, .16), green, .04)
+    stall(0, 2.9, 1)
+    stall(-1.1, 1.7, 1)
+    stall(1.2, 2.1, -1)
+    # Moored trading ship with mast and furled sail.
+    box('Moored ship hull', (2.7, -.5, .28), (1.7, 4.6, 1.1), wood, .05)
+    box('Ship gunwale trim', (2.7, -.5, .78), (1.86, 4.7, .08), dark, .03)
+    box('Ship deck', (2.7, -.5, .9), (1.3, 3.6, .06), wood, .01)
+    cylinder('Ship mast', (2.7, -.5, 1.75), .07, 2.0, dark, 12)
+    yard = cylinder('Ship yard', (2.7, -.5, 2.1), .05, 1.2, dark, 12)
+    yard.rotation_euler.z = math.pi / 2
+    furled = cylinder('Furled sail', (2.7, -.5, 1.95), .24, 1.0, canvas, 16)
+    furled.rotation_euler.x = math.pi / 2
+    # Stacked cargo at the dock edge, named for the cargo inspection object.
+    box('Muatan kapal', (.6, -1.7, .55), (.62, .62, .55), wood, .04)
+    box('Muatan kapal', (-.15, -2.2, .55), (.62, .62, .55), wood, .04)
+    box('Muatan kapal', (.95, -1.6, .52), (.44, .52, .36), canvas, .06)
+    box('Muatan kapal', (.95, -1.6, .9), (.4, .48, .3), canvas, .06)
+    cylinder('Muatan kapal', (-.5, -1.6, .58), .2, .5, green, 16)
+    cylinder('Muatan kapal', (-.95, -1.9, .58), .18, .46, brass, 16)
+    box('Distant shore', (0, 5.4, .5), (14, 1.1, 2.6), shore, .05)
+    box('Open sky backdrop', (0, 5.6, 3.8), (15, .2, 8), sky, 0)
+    box('Open sky canopy', (0, 6.9, 5.2), (15, 7.4, .2), sky, 0)
+    light('Harbor sunlight', (2, -4, 7), 1900, (1, .82, .58), 6, (0, 1, 1))
+
+
 if args.input:
     bpy.ops.wm.open_mainfile(filepath=str(args.input.resolve()))
 else:
@@ -306,7 +361,7 @@ else:
     books = [material('Binding ' + str(i), c, 'fabric') for i, c in enumerate([
         (.29, .09, .055), (.13, .22, .18), (.28, .22, .12), (.12, .15, .20)])]
     {'archive': archive, 'ww1-field-station': field_station, 'ww2-radio-room': radio_room,
-     'kingdom-court': kingdom_court}[args.room]()
+     'kingdom-court': kingdom_court, 'market-port': market_port}[args.room]()
     light('Soft afternoon key', (2, -4, 7), 1800, (1, .80, .57), 6, (0, 1, 1))
     light('Cool fill', (-4, -2, 4), 700, (.58, .72, 1), 5, (0, 1, 1))
     bpy.ops.object.camera_add(location=(7, -10, 6))

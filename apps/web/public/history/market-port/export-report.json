@@ -1,0 +1,19 @@
+{
+  "room": "market-port",
+  "blender": "5.2.1 LTS",
+  "triangles": 5428,
+  "files": {
+    "market-port.blend": {
+      "bytes": 2757537,
+      "sha256": "a4b8f8b4c085e2b5bda1f7326b8c544ba3c029724e7356af41537a2d7fa6468d"
+    },
+    "room.glb": {
+      "bytes": 318924,
+      "sha256": "60a541e8db3ce8e69a955ab995ff365651c69d90b1c6ec8d12fa9da66d56acac"
+    },
+    "poster.webp": {
+      "bytes": 40036,
+      "sha256": "6ab900360f4a682792cbb30e78374a4d1f503879681d14c7f0c66249c0d580e7"
+    }
+  }
+}

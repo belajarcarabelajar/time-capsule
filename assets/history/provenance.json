@@ -45,6 +45,16 @@
       "objects": ["ceremonial-seat", "manuscript-table", "courtyard-gate"],
       "references": [],
       "review": "Authored locally from procedural geometry and materials. No authentic documents, maps, or architectural claims."
+    },
+    "market-port": {
+      "source": "assets/history/source/market-port.blend",
+      "model": "apps/web/public/history/market-port/room.glb",
+      "poster": "apps/web/public/history/market-port/poster.webp",
+      "checksums": "apps/web/public/history/market-port/export-report.json",
+      "scope": "Illustrative Nusantara maritime trading port with a wooden pier, canvas market stalls, a moored ship, and stacked cargo. Not a reconstruction of a named port, ship, or historical cargo.",
+      "objects": ["dock", "market-stall", "cargo"],
+      "references": [],
+      "review": "Authored locally from procedural geometry and materials. Generated with Blender 5.2.1 LTS on this host. No authentic documents, maps, manifests, or cargo records."
     }
   }
 }
