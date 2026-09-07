@@ -7,7 +7,26 @@ import HistoricalEnvironment from '../HistoricalEnvironment.jsx';
 
 beforeEach(() => { sessionStorage.setItem('history-render-mode', 'static'); });
 afterEach(() => { cleanup(); sessionStorage.clear(); });
-describe('poster-first historical environment', () => {
+describe('3d-default historical environment', () => {
+  test('3d loads by default; save-data stays on the poster', async () => {
+    sessionStorage.removeItem('history-render-mode');
+    const loadRenderer = mock(async () => ({ default: () => null }));
+    const view = render(<HistoricalEnvironment loadRenderer={loadRenderer} />);
+    await act(async () => {});
+    expect(loadRenderer).toHaveBeenCalledTimes(1);
+    expect(view.getByRole('button', { name: 'Gunakan gambar' })).toBeTruthy();
+    cleanup();
+    const connection = navigator.connection;
+    try {
+      Object.defineProperty(navigator, 'connection', { value: { saveData: true }, configurable: true });
+      const staticLoader = mock(() => new Promise(() => {}));
+      render(<HistoricalEnvironment loadRenderer={staticLoader} />);
+      expect(staticLoader).not.toHaveBeenCalled();
+    } finally {
+      if (connection === undefined) delete navigator.connection;
+      else Object.defineProperty(navigator, 'connection', { value: connection, configurable: true });
+    }
+  });
   test('static poster and accessible inspection work without loading WebGL', () => {
     const loadRenderer = mock(() => new Promise(() => {}));
     const view = render(<HistoricalEnvironment loadRenderer={loadRenderer} />);

@@ -15,7 +15,7 @@ for (const [topic, location, room, object, environmentKey] of [
     await page.getByPlaceholder('Ketik Peristiwa Sejarah...').fill(topic);
     await page.getByRole('button', { name: 'Mulai Petualangan' }).click();
     await expect(page.locator(`[data-room="${room}"]`)).toBeVisible();
-    await page.getByRole('button', { name: 'Aktifkan 3D' }).click();
+    await expect(page.getByRole('button', { name: 'Gunakan gambar' })).toBeVisible();
     await expect(page.locator(`[data-room="${room}"]`)).toHaveAttribute('data-render-state', 'ready', { timeout: 12000 });
     await expect(page.locator('canvas')).toHaveCount(1);
     await page.screenshot({ path: `/tmp/time-capsule-${room}-desktop.png`, fullPage: true });
@@ -29,7 +29,7 @@ for (const [topic, location, room, object, environmentKey] of [
   });
 }
 
-test('kingdom-court stays poster-first on mobile without creating extra content', async ({ page }) => {
+test('kingdom-court loads 3D by default on mobile without creating extra content', async ({ page }) => {
   const calls = await mockHistoryApi(page, 'Java', 'kingdom-court');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -37,7 +37,8 @@ test('kingdom-court stays poster-first on mobile without creating extra content'
   await page.getByPlaceholder('Ketik Peristiwa Sejarah...').fill('Majapahit');
   await page.getByRole('button', { name: 'Mulai Petualangan' }).click();
   await expect(page.locator('[data-room="kingdom-court"]')).toBeVisible();
-  await expect(page.locator('canvas')).toHaveCount(0);
+  await expect(page.locator('[data-room="kingdom-court"]')).toHaveAttribute('data-render-state', 'ready', { timeout: 12000 });
+  await expect(page.locator('canvas')).toHaveCount(1);
   await page.getByRole('button', { name: 'Jelajahi ruang' }).click();
   await page.getByRole('button', { name: 'Kursi upacara', exact: true }).click();
   await expect(page.locator('.history-object-detail')).toContainText('bukan salinan singgasana');
@@ -53,25 +54,28 @@ test('archive scene renders real 3D with motion paused behind the original topic
   await page.goto('/');
   await expect(page.getByPlaceholder('Ketik Peristiwa Sejarah...')).toBeVisible();
   await expect(page.locator('[data-room="archive"]')).toBeVisible();
-  await page.getByRole('button', { name: 'Aktifkan 3D' }).click();
   await expect(page.locator('[data-room="archive"]')).toHaveAttribute('data-render-state', 'ready', { timeout: 12000 });
   await expect(page.locator('canvas')).toHaveCount(1);
   await page.screenshot({ path: '/tmp/time-capsule-archive-desktop.png', fullPage: true });
   await expect(page.locator('canvas')).toHaveCount(1);
 });
 
-test('mobile static exploration never generates content and keeps the form usable', async ({ page }) => {
+test('save-data stays on the poster and keeps the form usable', async ({ page }) => {
   const calls = await mockHistoryApi(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'connection', { value: { saveData: true } });
+  });
   await page.goto('/');
+  await expect(page.locator('[data-room="archive"]')).toBeVisible();
+  await expect(page.locator('canvas')).toHaveCount(0);
   await page.getByRole('button', { name: 'Jelajahi ruang' }).click();
   await page.getByRole('button', { name: 'Instrumen waktu', exact: true }).click();
   await expect(page.locator('.history-object-detail')).toContainText('bukan artefak sejarah');
   await page.getByRole('button', { name: 'Instrumen waktu', exact: true }).press('Escape');
   await expect(page.getByRole('button', { name: 'Jelajahi ruang' })).toBeFocused();
   expect(calls).toHaveLength(0);
-  await expect(page.locator('canvas')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: '/tmp/time-capsule-archive-mobile.png', fullPage: true });
 });

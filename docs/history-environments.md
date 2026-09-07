@@ -28,7 +28,7 @@ The renderer chooses a room from topic, validated `gameData.meta.location`, and 
 | A maritime-trade context (such as Sriwijaya, jalur rempah, Sunda Kelapa, Batavia, or pelabuhan) with no war signal, or a safe scenario with `environmentKey: "market-port"` | `market-port` | Illustrative open-air Nusantara trading port with a wooden pier, canvas market stalls, a moored ship, and stacked cargo; not a reconstruction of a named port, ship, or cargo |
 | Missing, unsupported, conflicting, malformed, oversized, or unsafe setting | `archive` | Fictional time archive used as a safe non-specific context |
 
-Mobile, reduced-motion, save-data, static preference, slow lazy import, missing model, lost graphics context, and poor renderer pacing use the selected room's poster and keep the lesson controls available. The user can retry 3D where the controls allow it.
+3D is the default background on every viewport. Save-data mode, an explicit static preference, slow lazy import, missing model, lost graphics context, and poor renderer pacing use the selected room's poster and keep the lesson controls available. The user can switch between 3D and the poster where the controls allow it.
 
 ## Authored assets
 

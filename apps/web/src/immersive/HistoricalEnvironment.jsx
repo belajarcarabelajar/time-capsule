@@ -14,8 +14,9 @@ const initialMode = () => {
     const stored = sessionStorage.getItem('history-render-mode');
     if (stored === 'static' || stored === '3d') return stored;
   } catch { /* Storage can be unavailable in private embedded contexts. */ }
-  return window.matchMedia?.('(min-width: 900px) and (pointer: fine)').matches
-    && !reducedMotion() && !navigator.connection?.saveData ? '3d' : 'static';
+  // 3D is the default background. Only data-saver mode starts on the poster.
+  // Reduced motion keeps 3D with paused animation; load failures fall back.
+  return navigator.connection?.saveData ? 'static' : '3d';
 };
 
 export default function HistoricalEnvironment({ topic = '', location = '', environmentKey = '', mood = '',
