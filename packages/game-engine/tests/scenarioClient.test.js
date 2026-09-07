@@ -20,7 +20,8 @@ describe("fetchScenarioData", () => {
       "ww1-field-station",
       "ww2-radio-room",
       "kingdom-court",
-      "market-port"
+      "market-port",
+      "rural-village"
     ]);
     expect(SCENARIO_SYSTEM_PROMPT).toContain('"environmentKey"');
     HISTORY_ENVIRONMENT_KEYS.forEach((key) => {
