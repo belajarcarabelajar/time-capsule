@@ -140,7 +140,10 @@ const fetchScenarioData = async (
 
   let rawText;
 
-  // Single scenario provider (AgentRouter via the Pages Function proxy)
+  // Single scenario provider (Groq via the Pages Function proxy).
+  // max_tokens bounds the output so a foreground-plus-preload pair stays
+  // inside the provider per-minute token budget. A full 15-20 slide
+  // scenario needs roughly 1500-1800 output tokens.
   const scenarioResponse = await fetch(`/api/scenario`, {
     method: "POST",
     headers: {
@@ -157,6 +160,7 @@ const fetchScenarioData = async (
         { role: "user", content: promptText },
       ],
       response_format: { type: "json_object" },
+      max_tokens: 2200,
     }),
   });
 

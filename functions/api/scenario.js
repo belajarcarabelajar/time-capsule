@@ -70,6 +70,7 @@ export async function onRequestPost(context) {
     const safeBody = {
       messages: body.messages,
       response_format: body.response_format,
+      max_tokens: body.max_tokens,
     };
 
     const response = await fetch(providerUrl, {
