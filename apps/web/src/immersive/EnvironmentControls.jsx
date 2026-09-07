@@ -7,9 +7,11 @@ export default function EnvironmentControls({ exploring, onExploreChange, motion
     onKeyDown={event => { event.stopPropagation(); if (event.key === 'Escape') onExploreChange(false); }}>
     <div className="history-controls__bar">
       <button ref={exploreRef} type="button" aria-expanded={exploring}
-        onClick={() => onExploreChange(!exploring)}>{exploring ? 'Kembali belajar' : 'Jelajahi ruang'}</button>
-      <button type="button" onClick={() => onModeChange(mode === '3d' ? 'static' : '3d')}>
-        {mode === '3d' ? 'Gunakan gambar' : 'Aktifkan 3D'}</button>
+        aria-label={exploring ? 'Kembali belajar' : 'Jelajahi ruang'}
+        onClick={() => onExploreChange(!exploring)}><span aria-hidden="true" className="history-controls__icon">{exploring ? '📖' : '🧭'}</span><span className="history-controls__label">{exploring ? 'Kembali belajar' : 'Jelajahi ruang'}</span></button>
+      <button type="button" aria-label={mode === '3d' ? 'Gunakan gambar' : 'Aktifkan 3D'}
+        onClick={() => onModeChange(mode === '3d' ? 'static' : '3d')}>
+        <span aria-hidden="true" className="history-controls__icon">{mode === '3d' ? '🖼️' : '✨'}</span><span className="history-controls__label">{mode === '3d' ? 'Gunakan gambar' : 'Aktifkan 3D'}</span></button>
       {failed && <button type="button" onClick={onRetry}>Coba 3D lagi</button>}
     </div>
     {exploring && <div className="history-inspection">

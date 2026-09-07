@@ -157,7 +157,7 @@ const fetchScenarioData = async (
           role: "system",
           content:
             SCENARIO_SYSTEM_PROMPT +
-            "\nIMPORTANT: You must respond ONLY with valid JSON matching the format requested. Do not include any conversational preamble or markdown code block markers.",
+            "\nPENTING: Jawab HANYA dengan JSON valid sesuai format. Tanpa pembuka percakapan atau penanda blok kode markdown.",
         },
         { role: "user", content: promptText },
       ],

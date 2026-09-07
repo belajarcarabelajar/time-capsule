@@ -20,11 +20,13 @@
 .history-environment.is-start .history-inspection { max-height: 35dvh; }
 .history-scope { position: absolute; z-index: 31; bottom: 1rem; right: 1.5rem; max-width: 24rem; padding: .35rem .65rem; margin: 0; color: #e3dfd0; background: #101b20db; border-radius: .25rem; font-size: .75rem; line-height: 1.5; }
 .history-environment.is-start .history-scope { top: 1.25rem; bottom: auto; left: 1.5rem; right: auto; max-width: 18rem; }
+.history-controls__icon { margin-right: .4rem; }
 @media (max-width: 600px) {
   .history-controls { top: 5rem; max-width: calc(100% - 1.5rem); }
   .history-controls button { font-size: .75rem; padding: .5rem .65rem; }
+  .history-controls__bar button { min-width: 44px; min-height: 44px; justify-content: center; }
+  .history-controls__bar .history-controls__label { display: none; }
+  .history-controls__bar .history-controls__icon { margin-right: 0; font-size: 1rem; }
   .history-inspection { max-height: 35dvh; padding: .75rem; }
-  .history-environment.is-start .history-scope { top: 4rem; left: 1.5rem; max-width: calc(100% - 3rem); }
-  .history-scope { font-size: .65rem; right: .75rem; bottom: .75rem; max-width: 55%; }
-}
+  .history-scope, .history-environment.is-start .history-scope { display: none; }
 @media (prefers-reduced-motion: reduce) { .history-environment *, .history-controls * { animation: none !important; transition: none !important; } }

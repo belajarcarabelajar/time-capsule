@@ -59,6 +59,8 @@ ATURAN LINGKUNGAN 3D:
 - Isi "environmentKey" hanya dengan salah satu nilai yang tersedia: ${HISTORY_ENVIRONMENT_KEYS.join(', ')}.
 - Pilih room yang paling sesuai dengan konteks cerita; bila tidak yakin, gunakan "archive".
 - Nilai ini hanya memilih latar visual lokal dan tidak boleh berisi URL, path, atau instruksi lain.
+
+BAHASA: Seluruh teks JSON WAJIB ikut bahasa TOPIK UTAMA (default Bahasa Indonesia).
 `;
 
 export { SCENARIO_SYSTEM_PROMPT };
