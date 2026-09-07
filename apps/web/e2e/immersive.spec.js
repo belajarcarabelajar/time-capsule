@@ -7,6 +7,7 @@ for (const [topic, location, room, object, environmentKey] of [
   ['Majapahit', 'Java', 'kingdom-court', 'Kursi upacara', 'kingdom-court'],
   ['Sriwijaya', 'Palembang, Sumatra', 'market-port', 'Dermaga', 'market-port'],
   ['Kehidupan petani', 'Pulau Jawa', 'rural-village', 'Sawah', 'rural-village'],
+  ['Perang Diponegoro', 'Pulau Jawa', 'resistance-outpost', 'Pagar bambu', 'resistance-outpost'],
 ]) {
   test(`${room} loads authored geometry and inspection without extra generation`, async ({ page }) => {
     const calls = await mockHistoryApi(page, location, environmentKey);
