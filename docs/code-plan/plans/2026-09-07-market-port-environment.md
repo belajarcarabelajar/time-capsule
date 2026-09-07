@@ -6,7 +6,7 @@
 **Active Project Profile:** Repository root `/home/belajarcarabelajar/time-capsule`, branch `main`, base revision `0fdd33f`. Toolchain Bun + Vite + Turbo; test runner `bun test`; e2e Playwright Chromium; ESLint. Configuration sources: `package.json`, `turbo.json`, `apps/web/package.json`, `scripts/export-history-assets.py`, `assets/history/provenance.json`, `docs/history-environments.md`, `docs/code-plan/specs/2026-09-07-ai-routed-historical-environments-design.md`.
 **Project Commands:**
 - `rtk bun test apps/web/src/immersive/__tests__/resolveRoom.test.js apps/web/src/immersive/__tests__/roomManifest.test.js apps/web/src/immersive/__tests__/roomAssets.test.js`
-- `rtk bun test packages/game-engine/tests/geminiClient.test.js`
+- `rtk bun test ./packages/game-engine/tests/scenarioClient.test.js`
 - `rtk bun scripts/verify-history-assets.mjs market-port`
 - `PATH=/usr/bin:/bin:$PATH rtk bun run test:immersive -- --project=chromium`
 - `rtk bun run lint` (inside `apps/web`)
@@ -46,7 +46,7 @@ flowchart LR
 **Traceability:**
 | AC | Task | Test/Check | Evidence |
 |---|---|---|---|
-| AC-1 | T1 | geminiClient.test | pass, prompt contains key |
+| AC-1 | T1 | scenarioClient.test | pass, prompt contains key |
 | AC-2 | T2 | roomManifest.test | pass |
 | AC-3 | T2/T3 | resolveRoom.test | pass |
 | AC-4 | T3 | resolveRoom.test | pass |
@@ -62,7 +62,7 @@ flowchart LR
 **CI/Review Gate:** ESLint on changed JS/JSX; targeted unit suites; Chromium e2e; verify-history-assets.
 **Documentation:** `docs/history-environments.md` runtime table + authored-assets list; checkpoint file.
 **Definition of Done:** AC-1..AC-8 evidenced; fresh log/exit-0 per check; diff review only intended files; docs updated; no em dashes or buzzwords in user-visible copy.
-**Plan Status & Version:** Approved v1, 2026-09-07.
+**Plan Status & Version:** Complete v1, 2026-09-08. Executed in commits 8e10577..935e72e (7 commits, T1-T6). All 29 steps marked [x]; evidence re-verified fresh on 2026-09-08: roomManifest/resolveRoom/roomAssets 37 pass, scenarioClient 4 pass (keys include `market-port`), `verify-history-assets.mjs market-port` exit 0 (398320 B, 6232 tris, 15 draw primitives, source + hashes verified).
 **Reproducibility:** Blender 4.5.4 LTS; Bun lockfile unchanged; commands reproduce from repo root on this WSL host.
 **Test Reliability:** Deterministic fixtures; no clock/network in unit tests; e2e blocks provider domains via mock fixture.
 **Privacy & Data Governance:** No data collection; no PII; no retention changes.
@@ -80,19 +80,19 @@ flowchart LR
 ## Task 1: Game-engine environment keys
 **Files:**
 - Modify: packages/game-engine/src/historyEnvironmentKeys.js
-- Modify: packages/game-engine/tests/geminiClient.test.js:18-21
+- Modify: packages/game-engine/tests/scenarioClient.test.js:18-23 (test file renamed from geminiClient.test.js after plan approval)
 **Interfaces:** Produces key `"market-port"` appended last; consumed by the systemPrompt.js template and the geminiClient test.
-**Behavior & Acceptance:** AC-1; the allowed-keys array and the prompt advertise list contain `market-port`.
+**Behavior & Acceptance:** AC-1; the allowed-keys array and the prompt advertise list contain `market-port` (asserted in scenarioClient.test.js).
 **Edge Cases & Failure Behavior:** Order must match the manifest order convention; appending last keeps existing keys stable.
 **Deliberate Shortcuts & Deferrals:** None.
 **Dependencies & Risks:** None.
 **Review & Evidence:** geminiClient test passes; prompt contains `market-port`.
 **Test Data & Determinism:** Static array; no external state.
-- [ ] Step 1: Write failing test [extend expected array with `"market-port"`]
-- [ ] Step 2: Run, verify fail [rtk bun test packages/game-engine/tests/geminiClient.test.js]
-- [ ] Step 3: Write minimal implementation [append key to HISTORY_ENVIRONMENT_KEYS]
-- [ ] Step 4: Run, verify pass [same command]
-- [ ] Step 5: Commit [git add packages/game-engine && git commit -m "feat(game-engine): register market-port environment key"]
+- [x] Step 1: Write failing test [extend expected array with `"market-port"`]
+- [x] Step 2: Run, verify fail [rtk bun test ./packages/game-engine/tests/scenarioClient.test.js]
+- [x] Step 3: Write minimal implementation [append key to HISTORY_ENVIRONMENT_KEYS]
+- [x] Step 4: Run, verify pass [same command]
+- [x] Step 5: Commit [git add packages/game-engine && git commit -m "feat(game-engine): register market-port environment key"] (8e10577)
 
 ## Task 2: Web room manifest entry
 **Files:**
@@ -105,11 +105,11 @@ flowchart LR
 **Dependencies & Risks:** Must land after T1 key (resolver uses manifest, not keys).
 **Review & Evidence:** roomManifest test passes.
 **Test Data & Determinism:** Static manifest; deterministic.
-- [ ] Step 1: Write failing test [extend key array + market-port object-id assertion]
-- [ ] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/roomManifest.test.js]
-- [ ] Step 3: Write minimal implementation [rooms.js market-port entry with copy]
-- [ ] Step 4: Run, verify pass [same command]
-- [ ] Step 5: Commit [git add apps/web/src/immersive && git commit -m "feat(web): add market-port room manifest"]
+- [x] Step 1: Write failing test [extend key array + market-port object-id assertion]
+- [x] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/roomManifest.test.js]
+- [x] Step 3: Write minimal implementation [rooms.js market-port entry with copy]
+- [x] Step 4: Run, verify pass [same command]
+- [x] Step 5: Commit [git add apps/web/src/immersive && git commit -m "feat(web): add market-port room manifest"] (ba27231)
 
 ## Task 3: Conservative resolver keyword path
 **Files:**
@@ -122,11 +122,11 @@ flowchart LR
 **Dependencies & Risks:** Predicate ordering is critical; full-row pass gates this task.
 **Review & Evidence:** resolveRoom test passes in full.
 **Test Data & Determinism:** Static table; deterministic.
-- [ ] Step 1: Write failing test [add market-port rows + environmentKey honored test]
-- [ ] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/resolveRoom.test.js]
-- [ ] Step 3: Write minimal implementation [marketPort regex + guarded branch]
-- [ ] Step 4: Run, verify pass [same command]
-- [ ] Step 5: Commit [git add apps/web/src/immersive && git commit -m "feat(web): route maritime-trade contexts to market-port"]
+- [x] Step 1: Write failing test [add market-port rows + environmentKey honored test]
+- [x] Step 2: Run, verify fail [rtk bun test apps/web/src/immersive/__tests__/resolveRoom.test.js]
+- [x] Step 3: Write minimal implementation [marketPort regex + guarded branch]
+- [x] Step 4: Run, verify pass [same command]
+- [x] Step 5: Commit [git add apps/web/src/immersive && git commit -m "feat(web): route maritime-trade contexts to market-port"] (09f5db1)
 
 ## Task 4: Asset authoring, generation, provenance
 **Files:**
@@ -141,13 +141,13 @@ flowchart LR
 **Dependencies & Risks:** Highest-effort task; verify assets before e2e.
 **Review & Evidence:** roomAssets test pass; verify-history-assets.mjs exit 0 for market-port.
 **Test Data & Determinism:** Fixed seed 1941 in authoring script; deterministic output.
-- [ ] Step 1: Write failing test [add market-port to roomAssets loop]
-- [ ] Step 2: Run, verify fail [missing market-port assets]
-- [ ] Step 3: Write minimal implementation [scene branch: pier, 3 stalls, moored ship, cargo, water]
-- [ ] Step 4: Generate assets [blender export command]
-- [ ] Step 5: Update provenance.json
-- [ ] Step 6: Run, verify pass [roomAssets + verify-history-assets market-port]
-- [ ] Step 7: Commit [feat(web): author market-port room assets]
+- [x] Step 1: Write failing test [add market-port to roomAssets loop]
+- [x] Step 2: Run, verify fail [missing market-port assets]
+- [x] Step 3: Write minimal implementation [scene branch: pier, 3 stalls, moored ship, cargo, water]
+- [x] Step 4: Generate assets [blender export command]
+- [x] Step 5: Update provenance.json
+- [x] Step 6: Run, verify pass [roomAssets + verify-history-assets market-port]
+- [x] Step 7: Commit [feat(web): author market-port room assets] (1a74ce8; editable .blend source committed separately in bde0274)
 
 ## Task 5: Browser e2e row
 **Files:**
@@ -159,9 +159,9 @@ flowchart LR
 **Dependencies & Risks:** Requires T4 assets present and served by the dev server.
 **Review & Evidence:** Chromium suite passes all 6 rows.
 **Test Data & Determinism:** Fixture-based; no provider network.
-- [ ] Step 1: Write the row [mirror kingdom-court row for market-port]
-- [ ] Step 2: Run, verify pass [test:immersive Chromium]
-- [ ] Step 3: Commit [test(e2e): cover market-port rendering and inspection]
+- [x] Step 1: Write the row [mirror kingdom-court row for market-port]
+- [x] Step 2: Run, verify pass [test:immersive Chromium]
+- [x] Step 3: Commit [test(e2e): cover market-port rendering and inspection] (165a6bf)
 
 ## Task 6: Docs, lint, final verification
 **Files:**
@@ -174,10 +174,10 @@ flowchart LR
 **Dependencies & Risks:** Needs all prior tasks green.
 **Review & Evidence:** Lint exit 0; full focused suite pass; checkpoint with AC-1..AC-8 evidence mapping.
 **Test Data & Determinism:** N/A documentation; deterministic checks.
-- [ ] Step 1: Update docs/history-environments.md
-- [ ] Step 2: Lint changed files + em-dash scan
-- [ ] Step 3: Full focused suite + asset verification
-- [ ] Step 4: Diff review, write checkpoint, commit [docs: document market-port environment]
+- [x] Step 1: Update docs/history-environments.md
+- [x] Step 2: Lint changed files + em-dash scan
+- [x] Step 3: Full focused suite + asset verification
+- [x] Step 4: Diff review, write checkpoint, commit [docs: document market-port environment] (935e72e)
 
 ## Plan lifecycle
-Status: Approved. Decisions: market-port selected over rural-village and urban-poor; conservative keyword predicate (strong maritime signals only); generic commerce words covered by environmentKey. Superseded: none.
+Status: Complete (verified 2026-09-08; plan doc finalized after execution). Decisions: market-port selected over rural-village and urban-poor; conservative keyword predicate (strong maritime signals only); generic commerce words covered by environmentKey. Superseded: none. Post-approval repo changes recorded: game-engine geminiClient test renamed to scenarioClient (test path updated above).
