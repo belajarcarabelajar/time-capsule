@@ -22,6 +22,7 @@ def enrich(room, box, cylinder, finish, material, wood, paper):
         'ww1-field-station': (('Illustrative blank notice',), (-2.5, 3.07, 2.45)),
         'ww2-radio-room': (('Blackout curtain fold',), (-2.5, 3.08, 3.8)),
         'kingdom-court': (('Illustrative hanging banner',), (0, 3.68, 3.27)),
+        'rural-village': (('Paddy tuft',), (-4.5, 2.6, .35)),
     }[room]
     motion_group('ambient_prop', [obj for obj in bpy.context.scene.objects
                                  if obj.type == 'MESH' and obj.name.startswith(prop_names)], pivot)
@@ -31,6 +32,7 @@ def enrich(room, box, cylinder, finish, material, wood, paper):
         'ww1-field-station': (-2.25, 1.4, .07),
         'ww2-radio-room': (2.8, .55, .05),
         'kingdom-court': (2.9, 1.2, 0),
+        'rural-village': (2.6, .5, .06),
     }[room]
     coat = material('Illustrative figure indigo cloth', (.12, .20, .25), 'fabric')
     skin = material('Illustrative figure warm clay', (.49, .29, .17), 'noise')

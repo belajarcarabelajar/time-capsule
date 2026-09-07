@@ -16,7 +16,7 @@ from history_asset_details import enrich, merge_material_groups
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', type=Path, required=True)
-parser.add_argument('--room', choices=['archive', 'ww1-field-station', 'ww2-radio-room', 'kingdom-court', 'market-port'], required=True)
+parser.add_argument('--room', choices=['archive', 'ww1-field-station', 'ww2-radio-room', 'kingdom-court', 'market-port', 'rural-village'], required=True)
 parser.add_argument('--input', type=Path, help='Re-export an edited blend instead of authoring.')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = args.root.resolve()
@@ -347,6 +347,70 @@ def market_port():
     light('Harbor sunlight', (2, -4, 7), 1900, (1, .82, .58), 6, (0, 1, 1))
 
 
+def rural_village():
+    soil = material('Field soil', (.28, .21, .11), 'noise')
+    paddy = material('Young paddy green', (.13, .33, .15), 'noise')
+    paddy_water = material('Paddy water tone', (.18, .29, .24), 'noise', 0, .55)
+    granary = material('Granary timber', (.46, .33, .15), 'grain')
+    channel = material('Irrigation earth', (.34, .27, .15), 'noise')
+    sky = material('Open sky daylight', (.47, .66, .92), 'noise', .05, .95)
+    sky.node_tree.nodes.get('Principled BSDF').inputs['Emission Color'].default_value = (.44, .64, .92, 1)
+    sky.node_tree.nodes.get('Principled BSDF').inputs['Emission Strength'].default_value = 1.2
+    box('Village ground', (0, 0, -.08), (14.5, 14.5, .25), soil, 0)
+    # Bund paths frame the west paddy band.
+    for yp in [-4.6, -2.4, -.2, 2.0, 4.2]:
+        box('Field bund path', (-3.6, yp, .02), (1.5, .45, .12), soil, .02)
+    # Sawah terraces: raised basins with water and young rice; inspection group 'Sawah'.
+    terrace = 0
+    for xo in [-5.6, -4.3]:
+        for yo in [-.6, 1.3, 3.2]:
+            box('Sawah basin bed', (xo, yo, .05), (1.5, 1.35, .22), soil, .02)
+            terrace += 1
+            box('Sawah', (xo, yo, .18), (1.12, 1.05, .05), paddy_water, .01)
+            for ry in range(4):
+                for rx in range(5):
+                    cx = xo - .45 + rx * .22
+                    cz = .36 + (rx + ry) % 2 * .04
+                    cylinder('Sawah', (cx, yo - .4 + ry * .28, cz), .016, .3, paddy, 8)
+    # Swaying paddy tufts near the enrich pivot stay on the ambient_prop group.
+    for dy, dx in [(0, 0), (.5, .25), (-.5, -.2), (.3, -.5), (-.3, .4)]:
+        cylinder('Paddy tuft', (-4.5 + dx, 2.6 + dy, .34), .02, .5, paddy, 8)
+    # Granary on posts with a gabled roof; inspection group 'Lumbung padi'.
+    for dx in [-.85, .85]:
+        for dy in [-.65, .65]:
+            box('Lumbung padi', (-3.2 + dx, 4.0 + dy, 1.25), (.18, .18, 2.5), granary, .02)
+    box('Lumbung padi', (-3.2, 4.0, 2.75), (2.3, 1.9, .14), granary, .03)
+    box('Lumbung padi', (-3.2, 4.48, 3.35), (2.2, .12, 1.05), granary, .02)
+    box('Lumbung padi', (-3.2, 3.52, 3.35), (2.2, .12, 1.05), granary, .02)
+    for sx in [-2.42, -1.98, 1.98, 2.42]:
+        box('Lumbung padi', (-3.2 + sx * .45, 4.0, 3.3), (.12, 1.9, 1.0), granary, .02)
+    roof_low = box('Lumbung padi', (-3.2, 3.6, 4.05), (2.7, 1.7, .12), granary, .03)
+    roof_low.rotation_euler.x = -.42
+    roof_high = box('Lumbung padi', (-3.2, 4.4, 4.05), (2.7, 1.7, .12), granary, .03)
+    roof_high.rotation_euler.x = .42
+    for cx in [-3.9, -2.5]:
+        box('Lumbung padi', (cx, 4.0, 4.35), (.18, .14, .5), granary, .02)
+    # Irrigation channel with a sluice gate; inspection group 'Saluran irigasi'.
+    box('Saluran irigasi', (3.8, -3.9, .28), (3.6, .8, .4), channel, .03)
+    box('Saluran irigasi', (3.8, -2.9, .28), (3.6, .8, .4), channel, .03)
+    box('Saluran irigasi', (2.1, -3.4, .18), (.5, 1.5, .22), channel, .02)
+    box('Saluran irigasi', (5.5, -3.4, .18), (.5, 1.5, .22), channel, .02)
+    box('Saluran irigasi', (3.8, -3.4, .3), (2.5, .5, .16), paddy_water, .01)
+    for gx in [3.0, 3.6]:
+        box('Saluran irigasi', (gx, -3.4, .78), (.24, .8, .7), granary, .02)
+    box('Saluran irigasi', (3.3, -3.4, .98), (1.1, .3, .3), granary, .02)
+    # Trees and sky frame the open-air setting.
+    for tx, ty in [(-1.2, -4.6), (5.2, 2.8), (-6.0, 3.6)]:
+        cylinder('Village tree trunk', (tx, ty, .8), .16, 1.6, wood, 10)
+        bpy.ops.mesh.primitive_cone_add(vertices=10, radius1=.95, radius2=.2,
+                                        depth=2.1, location=(tx, ty, 2.2))
+        finish(bpy.context.object, 'Village tree crown', green)
+    box('Distant tree line', (-6.4, 3.2, 2.0), (1.6, 6.5, 3.4), green, .05)
+    box('Open sky backdrop', (0, 5.8, 4.0), (15, .2, 8), sky, 0)
+    box('Open sky canopy', (0, 7.0, 6.4), (15, 8, .2), sky, 0)
+    light('Village morning light', (3, -4, 6), 1700, (1, .80, .55), 6, (0, 1, 1))
+
+
 if args.input:
     bpy.ops.wm.open_mainfile(filepath=str(args.input.resolve()))
 else:
@@ -364,7 +428,8 @@ else:
     books = [material('Binding ' + str(i), c, 'fabric') for i, c in enumerate([
         (.29, .09, .055), (.13, .22, .18), (.28, .22, .12), (.12, .15, .20)])]
     {'archive': archive, 'ww1-field-station': field_station, 'ww2-radio-room': radio_room,
-     'kingdom-court': kingdom_court, 'market-port': market_port}[args.room]()
+     'kingdom-court': kingdom_court, 'market-port': market_port,
+     'rural-village': rural_village}[args.room]()
     enrich(args.room, box, cylinder, finish, material, wood, paper)
     light('Soft afternoon key', (2, -4, 7), 1800, (1, .80, .57), 6, (0, 1, 1))
     light('Cool fill', (-4, -2, 4), 700, (.58, .72, 1), 5, (0, 1, 1))
@@ -394,6 +459,7 @@ detail_position, detail_target = {
     'ww2-radio-room': ((5, -9, 4.5), (0, 1.2, 1.5)),
     'kingdom-court': ((6, -10, 4.8), (-.6, 1, 1.6)),
     'market-port': ((7, -11, 4.2), (-.5, 2, 1.2)),
+    'rural-village': ((8, -11, 5.4), (-.4, 1, 1.1)),
 }[args.room]
 scene.camera.location = detail_position
 scene.camera.rotation_euler = (Vector(detail_target) - scene.camera.location).to_track_quat('-Z', 'Y').to_euler()

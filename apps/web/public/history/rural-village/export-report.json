@@ -1,0 +1,23 @@
+{
+  "room": "rural-village",
+  "blender": "5.2.1 LTS",
+  "triangles": 8984,
+  "files": {
+    "rural-village.blend": {
+      "bytes": 4090501,
+      "sha256": "7cb1984b78a1ff0ceb93bb67a8595fb520d15a1236db9cefd4a2d8e7b9e5368d"
+    },
+    "room.glb": {
+      "bytes": 553380,
+      "sha256": "4fcb3c9bcbee650d6d1dd28556895adee6201930f5e120f72f934422815b4542"
+    },
+    "poster.webp": {
+      "bytes": 33182,
+      "sha256": "ee20387f09227e37deb8db0079b60d8435404523b68a1f45c021c0e3166f9b95"
+    },
+    "poster-detail.webp": {
+      "bytes": 33860,
+      "sha256": "c525ee8d07a88d8c80ac1a21b54b0aa599a30169cc83a001042f764d05377595"
+    }
+  }
+}

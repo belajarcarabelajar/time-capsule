@@ -13,7 +13,8 @@
       "market-port": "Anonymous port ledger keeper",
       "ww1-field-station": "Anonymous dispatch reader, no rank or insignia",
       "ww2-radio-room": "Anonymous civilian listener holding a folio",
-      "kingdom-court": "Anonymous court attendant, no royal identity"
+      "kingdom-court": "Anonymous court attendant, no royal identity",
+      "rural-village": "Anonymous village farmer, no personal identity"
     },
     "motionNodes": ["ambient_figure", "ambient_prop"],
     "animation": "Rigid transform groups; no skins, clips, external textures or third-party assets. Runtime applies bounded motion relative to authored pivots and pauses it during reading and reduced-motion mode.",
@@ -72,6 +73,16 @@
       "objects": ["dock", "market-stall", "cargo"],
       "references": [],
       "review": "Authored locally from procedural geometry and materials. Generated with Blender 5.2.1 LTS on this host. No authentic documents, maps, manifests, or cargo records."
+    },
+    "rural-village": {
+      "source": "assets/history/source/rural-village.blend",
+      "model": "apps/web/public/history/rural-village/room.glb",
+      "poster": "apps/web/public/history/rural-village/poster.webp",
+      "checksums": "apps/web/public/history/rural-village/export-report.json",
+      "scope": "Illustrative agrarian Nusantara village with paddy terraces, a timber granary on posts, and an irrigation channel. Not a reconstruction of a named village, field system, or historical community.",
+      "objects": ["sawah", "lumbung", "irigasi"],
+      "references": [],
+      "review": "Authored locally from procedural geometry and materials. Generated with Blender 5.2.1 LTS on this host. No authentic documents, maps, or agricultural records."
     }
   }
 }
