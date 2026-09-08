@@ -46,7 +46,42 @@ describe('conservative room selection', () => {
     expect(resolveRoom({ topic, location }).roomId).toBe(roomId);
   });
   test('missing input returns archive', () => expect(resolveRoom().roomId).toBe('archive'));
+  test.each([
+    ['Al-Khawarizmi', ''],
+    ['Bayt al-Hikmah', 'Baghdad'],
+    ['Sokrates filsuf Yunani', 'Athena'],
+    ['Aristoteles', ''],
+    ['Ibn Sina', ''],
+    ['Perpustakaan Aleksandria', ''],
+    ['ilmu pengetahuan islam', ''],
+    ['  HOUSE OF WISDOM  ', 'Baghdad'],
+    ['', 'Ancient Greece'],
+  ])('ancient-library: %s / %s', (topic, location) => {
+    expect(resolveRoom({ topic, location })).toEqual({
+      roomId: 'ancient-library', reason: 'ancient-scholarship',
+    });
+  });
+  test.each([
+    ['Aristoteles Perang Dunia I', 'France', 'ww1-field-station', 'western-front-ww1'],
+    ['Ibn Sina WWII', 'London', 'ww2-radio-room', 'british-home-front-ww2'],
+    ['Aristoteles WWI WWII', '', 'archive', 'conflicting-eras'],
+    ['https://example.test/Aristoteles', '', 'archive', 'untrusted-input'],
+    ['<b>Ibn Sina</b>', '', 'archive', 'untrusted-input'],
+    ['xAristotelesx', '', 'archive', 'no-supported-setting'],
+    ['x'.repeat(501) + ' Aristoteles', '', 'archive', 'no-supported-setting'],
+  ])('preserves selection guards: %s / %s', (topic, location, roomId, reason) => {
+    expect(resolveRoom({ topic, location })).toEqual({ roomId, reason });
+  });
   test('honors only a safe, locally authored environment key', () => {
+    expect(resolveRoom({
+      topic: 'Ibn Sina', location: '', environmentKey: 'ancient-library',
+    })).toEqual({ roomId: 'ancient-library', reason: 'environment-key' });
+    expect(resolveRoom({
+      topic: 'Aristoteles WWI WWII', environmentKey: 'ancient-library',
+    })).toEqual({ roomId: 'ancient-library', reason: 'environment-key' });
+    expect(resolveRoom({
+      topic: 'https://example.test/Ibn-Sina', environmentKey: 'ancient-library',
+    })).toEqual({ roomId: 'archive', reason: 'untrusted-input' });
     expect(resolveRoom({
       topic: 'Majapahit', location: 'Java', environmentKey: 'kingdom-court',
     })).toEqual({ roomId: 'kingdom-court', reason: 'environment-key' });

@@ -8,6 +8,7 @@ const marketPort = /\b(?:sriwijaya|srivijaya|sailendra|shailendra|spice (?:route
 const ruralLife = /\b(?:petani|sawah|padi|ladang|panen raya|bawon|subak|irigasi|pertanian|agraris|lumbung padi|bajak)\b/u;
 const resistanceOutpost = /\b(?:diponegoro|perang jawa|perang padri|padri|puputan|perlawanan rakyat|proklamasi|pertempuran surabaya)\b/u;
 const pacificWar = /\b(?:japan|japanese|jepang|pacific|pasifik|tokyo|hiroshima|nagasaki|japanese occupation|pendudukan jepang|perang pasifik)\b/u;
+const ancientLibrary = /\b(?:abbasiyah|abbasid|bayt al-?hikmah|house of wisdom|al-?khawarizmi|ibn sina|avicenna|ibnu sina|al-?biruni|al-?farabi|al-?ghazali|al-?razi|ibn rushd|averroes|sokrates|socrates|plato|aristoteles|aristotle|yunani kuno|ancient greece|hellenistic|filsuf yunani|greek philosophy|perpustakaan aleksandria|library of alexandria|ptolemy|euclid|archimedes|pythagoras|ilmu pengetahuan islam|golden age of islam|zaman keemasan islam|cendekiawan muslim)\b/u;
 const incompatible = /\b(?:tokyo|japan|jepang|pacific|pasifik|asia|indonesia|java|jawa|africa|afrika|russia|rusia|moscow|berlin|germany|jerman|italy|italia|america|amerika|pearl harbor|normandy|normandia)\b/u;
 
 export function resolveRoom({ topic, location, environmentKey } = {}) {
@@ -31,6 +32,9 @@ export function resolveRoom({ topic, location, environmentKey } = {}) {
   }
   if (resistanceOutpost.test(all) && !pacificWar.test(all) && !first && !second) {
     return { roomId: 'resistance-outpost', reason: 'colonial-resistance' };
+  }
+  if (ancientLibrary.test(all) && !first && !second) {
+    return { roomId: 'ancient-library', reason: 'ancient-scholarship' };
   }
   if (incompatible.test(all)) return archive('outside-authored-scope');
   if (first && (!place || westernFront.test(place)) && !london.test(all)) {
