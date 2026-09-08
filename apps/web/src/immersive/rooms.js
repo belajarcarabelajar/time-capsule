@@ -174,4 +174,32 @@ export const roomManifest = {
       },
     ],
   },
+  'ancient-library': {
+    id: 'ancient-library',
+    label: 'Perpustakaan kuno',
+    scopeLabel: 'Ruang belajar imajinatif; bukan rekonstruksi perpustakaan atau institusi bersejarah tertentu',
+    modelUrl: '/history/ancient-library/room.glb',
+    posterUrl: '/history/ancient-library/poster.webp',
+    camera: { position: [7, 6, 10], target: [0, 1.6, -1], yawLimit: 0.45, pitchLimit: 0.2 },
+    objects: [
+      {
+        id: 'scroll-table',
+        label: 'Meja gulungan',
+        description: 'Meja tempat para cendekiawan membaca, menyalin, dan menerjemahkan teks. Gulungan di sini bersifat dekoratif dan tidak merujuk pada manuskrip atau karya bersejarah tertentu.',
+        view: { position: [2.5, 3.2, 4.5], target: [0, 1.5, -1] },
+      },
+      {
+        id: 'astrolabe',
+        label: 'Astrolab',
+        description: 'Astrolab membantu mengukur posisi bintang dan menentukan waktu. Alat ini menjadi simbol perpaduan ilmu astronomi, matematika, dan filsafat di pusat-pusat ilmu pengetahuan kuno.',
+        view: { position: [1, 2.8, 3.5], target: [-1.5, 1.8, -1.5] },
+      },
+      {
+        id: 'manuscript-shelf',
+        label: 'Rak manuskrip',
+        description: 'Rak penuh gulungan dan lembaran memperlihatkan tempat ilmu disimpan dan diteruskan antargenerasi. Koleksi ini adalah ilustrasi konsep perpustakaan kuno, bukan salinan koleksi atau institusi nyata.',
+        view: { position: [0, 2.5, 3], target: [3, 2, -2.5] },
+      },
+    ],
+  },
 };
