@@ -79,16 +79,24 @@ test('reduced motion retains 3D and switches visit without an arrival animation'
 test('arrival can be skipped and manual motion pause survives the next visit', async ({ page }) => {
   const calls = await mockHistoryApi(page, 'Palembang, Sumatra', 'market-port');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await startLesson(page);
+  await page.goto('/');
+  await page.getByPlaceholder('Ketik Peristiwa Sejarah...').fill('Sriwijaya');
+  // Observe and click in one browser frame: separate driver round trips can
+  // outlast the short arrival while software rendering blocks the main thread.
+  await Promise.all([
+    page.waitForFunction(() => {
+      const button = document.querySelector('[data-room="market-port"] .history-arrival button');
+      if (!button?.getClientRects().length) return false;
+      button.click();
+      return true;
+    }, null, { polling: 'raf', timeout: 15000 }),
+    page.getByRole('button', { name: 'Mulai Petualangan' }).click(),
+  ]);
   const room = page.locator('[data-room="market-port"]');
-  await expect(room).toHaveAttribute('data-render-state', 'ready', { timeout: 15000 });
   const skip = page.getByRole('button', { name: 'Lewati perjalanan' });
-  await expect(skip).toBeVisible();
-  // The arrival beat is ~1.2s: a stability-checked click can lose the race
-  // when the tween finishes first, so dispatch directly and tolerate that.
-  const clicked = await skip.dispatchEvent('click').then(() => true, () => false);
   await expect(room).toHaveAttribute('data-journey', 'reading');
-  if (clicked) await expect(page.getByRole('button', { name: 'Jelajahi ruang' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Jelajahi ruang' })).toBeFocused();
+  await expect(room).toHaveAttribute('data-render-state', 'ready', { timeout: 15000 });
   await page.getByRole('button', { name: 'Jelajahi ruang' }).click();
   await page.getByRole('button', { name: 'Jeda gerakan' }).click();
   await page.getByRole('button', { name: 'Kembali belajar' }).click();

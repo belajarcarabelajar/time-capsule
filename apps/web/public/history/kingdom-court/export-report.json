@@ -1,23 +1,65 @@
 {
   "room": "kingdom-court",
   "blender": "5.2.1 LTS",
-  "triangles": 27120,
+  "views": [
+    {
+      "position": [
+        8,
+        6,
+        11
+      ],
+      "target": [
+        0,
+        1.8,
+        -1
+      ]
+    },
+    {
+      "position": [
+        6,
+        4.8,
+        10
+      ],
+      "target": [
+        -0.6,
+        1.6,
+        -1
+      ]
+    },
+    {
+      "position": [
+        1,
+        2.8,
+        4
+      ],
+      "target": [
+        3.6,
+        2.2,
+        -2.2
+      ]
+    }
+  ],
+  "triangles": 29028,
   "files": {
     "kingdom-court.blend": {
-      "bytes": 4892890,
-      "sha256": "6cde140a0d48bbba788129cb85edb30be50aac7884396d5e97e1e54f5e9f1b63"
+      "bytes": 5101533,
+      "sha256": "24898c95b35647780020a79d7ef138c5c7a966b147260ca0a0e862cd5b94e3f6"
     },
     "room.glb": {
-      "bytes": 1362388,
-      "sha256": "caa810f262950e9859566d5b8a93178844859ede6e830dcacc4142396b9b5b6b"
+      "bytes": 1461316,
+      "sha256": "425cfbc3e0602aba0c1145dcb13a2ce68b7caaaa3be3b5a5a27fbb2a6b50d8c4"
     },
     "poster.webp": {
-      "bytes": 54692,
-      "sha256": "2f824c6d49286179dc2bb8d989ead9f77a86572b558cd44fe120d62de5c4d3f1"
+      "bytes": 52750,
+      "sha256": "ce3ad967c3e9edbf63c2c7a0fc23a0e0dd8b68c98fa315e0d4ceac8be3a92afa"
     },
     "poster-detail.webp": {
-      "bytes": 52958,
-      "sha256": "de55ba5a4b2c327e6b49eebe153fc10797f0da035ef829d770b49c455bfd7f95"
+      "bytes": 54748,
+      "sha256": "61f02cc7a0c004e892724d2ea727238aa618e9c89fad5e0f359e6affc30ed04b"
+    },
+    "poster-context.webp": {
+      "bytes": 26320,
+      "sha256": "3a33e85a6a8d3a952bcfbf8cb148315d0215fdfaf4826e691b5a585dd2eb1229"
     }
   }
 }

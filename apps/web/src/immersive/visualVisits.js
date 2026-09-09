@@ -24,6 +24,11 @@ const visits = Object.fromEntries(Object.values(roomManifest).map(room => {
       arrival: { position: room.camera.position, target: room.camera.target, duration: 1.2 },
       focusObjectId: room.objects[1].id, posterUrl: `/history/${room.id}/poster-detail.webp`,
     },
+    {
+      id: `${room.id}-context`, camera: room.objects[2].view,
+      arrival: { ...detail, duration: 1.2 },
+      focusObjectId: room.objects[2].id, posterUrl: `/history/${room.id}/poster-context.webp`,
+    },
   ]];
 }));
 

@@ -15,16 +15,28 @@
       "ww2-radio-room": "Anonymous civilian listener holding a folio",
       "kingdom-court": "Anonymous court attendant, no royal identity",
       "rural-village": "Anonymous village farmer, no personal identity",
-      "resistance-outpost": "Anonymous colonial resistance sentry, no rank or insignia"
+      "resistance-outpost": "Anonymous colonial resistance sentry, no rank or insignia",
+      "ancient-library": "Anonymous manuscript reader, no historical identity"
     },
     "motionNodes": ["ambient_figure", "ambient_prop"],
-    "animation": "Rigid transform groups; no skins, clips, external textures or third-party assets. Runtime applies bounded motion relative to authored pivots and pauses it during reading and reduced-motion mode.",
+    "animation": "Rigid transform groups; no skins, clips, external textures or third-party assets. Runtime applies bounded room-specific motion relative to authored pivots and pauses it during inspection, blocked learning states, and reduced-motion mode.",
     "detailPoster": "poster-detail.webp in each room model directory; generated from a second authored camera and recorded in that room export-report.json",
+    "contextPoster": "poster-context.webp in every room directory. All three poster cameras are read from runtime resolveVisit and stored in export-report.json.",
     "review": "Original local procedural geometry. Illustrated roles are fictional; historical source review and physical-device visual acceptance remain pending."
   },
   "seed": 1941,
   "historicalStatus": "Illustrative environments; not exact reconstructions. No historical recordings, documents, or maps are presented as authentic.",
   "rooms": {
+    "ancient-library": {
+      "source": "assets/history/source/ancient-library.blend",
+      "model": "apps/web/public/history/ancient-library/room.glb",
+      "poster": "apps/web/public/history/ancient-library/poster.webp",
+      "checksums": "apps/web/public/history/ancient-library/export-report.json",
+      "scope": "Illustrative manuscript library with scroll table, ring instrument and manuscript shelves. Not a reconstruction of Alexandria or any documented library; no authentic writing or instrument replica.",
+      "objects": ["scroll-table", "astrolabe", "manuscript-shelf"],
+      "references": [],
+      "review": "Original local procedural geometry and textures. Historical reconstruction and physical-device acceptance are not claimed."
+    },
     "archive": {
       "source": "assets/history/source/archive.blend",
       "model": "apps/web/public/history/archive/room.glb",

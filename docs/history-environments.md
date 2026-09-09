@@ -18,7 +18,7 @@ VITE_IMMERSIVE_ENABLED=false bun --filter web run dev
 
 The build gate is evaluated at build time. Only the exact string `false` disables the contextual renderer. A missing value or `true` enables it.
 
-The renderer chooses a room from topic, validated `gameData.meta.location`, and an optional `gameData.meta.environmentKey` supplied by the scenario. The finite allowed values are `archive`, `ww1-field-station`, `ww2-radio-room`, `kingdom-court`, `market-port`, `rural-village`, and `resistance-outpost`. The local `roomManifest` is the final authority: a valid key selects only its authored local room; missing or unknown keys continue to the existing topic and location rules. Unsafe topic or location text always selects `archive`, even if a valid key is present. AI output is never used as a URL, file path, shader, HTML, or executable configuration.
+The renderer chooses a room from topic, validated `gameData.meta.location`, and an optional `gameData.meta.environmentKey` supplied by the scenario. The finite allowed values are `archive`, `ww1-field-station`, `ww2-radio-room`, `kingdom-court`, `market-port`, `rural-village`, `resistance-outpost`, and `ancient-library`. The local `roomManifest` is the final authority: a valid key selects only its authored local room; missing or unknown keys continue to the existing topic and location rules. Unsafe topic or location text always selects `archive`, even if a valid key is present. AI output is never used as a URL, file path, shader, HTML, or executable configuration.
 
 | Input context | Room | Visual scope |
 |---|---|---|
@@ -30,29 +30,42 @@ The renderer chooses a room from topic, validated `gameData.meta.location`, and 
 | A colonial-era resistance context (such as Diponegoro, Perang Jawa, Perang Padri, puputan, or Proklamasi Kemerdekaan Indonesia) with no war signal and no Japan/Pacific signal, or a safe scenario with `environmentKey: "resistance-outpost"` | `resistance-outpost` | Illustrative open-air colonial-era Nusantara resistance outpost with a bamboo-timber palisade, a raised bamboo watch post, a lean-to shelter, and a low signal fire; not a reconstruction of a named field, fortress, or campaign |
 | Missing, unsupported, conflicting, malformed, oversized, or unsafe setting | `archive` | Fictional time archive used as a safe non-specific context |
 
+`ancient-library` supplies an illustrative scroll table, ring instrument, manuscript shelves, and an anonymous reader. It does not depict an authenticated historical library or manuscript.
+
+Chapters cycle through reveal, focus, and context visits, returning to reveal on chapter four. The first two cameras retain the existing compositions; context uses the third inspection object's authored view. Same-room chapter transitions reuse the loaded model. Each visit has its own poster; a missing alternate poster falls back to the room's primary poster.
+
+Ambient figure and prop groups use bounded rigid motion, without skeletal animation. Prop axes and rates vary by room; only the port ship receives vertical lift. Rotation stays within 0.025 radians and lift within 0.02 units. Inspection, blocked learning states, explicit pause, and reduced motion stop activity without accumulating hidden time. Lesson text, quizzes, chapter accounting, auth, and AI contracts are unchanged.
+
 3D is the default background on every viewport. Save-data mode, an explicit static preference, slow lazy import, missing model, lost graphics context, and poor renderer pacing use the selected room's poster and keep the lesson controls available. The user can switch between 3D and the poster where the controls allow it.
 
 ## Authored assets
 
-Each room has an editable Blender source, an optimized same-origin GLB, a poster render, an export report, and provenance references:
+Each room has an editable Blender source, an optimized same-origin GLB, three poster renders, an export report, and provenance references:
 
 ```text
 assets/history/source/<room>.blend
 apps/web/public/history/<room>/room.glb
 apps/web/public/history/<room>/poster.webp
+apps/web/public/history/<room>/poster-detail.webp
+apps/web/public/history/<room>/poster-context.webp
 apps/web/public/history/<room>/export-report.json
 ```
 
 In this WSL environment, export with Blender's system-Python environment so the user PATH's UV Python shim cannot affect Blender:
 
 ```bash
-env -u PYTHONUNBUFFERED -u PYTHONUTF8 -u PYTHONDONTWRITEBYTECODE PATH=/usr/bin:/bin \
-  blender --background --python scripts/export-history-assets.py -- --root . --room kingdom-court
+env -u PYTHONUNBUFFERED -u PYTHONUTF8 -u PYTHONDONTWRITEBYTECODE \
+  ALSOFT_DRIVERS=null SDL_AUDIODRIVER=dummy XDG_CACHE_HOME=/tmp/time-capsule-blender-cache PATH=/usr/bin:/bin \
+  blender --background -noaudio -t 4 --python-exit-code 1 --python scripts/export-history-assets.py -- --root . --room kingdom-court
 ```
 
 Author and verify a new room the same way, replacing the `--room` value. The `market-port`, `rural-village`, and `resistance-outpost` rooms were authored and exported with the same invocation on this host; their export reports record the exact Blender version used.
 
-Regenerate the source, GLB, poster, report, and checksum together. Do not edit generated binaries independently. Keep the GLB at or below 4 MiB, the poster at or below 250 KiB, the scene below 100,000 triangles and 60 draw primitives, and preserve the three reviewed inspection objects.
+Before regenerating rural geometry, run the same headless environment with `--python scripts/test-history-room-structure.py` (without exporter arguments). It constructs the actual scene and checks that all four granary posts reach the floor; `--python-exit-code 1` makes geometry regressions fail the command.
+
+The exporter uses `history_scene_primitives.py`, `history_room_scenes.py`, `history_room_enrichment.py`, and `history_asset_details.py`. System Node reads camera data through `history-asset-views.mjs` directly from runtime `resolveVisit`; the export report records these views for drift checks. Export sequentially on memory-constrained hosts. `--input <edited.blend>` re-exports an existing edited source without regenerating geometry.
+
+Regenerate the source, GLB, all three posters, report, and checksum together. Do not edit generated binaries independently. Keep the GLB at or below 4 MiB, each poster at or below 250 KiB, the scene below 100,000 triangles and 60 draw primitives, and preserve the three reviewed inspection objects.
 
 Verify all rooms from the repository root:
 
@@ -83,6 +96,7 @@ Browser checks use mocked auth and scenario endpoints and block real provider do
 ```bash
 PATH=/usr/bin:/bin:$PATH rtk bun run test:immersive -- --project=chromium
 PATH=/usr/bin:/bin:$PATH rtk bun run test:immersive:fallback -- --project=chromium
+PATH=/usr/bin:/bin:$PATH rtk proxy bunx playwright test --config playwright.enrichment.config.js --reporter=line
 ```
 
 The browser commands require native `/usr/bin/node` before the local Bun wrapper so esbuild's service can start. WebKit additionally requires its host libraries; Chromium is the verified local browser target. A missing browser or host library is an environment verification blocker, not evidence that the application assertions passed.

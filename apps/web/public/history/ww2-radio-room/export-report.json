@@ -1,23 +1,65 @@
 {
   "room": "ww2-radio-room",
   "blender": "5.2.1 LTS",
-  "triangles": 13620,
+  "views": [
+    {
+      "position": [
+        7,
+        6,
+        10
+      ],
+      "target": [
+        0,
+        1.6,
+        -1
+      ]
+    },
+    {
+      "position": [
+        5,
+        4.5,
+        9
+      ],
+      "target": [
+        0,
+        1.5,
+        -1.2
+      ]
+    },
+    {
+      "position": [
+        0,
+        2,
+        2
+      ],
+      "target": [
+        2.5,
+        1.5,
+        -2
+      ]
+    }
+  ],
+  "triangles": 14184,
   "files": {
     "ww2-radio-room.blend": {
-      "bytes": 4552430,
-      "sha256": "428f5a3cf0e8bea3543a07c10b2692bd09e323f39c03343cc23e62d1c1164825"
+      "bytes": 4662855,
+      "sha256": "550b31c09b284f22a71a5a23a836046377037c70c3a22c8208a188e44572ab02"
     },
     "room.glb": {
-      "bytes": 864904,
-      "sha256": "dc9d3c22314f23e5c309f015dabdbf7d0ceaea4d272d4547fd21bd242ac07ff9"
+      "bytes": 893312,
+      "sha256": "28ff4dde6ad3072f3b289fb2ea24dcb628792e56ee943ea7ffb92dd1181db89c"
     },
     "poster.webp": {
-      "bytes": 69020,
-      "sha256": "641c372f44bcbc46e2b68c1d542dcd0af067ef95c4811c0d824ab82b49d38ef2"
+      "bytes": 70314,
+      "sha256": "361e92afdd7a23ee642f733532678c429d0ebb1615edb7379e8c6c7878af7f0f"
     },
     "poster-detail.webp": {
-      "bytes": 69022,
-      "sha256": "a426b0dcd838c390aee70726883c07e8ceb7f5e267170484b570ec766d7d2624"
+      "bytes": 70804,
+      "sha256": "ce12285362b0bea35ce5f53c1040790439c177e80cfd4b49b16b69a5ffc44e63"
+    },
+    "poster-context.webp": {
+      "bytes": 48396,
+      "sha256": "51add961036f751b1adc3806ed23b8de267c0be78c23910c34b23daac87b4651"
     }
   }
 }

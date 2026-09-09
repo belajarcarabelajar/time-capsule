@@ -1,23 +1,65 @@
 {
   "room": "market-port",
   "blender": "5.2.1 LTS",
-  "triangles": 6232,
+  "views": [
+    {
+      "position": [
+        9,
+        5,
+        13
+      ],
+      "target": [
+        0,
+        1.5,
+        -2
+      ]
+    },
+    {
+      "position": [
+        7,
+        4.2,
+        11
+      ],
+      "target": [
+        -0.5,
+        1.2,
+        -2
+      ]
+    },
+    {
+      "position": [
+        1,
+        3,
+        5
+      ],
+      "target": [
+        2.5,
+        1.5,
+        -2
+      ]
+    }
+  ],
+  "triangles": 11364,
   "files": {
     "market-port.blend": {
-      "bytes": 3229330,
-      "sha256": "bfb86484aaecd5e6d99d3d724fdb7d9b41452985ee604d0071529ac3540beeb1"
+      "bytes": 3653248,
+      "sha256": "f8ccf3b8abffdd3032e2ecc13d1ab436d66d072e443c2388916ae640ddeddc8f"
     },
     "room.glb": {
-      "bytes": 398320,
-      "sha256": "38b026606ceb6c598da944516d516472d1c741726eba499aaff98610630fdf5a"
+      "bytes": 755396,
+      "sha256": "e4179aa9e6799e011958c391d9af14b61f52c6a916cf0f567ff9979b7212240f"
     },
     "poster.webp": {
-      "bytes": 40774,
-      "sha256": "f698ca4d4d8e5aa1ae0ab0e9c1f5285305fb54f8be5e5ff3a422ac25bfebbd7d"
+      "bytes": 35054,
+      "sha256": "2e33af15b98182f40c14588e50d351b786486591102635ae79d01570506ee379"
     },
     "poster-detail.webp": {
-      "bytes": 34942,
-      "sha256": "4156912d76fbddd2f54c9d405e2ed7a7308888fd6116c50b677e7b07ce527f9d"
+      "bytes": 39296,
+      "sha256": "de70f214b6a6e2904f2b40603e4732963d9467480820ea74c14c1b7c071c8045"
+    },
+    "poster-context.webp": {
+      "bytes": 42650,
+      "sha256": "81fb8f35c43e4acc62ef6a504900016632103b572369ff6cba303cf908c28720"
     }
   }
 }

@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { roomManifest } from '../apps/web/src/immersive/rooms.js';
+import { resolveVisit } from '../apps/web/src/immersive/visualVisits.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const provenance = JSON.parse(readFileSync(resolve(root, 'assets/history/provenance.json'), 'utf8'));
@@ -28,18 +29,26 @@ for (const id of ids) {
     if ([...(gltf.images ?? []), ...(gltf.buffers ?? [])].some(resource => resource.uri)) throw new Error('Non-embedded resource');
     if (!provenance.enrichment?.figureLabel?.includes('ilustratif') || !provenance.enrichment.figureRoles[id]) throw new Error('Missing illustrative figure provenance');
     const detailPoster = resolve(dirname(resolve(root, record.poster)), 'poster-detail.webp');
+    const contextPoster = resolve(dirname(resolve(root, record.poster)), 'poster-context.webp');
+    if (statSync(contextPoster).size > 250 * 1024) throw new Error('Context poster budget exceeded');
     if (statSync(detailPoster).size > 250 * 1024) throw new Error('Detail poster budget exceeded');
     if (statSync(resolve(root, record.poster)).size > 250 * 1024) throw new Error('Poster budget exceeded');
     if (readFileSync(resolve(root, record.source)).toString('utf8', 0, 7) !== 'BLENDER') throw new Error('Editable Blender source absent');
-    if (room.objects.length !== 3 || record.objects.some(objectId => !room.objects.some(object => object.id === objectId))) throw new Error('Inspection/provenance mismatch');
+    if (room.objects.length !== 3 || record.objects.length !== 3 || new Set(record.objects).size !== 3 || record.objects.some(objectId => !room.objects.some(object => object.id === objectId))) throw new Error('Inspection/provenance mismatch');
     for (const assetUrl of [room.modelUrl, room.posterUrl]) {
       if (!assetUrl.startsWith(`/history/${id}/`) || assetUrl.includes('..')) throw new Error('Non-local asset URL');
     }
     const report = JSON.parse(readFileSync(resolve(root, record.checksums), 'utf8'));
-    for (const [file, path] of [[`${id}.blend`, record.source], ['room.glb', record.model], ['poster.webp', record.poster], ['poster-detail.webp', detailPoster]]) {
+    const views = [1, 2, 3].map(chapter => {
+      const { position, target } = resolveVisit(id, chapter).camera;
+      return { position, target };
+    });
+    if (JSON.stringify(report.views) !== JSON.stringify(views)) throw new Error('Poster/runtime camera mismatch');
+    for (const [file, path] of [[`${id}.blend`, record.source], ['room.glb', record.model], ['poster.webp', record.poster], ['poster-detail.webp', detailPoster], ['poster-context.webp', contextPoster]]) {
       const checksum = createHash('sha256').update(readFileSync(resolve(root, path))).digest('hex');
       if (report.files[file]?.sha256 !== checksum) throw new Error(`Checksum mismatch: ${file}`);
     }
+    if (new Set(['poster.webp', 'poster-detail.webp', 'poster-context.webp'].map(name => report.files[name].sha256)).size !== 3) throw new Error('Poster compositions must differ');
     console.log(`${id}: OK; ${model.length} bytes, ${triangles} triangles, ${primitives.length} draw primitives; source and hashes verified`);
   } catch (error) {
     failures++;

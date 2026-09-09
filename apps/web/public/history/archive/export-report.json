@@ -1,23 +1,65 @@
 {
   "room": "archive",
   "blender": "5.2.1 LTS",
-  "triangles": 27376,
+  "views": [
+    {
+      "position": [
+        7,
+        6,
+        10
+      ],
+      "target": [
+        0,
+        1.6,
+        -1
+      ]
+    },
+    {
+      "position": [
+        6,
+        5,
+        9
+      ],
+      "target": [
+        -0.6,
+        1.6,
+        -1
+      ]
+    },
+    {
+      "position": [
+        1,
+        2.8,
+        4
+      ],
+      "target": [
+        -3,
+        2,
+        -3
+      ]
+    }
+  ],
+  "triangles": 30688,
   "files": {
     "archive.blend": {
-      "bytes": 8909770,
-      "sha256": "8b4c637001133c555fcaa28a08915312589412bba0698f6fdfd67036e9193a01"
+      "bytes": 9204293,
+      "sha256": "0534519f0db8af568f27cdcf213e0e0f8645df94571e1222e7a944cd12110ea9"
     },
     "room.glb": {
-      "bytes": 1750656,
-      "sha256": "e4f80fa5fb1f19d4e30fe76f352ec9cc0503187eeee894bf15fdcce978e6b434"
+      "bytes": 1923144,
+      "sha256": "8dabba613a137723a38990c183128a36fc7899b249627c08a6529b863b4225af"
     },
     "poster.webp": {
-      "bytes": 101990,
-      "sha256": "1cfcd1f250c90ed481baee9f1e4b706ae888b8fa3d124c57a6cbf0abb27aff0a"
+      "bytes": 103934,
+      "sha256": "760295f276538c7608bf56e498209b0dce7f4c0357e4e930fb909f9c0764de2e"
     },
     "poster-detail.webp": {
-      "bytes": 106878,
-      "sha256": "4d020353067c9f1a9d712ae7747985a274ad7d8ee86c2bdbeeed39f5bb38e18e"
+      "bytes": 109192,
+      "sha256": "8a875380d3eedde7e0e16d4f6c9e234a5aca6abd3a449dcd9a269f5b010e0a25"
+    },
+    "poster-context.webp": {
+      "bytes": 81280,
+      "sha256": "07db92203080bdcf0e44403437decdbd6a8bbbdfdf204cec757f17851530be3b"
     }
   }
 }

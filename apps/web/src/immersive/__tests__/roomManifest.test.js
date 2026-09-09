@@ -1,6 +1,11 @@
 import { expect, test } from 'bun:test';
 import { roomManifest } from '../rooms.js';
 
+test('archive instrument inspection targets its authored ring pivot, not the table', () => {
+  expect(roomManifest.archive.objects.find(object => object.id === 'instrument').view.target)
+    .toEqual([-2.2, 1.72, -1]);
+});
+
 test('every authored environment provides local media and accessible inspection views', () => {
   expect(Object.keys(roomManifest)).toEqual(['archive', 'ww1-field-station', 'ww2-radio-room', 'kingdom-court', 'market-port', 'rural-village', 'resistance-outpost', 'ancient-library']);
   for (const [id, room] of Object.entries(roomManifest)) {

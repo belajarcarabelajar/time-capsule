@@ -1,23 +1,65 @@
 {
   "room": "rural-village",
   "blender": "5.2.1 LTS",
-  "triangles": 8984,
+  "views": [
+    {
+      "position": [
+        10,
+        6.5,
+        11
+      ],
+      "target": [
+        0,
+        1.4,
+        -1
+      ]
+    },
+    {
+      "position": [
+        8,
+        5.4,
+        9.5
+      ],
+      "target": [
+        -0.4,
+        1.1,
+        -1.5
+      ]
+    },
+    {
+      "position": [
+        7,
+        3,
+        5.5
+      ],
+      "target": [
+        4,
+        0.9,
+        3
+      ]
+    }
+  ],
+  "triangles": 10180,
   "files": {
     "rural-village.blend": {
-      "bytes": 4090501,
-      "sha256": "7cb1984b78a1ff0ceb93bb67a8595fb520d15a1236db9cefd4a2d8e7b9e5368d"
+      "bytes": 4311551,
+      "sha256": "7bb67bb4c3f9c8ebe3f3b863d253b411c2f5418742eca88ea2b39cd93fce2502"
     },
     "room.glb": {
-      "bytes": 553380,
-      "sha256": "4fcb3c9bcbee650d6d1dd28556895adee6201930f5e120f72f934422815b4542"
+      "bytes": 619196,
+      "sha256": "454a901bea208b5b5d691b9dd233b2a27224f9fe5bb9844804d89bab4b25c458"
     },
     "poster.webp": {
-      "bytes": 33182,
-      "sha256": "ee20387f09227e37deb8db0079b60d8435404523b68a1f45c021c0e3166f9b95"
+      "bytes": 34992,
+      "sha256": "01792ebe14e208d6241adf219b46bfa77cc204b18a4bed5c42eba677456cde5b"
     },
     "poster-detail.webp": {
-      "bytes": 33860,
-      "sha256": "c525ee8d07a88d8c80ac1a21b54b0aa599a30169cc83a001042f764d05377595"
+      "bytes": 36546,
+      "sha256": "17930cc6096c91294bf7192e4278f8aa9c77801c1652ee781bc014c401e1ca05"
+    },
+    "poster-context.webp": {
+      "bytes": 28462,
+      "sha256": "b22f14f314b359803a127631848db1a7e4cc09a8bb127c9e80ef08cbd6247dbc"
     }
   }
 }

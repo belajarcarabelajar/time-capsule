@@ -1,0 +1,65 @@
+{
+  "room": "ancient-library",
+  "blender": "5.2.1 LTS",
+  "views": [
+    {
+      "position": [
+        7,
+        6,
+        10
+      ],
+      "target": [
+        0,
+        1.6,
+        -1
+      ]
+    },
+    {
+      "position": [
+        6,
+        5,
+        9
+      ],
+      "target": [
+        -0.6,
+        1.6,
+        -1
+      ]
+    },
+    {
+      "position": [
+        0,
+        2.5,
+        3
+      ],
+      "target": [
+        3,
+        2,
+        -2.5
+      ]
+    }
+  ],
+  "triangles": 23000,
+  "files": {
+    "ancient-library.blend": {
+      "bytes": 6828282,
+      "sha256": "da3e373d3f29ec58fa0e8f3340ff35220eff6e30fcb027f3bd0d3a4decdb9591"
+    },
+    "room.glb": {
+      "bytes": 1399428,
+      "sha256": "a78479a06601cd1de4da690f68380ca267df4709a68bf37b3144348bd89b13c6"
+    },
+    "poster.webp": {
+      "bytes": 86570,
+      "sha256": "be04fcc81ceb89c4ff219427d729ace6e54853f3927a14b5850b9149cc67a6f3"
+    },
+    "poster-detail.webp": {
+      "bytes": 89860,
+      "sha256": "8c95c9c752042e5470140544e811f75ed0dde2457900b26da84fa063e0617d59"
+    },
+    "poster-context.webp": {
+      "bytes": 51266,
+      "sha256": "3d816dfb6a3d6c3929059cc55e19faf6e6b8ef5e7f9fb0e79c69970d06c15c75"
+    }
+  }
+}

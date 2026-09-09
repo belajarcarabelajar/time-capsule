@@ -29,6 +29,15 @@ test('same-room chapter changes replace the visit and poster without reloading g
   expect(view.getByTestId('environment-poster').getAttribute('src')).toContain('poster-detail.webp');
   await act(async () => {});
   expect(h.current().visit.id).not.toBe(first);
+  view.rerender(<HistoricalEnvironment chapterCount={3} loadRenderer={h.loadRenderer} />);
+  await act(async () => {});
+  expect(h.current().visit.id).toBe('archive-context');
+  expect(h.current().visit.focusObjectId).toBe('cabinet');
+  expect(view.getByTestId('environment-poster').getAttribute('src')).toBe('/history/archive/poster-context.webp');
+  view.rerender(<HistoricalEnvironment chapterCount={4} loadRenderer={h.loadRenderer} />);
+  await act(async () => {});
+  expect(h.current().visit.id).toBe(first);
+  expect(view.getByTestId('environment-poster').getAttribute('src')).toBe('/history/archive/poster.webp');
   expect(h.loadRenderer).toHaveBeenCalledTimes(1);
 });
 

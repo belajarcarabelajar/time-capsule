@@ -10,7 +10,7 @@ export const roomManifest = {
       {
         id: 'instrument', label: 'Instrumen waktu',
         description: 'Instrumen rekaan ini menjadi penanda perjalanan kita. Bentuk lingkarannya mengajak kita melihat kembali peristiwa dari sudut pandang yang berbeda; ini bukan artefak sejarah.',
-        view: { position: [3, 3.4, 4], target: [0, 1.7, 0] },
+        view: { position: [1, 2.8, 3], target: [-2.2, 1.72, -1] },
       },
       {
         id: 'map', label: 'Meja penjelajah',

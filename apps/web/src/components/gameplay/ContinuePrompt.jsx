@@ -14,7 +14,8 @@ export default function ContinuePrompt({
 }) {
   return (
     <div className="absolute inset-0 z-[60] bg-stone-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 animate-in fade-in">
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/aged-paper.png')] opacity-10 pointer-events-none"></div>
+      <div aria-hidden="true" className="absolute inset-0 opacity-10 pointer-events-none"
+        style={{ backgroundImage: 'radial-gradient(#d6d3d1 0.5px, transparent 0.5px)', backgroundSize: '4px 3px' }}></div>
 
       <div className="relative bg-stone-900 border-2 border-amber-700 p-8 rounded-2xl max-w-md w-full text-center shadow-[0_0_50px_rgba(217,119,6,0.3)]">
         <h2 className="text-3xl font-bold text-amber-500 mb-2 font-serif tracking-widest">Selesai!</h2>

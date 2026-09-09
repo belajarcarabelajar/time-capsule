@@ -1,23 +1,65 @@
 {
   "room": "resistance-outpost",
   "blender": "5.2.1 LTS",
-  "triangles": 12180,
+  "views": [
+    {
+      "position": [
+        10,
+        6.5,
+        11
+      ],
+      "target": [
+        0,
+        1.4,
+        -1
+      ]
+    },
+    {
+      "position": [
+        8.5,
+        5.8,
+        10
+      ],
+      "target": [
+        -0.4,
+        1.4,
+        -1.5
+      ]
+    },
+    {
+      "position": [
+        2.6,
+        2.4,
+        1.6
+      ],
+      "target": [
+        0.2,
+        0.6,
+        -1.2
+      ]
+    }
+  ],
+  "triangles": 17636,
   "files": {
     "resistance-outpost.blend": {
-      "bytes": 4103482,
-      "sha256": "f9abb10046a35a8798c70e19c88c2371344de3eeaa70afc7d80d87904ad49b77"
+      "bytes": 4543261,
+      "sha256": "34cdfb9bc23915c6eb85b149898a234adfc4117028cd611ac75ab04e8f907c08"
     },
     "room.glb": {
-      "bytes": 707988,
-      "sha256": "3384515c3ddf40506f0cf80e1e3fa980bc9238c93e5eb1f31ef0063c2fd3c1ed"
+      "bytes": 1096540,
+      "sha256": "4fdd9075d4057264295d6ad5b4f3ecdd3c20734eb63ac5a40f8a071d60c4063c"
     },
     "poster.webp": {
-      "bytes": 49330,
-      "sha256": "94e66652b1e234541b570ee82d8936b484b3c1597bd8ec0d56d1bcf3e6dbc0c5"
+      "bytes": 38106,
+      "sha256": "5c19cf38db2220812bf009e2ad165404645a544b88628802895d5ab3bb79a36d"
     },
     "poster-detail.webp": {
-      "bytes": 45736,
-      "sha256": "8dc8b2555c84ac563e7a945bec2fa11b5ebcb7a0aa1807b2025d58b8dc5372c3"
+      "bytes": 42336,
+      "sha256": "eac4ec7bd1ead69575a78d77253b556b076add41f611b25696ddf78044de6d1d"
+    },
+    "poster-context.webp": {
+      "bytes": 39878,
+      "sha256": "c73e2059407f5095fc29cc36045301db060dbe8f1b4bec5354479e3ead28024b"
     }
   }
 }
