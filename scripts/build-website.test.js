@@ -138,6 +138,25 @@ test("Pages headers enforce the same-origin CSP used by the current app", () => 
   expect(source).not.toContain("img-src self https:");
 });
 
+test("Pages CSP allows GLTFLoader blob textures and the zone's Web Analytics beacon", () => {
+  const source = readFileSync(join(root, "apps/web/public/_headers"), "utf8");
+  const policy = source.match(/Content-Security-Policy: (.+)/)[1];
+  const directive = (name) =>
+    policy
+      .split(";")
+      .map((part) => part.trim().split(/\s+/))
+      .find(([key]) => key === name)
+      .slice(1);
+  // GLTFLoader turns embedded GLB textures into blob: URLs and ImageBitmapLoader fetch()es them.
+  expect(directive("connect-src")).toEqual(
+    expect.arrayContaining(["'self'", "blob:", "https://cloudflareinsights.com"]),
+  );
+  // The belajarcarabelajar.com zone injects this beacon on the custom domain.
+  expect(directive("script-src")).toEqual(
+    expect.arrayContaining(["'self'", "https://static.cloudflareinsights.com"]),
+  );
+});
+
 test("client asset verification is part of the post-build quality workflow", () => {
   const rootPackage = JSON.parse(
     readFileSync(join(root, "package.json"), "utf8"),
