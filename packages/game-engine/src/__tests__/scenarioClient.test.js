@@ -214,7 +214,7 @@ describe('Scenario Provider Behavior', () => {
   });
 });
 
-describe('Input Validation & Prompt Construction & Zod Schema Validation', () => {
+describe('Input Validation & Scenario Request & Zod Schema Validation', () => {
   let originalFetch;
   let fetchScenarioData;
 
@@ -265,12 +265,69 @@ describe('Input Validation & Prompt Construction & Zod Schema Validation', () =>
 
     await fetchScenarioData(longTopic, 2, longHistory);
 
-    const promptSent = capturedBody.messages[1].content;
-    
-    expect(promptSent).toContain("TOPIK UTAMA: " + "A".repeat(200));
-    expect(promptSent).toContain("B".repeat(3000));
-    expect(promptSent).not.toContain("B".repeat(3001));
-    expect(promptSent).toContain("KONTEKS: Ini adalah BAGIAN 2.");
+    expect(capturedBody).toEqual({
+      topic: "A".repeat(200),
+      chapter: 2,
+      history: "B".repeat(3000),
+    });
+  });
+
+  it('should send a scenario request with only the topic, chapter, and history keys', async () => {
+    let capturedBody;
+    let capturedOptions;
+    const validJsonString = JSON.stringify({
+      meta: { location: "Scenario Request", themeColor: "red" },
+      characters: validCharacters,
+      scenes: validScenes,
+      script: []
+    });
+
+    global.fetch = mock(async (url, options) => {
+      expect(url).toBe('/api/scenario');
+      capturedOptions = options;
+      capturedBody = JSON.parse(options.body);
+      return new Response(JSON.stringify({
+        success: true,
+        result: { response: validJsonString }
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+
+    await fetchScenarioData("Majapahit", 1, "");
+
+    expect(capturedOptions.method).toBe('POST');
+    expect(capturedOptions.headers['Content-Type']).toBe('application/json');
+    expect(Object.keys(capturedBody).sort()).toEqual(['chapter', 'history', 'topic']);
+    expect(capturedBody).toEqual({ topic: "Majapahit", chapter: 1, history: "" });
+    expect(capturedBody).not.toHaveProperty('messages');
+    expect(capturedBody).not.toHaveProperty('max_tokens');
+    expect(capturedBody).not.toHaveProperty('model');
+    expect(capturedBody).not.toHaveProperty('response_format');
+  });
+
+  it('should reject with the server message when the scenario request returns 422', async () => {
+    global.fetch = mock(async () => {
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'Topik ini tidak dapat diproses. Coba topik sejarah lain.'
+      }), { status: 422, headers: { 'Content-Type': 'application/json' } });
+    });
+
+    await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow(
+      new Error('Topik ini tidak dapat diproses. Coba topik sejarah lain.'),
+    );
+  });
+
+  it('should reject with the server message when the scenario request returns 429', async () => {
+    global.fetch = mock(async () => {
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.'
+      }), { status: 429, headers: { 'Content-Type': 'application/json' } });
+    });
+
+    await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow(
+      new Error('Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.'),
+    );
   });
 
   it('should strip forbidden characters <>{}[\] from inputs', async () => {
@@ -293,14 +350,14 @@ describe('Input Validation & Prompt Construction & Zod Schema Validation', () =>
 
     await fetchScenarioData("<Topic>{With}[Brackets]", 1, "<History>{With}[Brackets]");
 
-    const promptSent = capturedBody.messages[1].content;
-    expect(promptSent).not.toContain("<");
-    expect(promptSent).not.toContain(">");
-    expect(promptSent).not.toContain("{");
-    expect(promptSent).not.toContain("}");
-    expect(promptSent).not.toContain("[");
-    expect(promptSent).not.toContain("]");
-    expect(promptSent).toContain("TopicWithBrackets");
+    for (const field of [capturedBody.topic, capturedBody.history]) {
+      expect(typeof field).toBe("string");
+      for (const forbidden of ["<", ">", "{", "}", "[", "]"]) {
+        expect(field).not.toContain(forbidden);
+      }
+    }
+    expect(capturedBody.topic).toBe("TopicWithBrackets");
+    expect(capturedBody.history).toBe("HistoryWithBrackets");
   });
 
   it('should throw an error if response structure fails Zod schema validation', async () => {
