@@ -1,7 +1,7 @@
 ---
 schema: ultra-plan/v1
 plan_id: 2026-10-21-story-loading-hint
-status: Draft
+status: Approved
 version: 1
 runner_contract: true
 defaults:
@@ -123,7 +123,7 @@ flowchart LR
 
 **Definition of Done:** T1 to T3 green with exit codes, PR open and registered.
 
-**Plan Status & Version:** Draft, version 1.
+**Plan Status & Version:** Approved, version 1.
 
 **Reproducibility:** bun 1.4.3 locally, lockfile unchanged.
 
@@ -170,10 +170,10 @@ Inline, by the parent: one component with its test plus one documentation update
 
 ## Session checklist
 
-- [ ] Design and plan approved at the `Design` gate.
-- [ ] T1: RED then GREEN of `LoadingPanel.test.jsx`.
-- [ ] T2: previous plan validates with the production evidence recorded.
-- [ ] T3: local gates exit 0.
+- [x] Design and plan approved at the `Design` gate. Evidence: `Design` answered "Approve design" 2026-10-21; `ultra-plan-runner.mjs` exit 0.
+- [x] T1: RED then GREEN of `LoadingPanel.test.jsx`. Evidence: RED exit 1 (`No instances found with props: {"data-testid":"loading-hint"}`, 2 fail); GREEN exit 0, 4 pass; commit `01651a6`.
+- [x] T2: previous plan validates with the production evidence recorded. Evidence: `ultra-plan-runner.mjs docs/code-plan/plans/2026-10-21-claude-story-worker.md` exit 0; commit `8025fe0`.
+- [x] T3: local gates exit 0. Evidence: ui `bun run test` exit 0, 59 pass; StartScreen and GameplayScreen tests exit 0, 12 pass; lint exit 0, 0 warnings; build exit 0; `test:client-assets` exit 0; `test:script` exit 0, 13 pass; hint text present in `apps/web/dist/assets/index-B3yIQd3d.js`; copy rules exit 0.
 - [ ] Deliver: PR opened through `pr-registry.mjs open`.
 - [ ] Merge and deploy Pages, each at its own gate.
 
@@ -182,4 +182,4 @@ Inline, by the parent: one component with its test plus one documentation update
 | Gate | Answer | Date |
 |---|---|---|
 | `Loading` | Medium + loading hint | 2026-10-21 |
-| `Design` | pending | |
+| `Design` | Approve design | 2026-10-21 |
