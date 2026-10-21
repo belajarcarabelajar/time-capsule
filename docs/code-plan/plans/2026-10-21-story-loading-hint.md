@@ -1,7 +1,7 @@
 ---
 schema: ultra-plan/v1
 plan_id: 2026-10-21-story-loading-hint
-status: Approved
+status: InProgress
 version: 1
 runner_contract: true
 defaults:
@@ -62,6 +62,56 @@ tasks:
       - cmd: "bun $HOME/vivera/scripts/check-copy-rules.mjs --diff origin/main"
         expect_exit: 0
         retry: 0
+  - id: T4
+    depends_on: [T3]
+    impacts: ["continue and preload flow on both screens - cd apps/web && bun test src/__tests__/App.test.jsx"]
+    files: { create: [], modify: [apps/web/src/hooks/useGameState.js], test: [apps/web/src/hooks/__tests__/useGameState.test.jsx] }
+    idempotency_key: "T4:reuse-inflight-preload"
+    skip_if: "cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx"
+    verify_exit: 0
+    run:
+      - cmd: "cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx"
+        expect_exit: 0
+        retry: 1
+  - id: T5
+    depends_on: [T3]
+    impacts: ["story Worker request contract and bundle - bun run --cwd apps/story-worker check"]
+    files: { create: [], modify: [apps/story-worker/src/claude.js, apps/story-worker/wrangler.jsonc], test: [apps/story-worker/src/index.test.js] }
+    idempotency_key: "T5:worker-timeout-and-dev-date"
+    skip_if: "bun test apps/story-worker/src/index.test.js"
+    verify_exit: 0
+    run:
+      - cmd: "bun test apps/story-worker/src/index.test.js"
+        expect_exit: 0
+        retry: 1
+      - cmd: "bun run --cwd apps/story-worker check"
+        expect_exit: 0
+        retry: 1
+        timeout_s: 180
+  - id: T6
+    depends_on: [T4, T5]
+    impacts: ["every local gate, since CI is disabled by the owner - bun run test:script"]
+    files: { create: [], modify: [], test: [] }
+    idempotency_key: "T6:follow-up-verification"
+    skip_if: "false"
+    verify_exit: 0
+    run:
+      - cmd: "cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx src/__tests__/App.test.jsx"
+        expect_exit: 0
+        retry: 0
+      - cmd: "bun test apps/story-worker/src/index.test.js"
+        expect_exit: 0
+        retry: 0
+      - cmd: "bun run --cwd apps/web lint"
+        expect_exit: 0
+        retry: 0
+      - cmd: "bun run build"
+        expect_exit: 0
+        retry: 0
+        timeout_s: 600
+      - cmd: "bun $HOME/vivera/scripts/check-copy-rules.mjs --diff origin/main"
+        expect_exit: 0
+        retry: 0
 ---
 # Story Loading Hint Implementation Plan
 
@@ -96,6 +146,10 @@ flowchart LR
     T1 --> T3["T3 local verification"]
     T2 --> T3
     T3 --> PR(["Pull request"])
+    T3 --> T4["T4 follow-up: reuse the in-flight preload"]
+    T3 --> T5["T5 follow-up: Claude timeout 90 s, local dev date"]
+    T4 --> T6["T6 follow-up verification"]
+    T5 --> T6
 ```
 
 **Reasoning Lenses:** intent (owner: "lama loadingnya"), investigative (measured 28 to 33 s per chapter at effort medium, two live requests 32.6 s and 33.1 s), user-centered (a wait with no estimate reads as stuck), test-first, verification.
@@ -123,7 +177,7 @@ flowchart LR
 
 **Definition of Done:** T1 to T3 green with exit codes, PR open and registered.
 
-**Plan Status & Version:** Approved, version 1.
+**Plan Status & Version:** InProgress (debt-sweep follow-ups T4 to T6), version 1.
 
 **Reproducibility:** bun 1.4.3 locally, lockfile unchanged.
 
@@ -149,20 +203,49 @@ flowchart LR
 
 **Files:** Modify `packages/ui/src/components/LoadingPanel.jsx`; Test `packages/ui/src/components/LoadingPanel.test.jsx`.
 **Interfaces:** `LoadingPanel({ text, hint })`, `hint` defaults to the AC1 text.
-- [ ] Step 1: RED tests for the default hint and the override | cmd: `cd packages/ui && bun test src/components/LoadingPanel.test.jsx` | expect: exit 1
-- [ ] Step 2: add the `hint` prop and its paragraph | same command, expect: exit 0
-- [ ] Step 3: Commit (parent) by explicit path.
+- [x] Step 1: RED tests for the default hint and the override | cmd: `cd packages/ui && bun test src/components/LoadingPanel.test.jsx` | expect: exit 1
+- [x] Step 2: add the `hint` prop and its paragraph | same command, expect: exit 0
+- [x] Step 3: Commit (parent) by explicit path.
 
 ### Task T2: record production evidence of PR #45
 
 **Files:** Create `docs/code-plan/evidence/2026-10-21-claude-story-worker/production.md`; Modify `docs/code-plan/plans/2026-10-21-claude-story-worker.md` (session checklist and closeout status only).
-- [ ] Step 1: write the deploy, binding, secret, `workers.dev`, analytics, and timing evidence as measured.
-- [ ] Step 2: tick the merge and deploy checklist items with that evidence; keep the plan open (T6 still blocked) | cmd: `bun $HOME/vivera/scripts/ultra-plan-runner.mjs docs/code-plan/plans/2026-10-21-claude-story-worker.md` | expect: exit 0
-- [ ] Step 3: Commit (parent) by explicit path.
+- [x] Step 1: write the deploy, binding, secret, `workers.dev`, analytics, and timing evidence as measured.
+- [x] Step 2: tick the merge and deploy checklist items with that evidence; keep the plan open (T6 still blocked) | cmd: `bun $HOME/vivera/scripts/ultra-plan-runner.mjs docs/code-plan/plans/2026-10-21-claude-story-worker.md` | expect: exit 0
+- [x] Step 3: Commit (parent) by explicit path.
 
 ### Task T3: local verification
 
+- [x] Step 1: run the `run[]` commands and record exit codes in the PR body.
+
+### Task T4: follow-up, reuse the in-flight preload
+
+**Files:** Modify `apps/web/src/hooks/useGameState.js`; Test `apps/web/src/hooks/__tests__/useGameState.test.jsx`.
+**Behavior & Acceptance:** continuing while the preload for that chapter is still running waits for it instead of requesting the chapter again; exactly one Claude request per chapter; the next continue never shows a duplicate of the chapter just shown.
+- [ ] Step 1: RED hook test with a pending preload | cmd: `cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx` | expect: exit 1
+- [ ] Step 2: track the in-flight preload in a ref and await it in `handleContinue` | same command, expect: exit 0
+- [ ] Step 3: Commit (parent) by explicit path.
+
+### Task T5: follow-up, Claude timeout 90 s and local dev date
+
+**Files:** Modify `apps/story-worker/src/claude.js`, `apps/story-worker/wrangler.jsonc`; Test `apps/story-worker/src/index.test.js`.
+**Behavior & Acceptance:** the SDK timeout is 90000 ms (measured single attempts 28 to 33 s); `compatibility_date` is `2026-09-10` so `wrangler dev` starts with the bundled workerd.
+- [ ] Step 1: RED assertions for the timeout and the date | cmd: `bun test apps/story-worker/src/index.test.js` | expect: exit 1
+- [ ] Step 2: change both values; `wrangler dev` reaches `Ready on` | expect: test exit 0, `bun run --cwd apps/story-worker check` exit 0
+- [ ] Step 3: Commit (parent) by explicit path.
+
+### Task T6: follow-up verification
+
 - [ ] Step 1: run the `run[]` commands and record exit codes in the PR body.
+
+## Follow-up backlog (debt sweep 2026-10-21)
+
+Selected: T4, T5. Deferred:
+
+- 10 `AuthContext` web tests red on `main`. `defer: separate pull request per AGENTS.md A7, when the owner schedules it`.
+- Prompt adherence: 1 of 5 medium scenarios ended on a quiz instead of the narrator slide; slides 19 to 27 against 15 to 20. `defer: an eval over 10 or more topics, before any prompt change`.
+- Worker cold-start CPU 29.1 ms against the Workers Free 10 ms figure. `defer: watch Worker errors for exceededCpu, act on the first one`.
+- A tail-captured `"outcome":"ok"` line from a browser request. `defer: the next time the owner plays with wrangler tail running`.
 
 ## Execution
 
@@ -174,7 +257,7 @@ Inline, by the parent: one component with its test plus one documentation update
 - [x] T1: RED then GREEN of `LoadingPanel.test.jsx`. Evidence: RED exit 1 (`No instances found with props: {"data-testid":"loading-hint"}`, 2 fail); GREEN exit 0, 4 pass; commit `01651a6`.
 - [x] T2: previous plan validates with the production evidence recorded. Evidence: `ultra-plan-runner.mjs docs/code-plan/plans/2026-10-21-claude-story-worker.md` exit 0; commit `8025fe0`.
 - [x] T3: local gates exit 0. Evidence: ui `bun run test` exit 0, 59 pass; StartScreen and GameplayScreen tests exit 0, 12 pass; lint exit 0, 0 warnings; build exit 0; `test:client-assets` exit 0; `test:script` exit 0, 13 pass; hint text present in `apps/web/dist/assets/index-B3yIQd3d.js`; copy rules exit 0.
-- [ ] Deliver: PR opened through `pr-registry.mjs open`.
+- [x] Deliver: PR opened through `pr-registry.mjs open`. Evidence: exit 0, `https://github.com/belajarcarabelajar/time-capsule/pull/46`, recorded PR #46 (open).
 - [ ] Merge and deploy Pages, each at its own gate.
 
 ## Approval
