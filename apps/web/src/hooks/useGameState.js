@@ -3,6 +3,22 @@ import { SoundEngine, fetchScenarioData } from '@time-capsule/game-engine';
 import { generateHistorySummary } from '../utils/history';
 import { useAuth } from '../context/AuthContext';
 
+// The server writes visitor-facing text for these statuses (refused topic,
+// rate limit, points); every other failure keeps the fixed text and its
+// detail stays in errorDetail. 401 is handled first by the auth modal.
+const VISIBLE_SERVER_MESSAGE_STATUSES = new Set([403, 422, 429, 503]);
+
+// A reply without a JSON message (for example a platform 503 page) leaves
+// only a bare code such as POINTS_UNAVAILABLE, which is not visitor text.
+const BARE_ERROR_CODE = /^[A-Z_]+$/;
+
+const visibleErrorMessage = (err, fallback) =>
+  VISIBLE_SERVER_MESSAGE_STATUSES.has(err?.status) &&
+  err.message &&
+  !BARE_ERROR_CODE.test(err.message)
+    ? err.message
+    : fallback;
+
 export function useGameState() {
   const { user, checkSession } = useAuth();
   const [inputMode, setInputMode] = useState(true);
@@ -94,7 +110,7 @@ ${errorDetail.stack || "N/A"}
       if (isAuthErr) {
         setShowAuthModal(true);
       } else {
-        setErrorMsg("Gagal membuka portal. Coba lagi.");
+        setErrorMsg(visibleErrorMessage(err, "Gagal membuka portal. Coba lagi."));
         setErrorDetail({
           message: err.message,
           stack: err.stack,
@@ -153,7 +169,7 @@ ${errorDetail.stack || "N/A"}
         if (isAuthErr) {
           setShowAuthModal(true);
         } else {
-          setErrorMsg("Koneksi terputus. Mohon coba lagi.");
+          setErrorMsg(visibleErrorMessage(err, "Koneksi terputus. Mohon coba lagi."));
           setErrorDetail({
             message: err.message,
             stack: err.stack,

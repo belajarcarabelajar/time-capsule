@@ -53,6 +53,26 @@ const validMockGameData = {
   ]
 };
 
+const REFUSED_MESSAGE = 'Topik ini tidak dapat diproses. Coba topik sejarah lain.';
+const RATE_LIMITED_MESSAGE = 'Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.';
+
+const scenarioReply = (status, body) => ({
+  ok: status >= 200 && status < 300,
+  status,
+  json: async () => body,
+});
+const successReply = () => scenarioReply(200, {
+  success: true,
+  result: { response: JSON.stringify(validMockGameData) },
+});
+const refusedReply = () => scenarioReply(422, { success: false, error: 'REFUSED', message: REFUSED_MESSAGE });
+const rateLimitedReply = () => scenarioReply(429, { success: false, error: 'RATE_LIMITED', message: RATE_LIMITED_MESSAGE });
+const serverErrorReply = () => scenarioReply(500, { success: false, message: 'Portal waktu sedang sibuk. Coba lagi sebentar lagi.' });
+const INSUFFICIENT_POINTS_MESSAGE = 'Poin Anda tidak mencukupi. Diperlukan 10 poin untuk men-generate cerita. Poin akan di-reset besok!';
+const POINTS_UNAVAILABLE_MESSAGE = 'Saldo poin sementara tidak tersedia. Silakan coba lagi.';
+const insufficientPointsReply = () => scenarioReply(403, { success: false, error: 'INSUFFICIENT_POINTS', message: INSUFFICIENT_POINTS_MESSAGE });
+const pointsUnavailableReply = () => scenarioReply(503, { success: false, error: 'POINTS_UNAVAILABLE', message: POINTS_UNAVAILABLE_MESSAGE });
+
 const originalConsoleError = console.error;
 
 import { useGameState } from '../useGameState';
@@ -146,6 +166,104 @@ describe('useGameState', () => {
     expect(checkSession).toHaveBeenCalledTimes(1);
     expect(result.current.inputMode).toBe(true);
     expect(result.current.errorMsg).toBeTruthy();
+  });
+
+  const startChapterOne = async (reply) => {
+    global.fetch = mock(async () => reply());
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.setTopic('History'));
+    await act(async () => { await result.current.handleStartAdventure(); });
+    return result;
+  };
+
+  test('chapter 1 scenario request refused with 422 shows the server message', async () => {
+    const result = await startChapterOne(refusedReply);
+    expect(result.current.errorMsg).toBe(REFUSED_MESSAGE);
+    expect(result.current.errorDetail.message).toBe(REFUSED_MESSAGE);
+    expect(result.current.showAuthModal).toBe(false);
+    expect(result.current.inputMode).toBe(true);
+  });
+
+  test('chapter 1 scenario request rate limited with 429 shows the server message', async () => {
+    const result = await startChapterOne(rateLimitedReply);
+    expect(result.current.errorMsg).toBe(RATE_LIMITED_MESSAGE);
+    expect(result.current.showAuthModal).toBe(false);
+  });
+
+  test('chapter 1 scenario request failing with 500 keeps the fixed portal message', async () => {
+    const result = await startChapterOne(serverErrorReply);
+    expect(result.current.errorMsg).toBe('Gagal membuka portal. Coba lagi.');
+    expect(result.current.errorDetail.message).toBe('Portal waktu sedang sibuk. Coba lagi sebentar lagi.');
+  });
+
+  // Reply 1 opens chapter 1, reply 2 fails the preload so handleContinue
+  // must fetch, reply 3 answers that foreground request.
+  const continueWithoutPreload = async (foregroundReply) => {
+    const replies = [successReply, serverErrorReply, foregroundReply];
+    let call = 0;
+    global.fetch = mock(async () => replies[Math.min(call++, replies.length - 1)]());
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.setTopic('History'));
+    await act(async () => { await result.current.handleStartAdventure(); });
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(result.current.nextGameData).toBeNull();
+    await act(async () => { await result.current.handleContinue(); });
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+    return result;
+  };
+
+  test('later chapter scenario request rate limited with 429 shows the server message', async () => {
+    const result = await continueWithoutPreload(rateLimitedReply);
+    expect(result.current.errorMsg).toBe(RATE_LIMITED_MESSAGE);
+    expect(result.current.chapterCount).toBe(1);
+    expect(result.current.showAuthModal).toBe(false);
+  });
+
+  test('chapter 1 scenario request with insufficient points (403) shows the server message', async () => {
+    const result = await startChapterOne(insufficientPointsReply);
+    expect(result.current.errorMsg).toBe(INSUFFICIENT_POINTS_MESSAGE);
+    expect(result.current.showAuthModal).toBe(false);
+  });
+
+  test('chapter 1 scenario request with points unavailable (503) shows the server message', async () => {
+    const result = await startChapterOne(pointsUnavailableReply);
+    expect(result.current.errorMsg).toBe(POINTS_UNAVAILABLE_MESSAGE);
+    expect(result.current.showAuthModal).toBe(false);
+  });
+
+  test('chapter 1 scenario request with a non-JSON 503 page keeps the fixed portal message', async () => {
+    const result = await startChapterOne(() => ({
+      ok: false,
+      status: 503,
+      json: async () => { throw new Error('not json'); },
+    }));
+    expect(result.current.errorMsg).toBe('Gagal membuka portal. Coba lagi.');
+    expect(result.current.errorDetail.message).toBe('POINTS_UNAVAILABLE');
+  });
+
+  test('chapter 1 scenario request with a 403 carrying only an error code keeps the fixed portal message', async () => {
+    const result = await startChapterOne(() => scenarioReply(403, { success: false, error: 'INSUFFICIENT_POINTS' }));
+    expect(result.current.errorMsg).toBe('Gagal membuka portal. Coba lagi.');
+    expect(result.current.errorDetail.message).toBe('INSUFFICIENT_POINTS');
+  });
+
+  test('chapter 1 scenario request rejected with 401 opens the auth modal without an error message', async () => {
+    const result = await startChapterOne(() => scenarioReply(401, { success: false }));
+    expect(result.current.showAuthModal).toBe(true);
+    expect(result.current.errorMsg).toBeNull();
+  });
+
+  test('later chapter scenario request refused with 422 shows the server message', async () => {
+    const result = await continueWithoutPreload(refusedReply);
+    expect(result.current.errorMsg).toBe(REFUSED_MESSAGE);
+    expect(result.current.chapterCount).toBe(1);
+    expect(result.current.showAuthModal).toBe(false);
+  });
+
+  test('later chapter scenario request failing with 500 keeps the fixed connection message', async () => {
+    const result = await continueWithoutPreload(serverErrorReply);
+    expect(result.current.errorMsg).toBe('Koneksi terputus. Mohon coba lagi.');
+    expect(result.current.chapterCount).toBe(1);
   });
 
   test('handleStartAdventure shows auth modal if user is missing', async () => {

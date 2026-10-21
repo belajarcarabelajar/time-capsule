@@ -1,4 +1,3 @@
-import { SCENARIO_SYSTEM_PROMPT } from "./systemPrompt.js";
 import { z } from "zod";
 
 const zPlayerSchema = z.object({
@@ -110,8 +109,7 @@ const fetchScenarioData = async (
     throw new Error("Invalid input types.");
   }
 
-  // 2. Length validation (history capped so a foreground-plus-preload
-  // pair stays inside the provider per-minute token budget)
+  // 2. Length validation
   if (activeTopic.length > 200) {
     activeTopic = activeTopic.substring(0, 200);
   }
@@ -127,42 +125,19 @@ const fetchScenarioData = async (
   const cleanTopic = sanitizeText(activeTopic);
   const cleanHistory = sanitizeText(historySummary);
 
-  let promptText = `TOPIK UTAMA: ${cleanTopic}`;
-
-  if (chapterNum > 1) {
-    promptText += `\n\nKONTEKS: Ini adalah BAGIAN ${chapterNum}.`;
-    if (cleanHistory) {
-      promptText += `\n\nRIWAYAT CERITA/MATERI SEBELUMNYA (JANGAN ULANGI TOPIK/KUIS INI):\n${cleanHistory}`;
-    }
-    promptText += `\n\nATURAN KHUSUS: \n1. JANGAN ULANGI scene kedatangan. \n2. LANGSUNG diskusi mendalam/lanjutan topik. \n3. Lanjutkan materi ke sub-topik baru yang lebih mendalam dan berbeda dari bagian sebelumnya. \n4. Buat pertanyaan kuis yang sepenuhnya baru.`;
-  } else {
-    promptText += `\n\nKONTEKS: Ini adalah BAGIAN 1 (AWAL). \nATURAN KHUSUS: \n1. Mulai cerita dengan adegan Penjelajah Waktu BARU SAJA MENDARAT.`;
-  }
-
   let rawText;
 
-  // Single scenario provider (Groq via the Pages Function proxy).
-  // max_tokens bounds the output so a foreground-plus-preload pair stays
-  // inside the provider per-minute token budget. A full 15-20 slide
-  // scenario needs roughly 2200-2800 output tokens; below that the
-  // provider cuts the JSON mid-object and rejects it (failed_generation).
+  // The server builds the prompt (scenarioPrompt.js), so the browser only
+  // sends the scenario request fields.
   const scenarioResponse = await fetch(`/api/scenario`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      messages: [
-        {
-          role: "system",
-          content:
-            SCENARIO_SYSTEM_PROMPT +
-            "\nPENTING: Jawab HANYA dengan JSON valid sesuai format. Tanpa pembuka percakapan atau penanda blok kode markdown.",
-        },
-        { role: "user", content: promptText },
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: 3000,
+      topic: cleanTopic,
+      chapter: chapterNum,
+      history: cleanHistory,
     }),
   });
 
@@ -179,11 +154,15 @@ const fetchScenarioData = async (
   if ([401, 403, 503].includes(scenarioResponse.status)) {
     const defaultMessage = scenarioResponse.status === 401 ? 'Authentication required.'
       : scenarioResponse.status === 403 ? 'INSUFFICIENT_POINTS' : 'POINTS_UNAVAILABLE';
-    throw new Error(providerErrorMessage(data, defaultMessage));
+    const error = new Error(providerErrorMessage(data, defaultMessage));
+    error.status = scenarioResponse.status;
+    throw error;
   }
 
   if (!scenarioResponse.ok || data?.success === false) {
-    throw new Error(providerErrorMessage(data, "Gagal menghubungi portal AI."));
+    const error = new Error(providerErrorMessage(data, "Gagal menghubungi portal AI."));
+    error.status = scenarioResponse.status;
+    throw error;
   }
 
   rawText = data.result?.response;

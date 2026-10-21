@@ -1,7 +1,9 @@
 import { afterEach, expect, test } from "bun:test";
 import {
   chmodSync,
+  existsSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -65,11 +67,43 @@ test("server credential paths do not use Vite-exposed variable names", () => {
     "functions/api/scenario.js",
     "functions/api/auth/callback.js",
     "functions/api/auth/login.js",
+    "apps/story-worker/src/index.js",
+    "apps/story-worker/src/claude.js",
   ];
   for (const file of files) {
     const source = readFileSync(join(root, file), "utf8");
-    expect(source).not.toMatch(/VITE_(CF|GEMINI|GOOGLE)_/);
+    expect(source).not.toMatch(/VITE_(CF|GEMINI|GOOGLE|ANTHROPIC)_/);
   }
+});
+
+function sourceFiles(directory) {
+  return readdirSync(join(root, directory), { withFileTypes: true }).flatMap(
+    (entry) => {
+      if (entry.name === "__tests__" || entry.name === "node_modules") return [];
+      const path = join(directory, entry.name);
+      return entry.isDirectory() ? sourceFiles(path) : [path];
+    },
+  );
+}
+
+test("browser-bundled sources never name the Claude key", () => {
+  const files = ["apps/web/src", "packages/game-engine/src", "packages/ui/src"]
+    .flatMap(sourceFiles);
+  expect(files).toContain("packages/game-engine/src/scenarioPrompt.js");
+  const offenders = files.filter((file) => {
+    const source = readFileSync(join(root, file), "utf8");
+    return source.includes("ANTHROPIC_API_KEY") || /VITE_ANTHROPIC/.test(source);
+  });
+  expect(offenders).toEqual([]);
+});
+
+test("story Worker reads the Claude key only from its env binding", () => {
+  const worker = readFileSync(join(root, "apps/story-worker/src/index.js"), "utf8");
+  const reads = worker.match(/[\w.$]*ANTHROPIC_API_KEY/g) ?? [];
+  expect(reads.length).toBeGreaterThan(0);
+  expect(new Set(reads)).toEqual(new Set(["env.ANTHROPIC_API_KEY"]));
+  const client = readFileSync(join(root, "apps/story-worker/src/claude.js"), "utf8");
+  expect(client).not.toMatch(/ANTHROPIC_API_KEY|process\.env|import\.meta\.env/);
 });
 
 test("Vite development API traffic uses an explicit local Pages Functions origin", () => {
@@ -128,6 +162,44 @@ test("workspace quality commands cover package tests without shell-specific disc
   expect(enginePackage.scripts.test).toBe("bun test src");
   expect(enginePackage.scripts.build).toBeUndefined();
   expect(uiPackage.scripts.test).not.toMatch(/find|xargs/);
+});
+
+test("bun commands put --cwd after run so the script really runs", () => {
+  // Bun 1.4.2 and 1.4.3 treat `bun --cwd <dir> run <script>` as a bare
+  // `bun run`: they print usage and exit 0, so a CI step passes without
+  // running anything.
+  const brokenCwd = /\bbun\s+--cwd(?:=|\s+)\S+\s+run\b/;
+  expect(brokenCwd.test("bun --cwd apps/web run lint")).toBe(true);
+  expect(brokenCwd.test("bun run --cwd apps/web lint")).toBe(false);
+
+  const packageFiles = [
+    "package.json",
+    ...["apps", "packages"].flatMap((directory) =>
+      readdirSync(join(root, directory), { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => `${directory}/${entry.name}/package.json`)
+        .filter((file) => existsSync(join(root, file))),
+    ),
+  ];
+  const workflowFiles = readdirSync(join(root, ".github/workflows")).map(
+    (name) => `.github/workflows/${name}`,
+  );
+  expect(packageFiles).toContain("apps/web/package.json");
+  expect(workflowFiles).toContain(".github/workflows/quality.yml");
+
+  const offenders = [
+    ...packageFiles.flatMap((file) =>
+      Object.entries(JSON.parse(readFileSync(join(root, file), "utf8")).scripts ?? {})
+        .filter(([, command]) => brokenCwd.test(command))
+        .map(([name]) => `${file} scripts.${name}`),
+    ),
+    ...workflowFiles.flatMap((file) =>
+      readFileSync(join(root, file), "utf8")
+        .split("\n")
+        .flatMap((line, index) => (brokenCwd.test(line) ? [`${file}:${index + 1}`] : [])),
+    ),
+  ];
+  expect(offenders).toEqual([]);
 });
 
 test("Pages headers enforce the same-origin CSP used by the current app", () => {
