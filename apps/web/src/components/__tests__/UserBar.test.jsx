@@ -73,62 +73,51 @@ describe('UserBar Component', () => {
     expect(mockLogin).toHaveBeenCalled();
   });
 
-  test('renders user avatar image and name when authenticated with picture', () => {
+  const GOOGLE_AVATAR = 'https://lh3.googleusercontent.com/a/ACg8ocTestAvatar=s96-c';
+
+  const signedIn = (picture) => {
     useAuthSpy = spyOn(AuthContextModule, 'useAuth').mockReturnValue({
-      user: { name: 'Ahmad Yani', email: 'ahmad@example.com', picture: 'https://example.com/avatar.jpg' },
+      user: { name: 'Ahmad Yani', email: 'ahmad@example.com', picture },
       loading: false,
       loginWithGoogle: mock(),
       logout: mock()
     });
+  };
+
+  test('renders the Google avatar image and name when authenticated with a Google picture', () => {
+    signedIn(GOOGLE_AVATAR);
 
     const { getByText, getByAltText } = render(<UserBar />);
     expect(getByText('Ahmad Yani')).toBeTruthy();
     const avatarImg = getByAltText('Ahmad Yani');
-    expect(avatarImg.getAttribute('src')).toBe('https://example.com/avatar.jpg');
+    expect(avatarImg.getAttribute('src')).toBe(GOOGLE_AVATAR);
   });
 
-  test('a profile picture that fails to load falls back to the initial', () => {
-    useAuthSpy = spyOn(AuthContextModule, 'useAuth').mockReturnValue({
-      user: { name: 'Penjelajah', email: 'p@example.com', picture: 'https://lh3.googleusercontent.com/a/test=s96-c', points: 50, maxPoints: 50 },
-      loading: false,
-      loginWithGoogle: mock(),
-      logout: mock()
-    });
+  test('loads the Google avatar without sending a referrer', () => {
+    signedIn(GOOGLE_AVATAR);
+
+    const { getByAltText } = render(<UserBar />);
+    expect(getByAltText('Ahmad Yani').getAttribute('referrerpolicy')).toBe('no-referrer');
+  });
+
+  test('shows the initial for an https picture outside the CSP-allowed Google host', () => {
+    for (const picture of ['https://example.com/avatar.jpg', 'https://googleusercontent.com.evil.example/a.png']) {
+      signedIn(picture);
+
+      const { getByText, queryByAltText, unmount } = render(<UserBar />);
+      expect(queryByAltText('Ahmad Yani')).toBeNull();
+      expect(getByText('A')).toBeTruthy();
+      unmount();
+    }
+  });
+
+  test('replaces a Google avatar that fails to load with the initial', () => {
+    signedIn(GOOGLE_AVATAR);
 
     const { getByAltText, queryByAltText, getByText } = render(<UserBar />);
-    fireEvent.error(getByAltText('Penjelajah'));
-    expect(queryByAltText('Penjelajah')).toBeNull();
-    expect(getByText('P')).toBeTruthy();
-  });
-
-  test('a new picture URL after a failed one gets a fresh try', () => {
-    const auth = (picture) => ({
-      user: { name: 'Penjelajah', email: 'p@example.com', picture, points: 50, maxPoints: 50 },
-      loading: false,
-      loginWithGoogle: mock(),
-      logout: mock()
-    });
-    useAuthSpy = spyOn(AuthContextModule, 'useAuth').mockReturnValue(auth('https://lh3.googleusercontent.com/a/test=s96-c'));
-
-    const { getByAltText, rerender } = render(<UserBar />);
-    fireEvent.error(getByAltText('Penjelajah'));
-    useAuthSpy.mockReturnValue(auth('https://lh3.googleusercontent.com/a/other=s96-c'));
-    rerender(<UserBar />);
-    expect(getByAltText('Penjelajah').getAttribute('src')).toBe('https://lh3.googleusercontent.com/a/other=s96-c');
-  });
-
-  test('a loaded picture shows the image', () => {
-    useAuthSpy = spyOn(AuthContextModule, 'useAuth').mockReturnValue({
-      user: { name: 'Penjelajah', email: 'p@example.com', picture: 'https://lh3.googleusercontent.com/a/test=s96-c', points: 50, maxPoints: 50 },
-      loading: false,
-      loginWithGoogle: mock(),
-      logout: mock()
-    });
-
-    const { getByAltText, queryByText } = render(<UserBar />);
-    fireEvent.load(getByAltText('Penjelajah'));
-    expect(getByAltText('Penjelajah').getAttribute('src')).toBe('https://lh3.googleusercontent.com/a/test=s96-c');
-    expect(queryByText('P')).toBeNull();
+    fireEvent.error(getByAltText('Ahmad Yani'));
+    expect(queryByAltText('Ahmad Yani')).toBeNull();
+    expect(getByText('A')).toBeTruthy();
   });
 
   test('renders name initial fallback when user has no picture', () => {

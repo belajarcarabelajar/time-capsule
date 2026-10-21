@@ -5,13 +5,16 @@ export const CLAUDE_EFFORT = "medium";
 // Adaptive thinking tokens count against max_tokens, so this leaves room for
 // both the thinking and the scenario JSON.
 export const CLAUDE_MAX_TOKENS = 16000;
+// Single attempts at medium effort measured 28 to 33 s on 2026-10-21, so a
+// 45 s cap cut slow but healthy generations short.
+export const CLAUDE_TIMEOUT_MS = 90_000;
 
 export async function generateWithClaude({ apiKey, system, user, schema, fetch }) {
   try {
     const client = new Anthropic({
       apiKey,
       maxRetries: 1,
-      timeout: 45_000,
+      timeout: CLAUDE_TIMEOUT_MS,
       ...(fetch ? { fetch } : {}),
     });
     const message = await client.messages.create({

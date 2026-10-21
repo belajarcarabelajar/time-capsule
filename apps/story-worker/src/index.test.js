@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import worker, { handleStoryRequest } from "./index.js";
+import * as claude from "./claude.js";
 import { SCENARIO_JSON_SCHEMA } from "../../../packages/game-engine/src/scenarioPrompt.js";
 
 const API_KEY = "sk-ant-test-key-0000";
@@ -120,6 +121,19 @@ describe("primary provider request", () => {
       effort: "medium",
       format: { type: "json_schema", schema: SCENARIO_JSON_SCHEMA },
     });
+  });
+
+  // The SDK reports the client timeout on every attempt in the
+  // X-Stainless-Timeout header (whole seconds), so the outgoing request shows
+  // which timeout the client was built with.
+  test("gives each primary provider attempt a 90 s timeout with one retry", async () => {
+    const fetch = fakeFetch(apiError(500, "api_error"), message());
+    const { status } = await send(storyRequest(), makeEnv(), fetch);
+
+    expect(status).toBe(200);
+    expect(fetch.calls.map((call) => call.headers.get("x-stainless-timeout"))).toEqual(["90", "90"]);
+    expect(fetch.calls.map((call) => call.headers.get("x-stainless-retry-count"))).toEqual(["0", "1"]);
+    expect(claude.CLAUDE_TIMEOUT_MS).toBe(90_000);
   });
 
   test("sends a cached system block and one user message with the tagged topic", async () => {
@@ -421,7 +435,9 @@ describe("wrangler config", () => {
   test("names the private story Worker with no public URL and no route", () => {
     expect(config.name).toBe("time-capsule-story");
     expect(config.main).toBe("src/index.js");
-    expect(config.compatibility_date).toBe("2026-10-01");
+    // wrangler 4.129.0 ships a workerd whose newest supported date is
+    // 2026-09-10; a later date makes `wrangler dev` refuse to start.
+    expect(config.compatibility_date).toBe("2026-09-10");
     expect(config.workers_dev).toBe(false);
     expect(config.preview_urls).toBe(false);
     expect(config.observability).toEqual({ enabled: true });

@@ -505,19 +505,19 @@ Worker reply bodies: `{ success: true, provider: "claude", response: "<scenario 
 
 No `run[]`: production changes happen only after the `Deploy Worker` gate.
 
-- [ ] Step 1: `bun run --cwd apps/story-worker deploy`; record the output (proves the `ratelimits` bindings on this plan).
-- [ ] Step 2: pipe the value from the root `.env` into `./node_modules/.bin/wrangler secret put ANTHROPIC_API_KEY --name time-capsule-story` without echoing it.
-- [ ] Step 3: `curl -sS -o /dev/null -w '%{http_code}' https://time-capsule-story.<account-subdomain>.workers.dev/v1/story` must not return a Worker reply (AC10).
-- [ ] Step 4: `skip_if` exits 0.
+- [x] Step 1: `bun run --cwd apps/story-worker deploy`; record the output (proves the `ratelimits` bindings on this plan). Ticked by hand (runner halts T7 behind T6): exit 0, bindings accepted on Workers Free, `docs/code-plan/evidence/2026-10-21-claude-story-worker/production.md`.
+- [x] Step 2: pipe the value from the root `.env` into `./node_modules/.bin/wrangler secret put ANTHROPIC_API_KEY --name time-capsule-story` without echoing it. Ticked by hand: exit 0, `ANTHROPIC_API_KEY secret_text` listed.
+- [x] Step 3: `curl -sS -o /dev/null -w '%{http_code}' https://time-capsule-story.<account-subdomain>.workers.dev/v1/story` must not return a Worker reply (AC10). Ticked by hand: HTTP 404 `error code: 1042`; subdomain `enabled: false`.
+- [x] Step 4: `skip_if` exits 0. Ticked by hand: `wrangler secret list --name time-capsule-story | jq -e ...` exit 0 on 2026-10-21.
 
 ### Task T8: Pages binding, deploy, smoke (gated)
 
 No `run[]`: production changes happen only after the `Pages deploy` gate.
 
-- [ ] Step 1: PATCH the Pages project `deployment_configs.production.services.STORY_WORKER = { service: "time-capsule-story", environment: "production" }`.
-- [ ] Step 2: `bash scripts/deploy-website.sh` from the merged `main`.
-- [ ] Step 3: run `./node_modules/.bin/wrangler tail time-capsule-story --format pretty` while the owner plays one chapter; record status and reason lines only.
-- [ ] Step 4: `skip_if` exits 0.
+- [x] Step 1: PATCH the Pages project `deployment_configs.production.services.STORY_WORKER = { service: "time-capsule-story", environment: "production" }`. Ticked by hand: `success: true`, env var names unchanged.
+- [x] Step 2: `bash scripts/deploy-website.sh` from the merged `main`. Ticked by hand: exit 0, deployment `73d38367` from `38ded6e`.
+- [ ] Step 3: run `./node_modules/.bin/wrangler tail time-capsule-story --format pretty` while the owner plays one chapter; record status and reason lines only. Open: the tails (positive control captured) saw no browser request while they ran; the owner's chapter at 13:48 to 13:49 is evidenced by analytics only (2 Worker invocations, 1 subrequest each, 32.6 s and 33.1 s, no Groq subrequest), see production.md.
+- [x] Step 4: `skip_if` exits 0. Ticked by hand: the Pages API `jq -e` check on `STORY_WORKER` exit 0 on 2026-10-21.
 
 ### Task T9: follow-up, points messages visible and later-chapter 422 test
 
@@ -589,6 +589,7 @@ Selected and executed in this PR: T9 to T12. Deferred:
 - **Readiness:** `bun ~/vivera/scripts/plan-closeout.mjs --readiness docs/code-plan/plans/2026-10-21-claude-story-worker.md` exit 1, `NOT-READY` (2026-10-21, after the follow-ups at `ebd6fd4`): T1 to T5 and T9 to T12 `DONE`; T6 `UNPROVEN` (`skip_if: "false"`; its `bun run test:quality` step fails only on the 10 `AuthContext` web tests that also fail on `main`); T7 and T8 `OPEN` (Worker not deployed, Pages binding absent); 10 open step boxes (T6, T7, T8).
 - **What remains:** the gated Worker deploy and secret (T7), the Pages binding, deploy, and smoke test (T8), and a green `bun run test:quality`.
 - **Reopen trigger:** when T7 and T8 are done and the `AuthContext` fix PR (AGENTS.md A7) has merged, that fix PR re-runs readiness and carries `status: Complete` for this plan.
+- **Update 2026-10-21 (recorded in the `story-loading-hint` PR):** merge, T7, and T8 steps 1, 2, 4 are done and were ticked by hand with evidence in `docs/code-plan/evidence/2026-10-21-claude-story-worker/production.md`, because the runner halts T7 and T8 behind the failing T6. Still open: T6 (`AuthContext` failures on `main`) and T8 step 3 (a tail-captured `"outcome":"ok"` line from a browser request; the owner skipped the tail test, and the live chapter is evidenced by analytics only).
 
 ## Session checklist
 
@@ -604,9 +605,9 @@ Selected and executed in this PR: T9 to T12. Deferred:
 - [ ] Verify: `bun run test:quality` exit 0, web lint exit 0, `bun run build` exit 0, no `sk-ant` string in `apps/web/dist`. Status 2026-10-21: every gate green except `bun run test:quality` exit 1, caused by 10 web `AuthContext` failures that are identical on `main` at `14cc4db` (fail-set `diff` exit 0; CI run `39405049592` red on the same tests). Evidence: `docs/code-plan/evidence/2026-10-21-claude-story-worker/verification.md`. Stays open until those failures are fixed in their own PR (A7).
 - [x] Review: parent diff audit and an independent reviewer report with no open P0/P1. Evidence: review 1 verdict `not correct` (one P1, three P3, `docs/code-plan/evidence/2026-10-21-claude-story-worker/review-1.md`); fixes `646c08b` and `77b304f` audited and re-tested in the parent (hook 12 pass, client 20 pass, prompt 70 pass, Worker 44 pass, test:script 12 pass, all exit 0); review 2 verdict `correct` (`review-2.md`); full rerun at `77b304f` in `verification.md`.
 - [x] Deliver: PR opened through `pr-registry.mjs open`, session state `open`. Evidence: `bun scripts/pr-registry.mjs open claude-story-worker ...` exit 0, `https://github.com/belajarcarabelajar/time-capsule/pull/45`, recorded PR #45 (open).
-- [ ] Merge: approved at its own gate, session state `merged`.
-- [ ] Deploy story Worker and set `ANTHROPIC_API_KEY` secret (own gate); public URL check fails to connect.
-- [ ] Add `STORY_WORKER` binding to Pages production and deploy Pages (own gate); smoke test with `wrangler tail`.
+- [x] Merge: approved at its own gate, session state `merged`. Evidence: `gh pr merge 45 --merge --match-head-commit dd3d4fe...` merged at 2026-10-21T13:06:03Z as `38ded6e`; `pr-registry.mjs reconcile` recorded `merged`.
+- [x] Deploy story Worker and set `ANTHROPIC_API_KEY` secret (own gate); public URL check fails to connect. Evidence: production.md (deploy exit 0, secret listed, `workers.dev` 404/1042).
+- [ ] Add `STORY_WORKER` binding to Pages production and deploy Pages (own gate); smoke test with `wrangler tail`. Status: binding and deploy done (production.md); the tail-based smoke line is still missing, the live chapter is evidenced by analytics only.
 - [ ] Session-close debt sweep, learning ledger, graphify sync, plan closeout. Status 2026-10-21: sweep closed (5 follow-ups T9 to T12 done, 7 deferred, re-pass 0, `docs/code-plan/evidence/2026-10-21-claude-story-worker/follow-ups.md`); ledger `learning-ledger.md` and `MEMORY.md` M1 to M3; plan kept open (Closeout status above); graphify sync pending.
 
 ## Approval

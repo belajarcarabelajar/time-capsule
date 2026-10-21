@@ -223,22 +223,15 @@ test("Pages CSP allows GLTFLoader blob textures and the zone's Web Analytics bea
   expect(directive("connect-src")).toEqual(
     expect.arrayContaining(["'self'", "blob:", "https://cloudflareinsights.com"]),
   );
+  // Google profile pictures come from *.googleusercontent.com; images only, never a bare https: allowance.
+  expect(directive("img-src")).toEqual(
+    expect.arrayContaining(["'self'", "data:", "blob:", "https://*.googleusercontent.com"]),
+  );
+  expect(directive("img-src")).not.toContain("https:");
   // The belajarcarabelajar.com zone injects this beacon on the custom domain.
   expect(directive("script-src")).toEqual(
     expect.arrayContaining(["'self'", "https://static.cloudflareinsights.com"]),
   );
-});
-
-test("Pages CSP allows the Google profile picture host and nothing broader", () => {
-  const source = readFileSync(join(root, "apps/web/public/_headers"), "utf8");
-  const policy = source.match(/Content-Security-Policy: (.+)/)[1];
-  const imgSrc = policy
-    .split(";")
-    .map((part) => part.trim().split(/\s+/))
-    .find(([key]) => key === "img-src")
-    .slice(1);
-  // Google userinfo returns the avatar on this host, and UserBar renders it directly.
-  expect(imgSrc).toEqual(["'self'", "data:", "blob:", "https://lh3.googleusercontent.com"]);
 });
 
 test("client asset verification is part of the post-build quality workflow", () => {

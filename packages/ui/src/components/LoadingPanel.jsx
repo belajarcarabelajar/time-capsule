@@ -1,7 +1,11 @@
 import React from 'react';
 import { Hourglass } from 'lucide-react';
 
-const LoadingPanel = ({ text = "MEMBUKA PORTAL WAKTU..." }) => {
+// A chapter takes about 30 seconds at the story Worker's medium effort
+// (measured 28 to 33 s on 2026-10-21), so the wait gets an estimate.
+const DEFAULT_HINT = "AI sedang menulis babak ini. Biasanya butuh sekitar 30 detik.";
+
+const LoadingPanel = ({ text = "MEMBUKA PORTAL WAKTU...", hint = DEFAULT_HINT }) => {
   return (
     <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center p-8 backdrop-blur-md">
        <div className="w-full max-w-md space-y-6 text-center">
@@ -17,6 +21,7 @@ const LoadingPanel = ({ text = "MEMBUKA PORTAL WAKTU..." }) => {
                {text}
             </h3>
             <p className="text-stone-400 text-sm font-mono">Memproses data historis & membangun simulasi...</p>
+            <p data-testid="loading-hint" className="text-stone-500 text-xs mt-2">{hint}</p>
           </div>
           <div className="h-2 w-full bg-stone-800 rounded-full overflow-hidden relative border border-stone-700">
              {/* UPDATE: Warna gradient diubah menjadi coklat ke oranye */}

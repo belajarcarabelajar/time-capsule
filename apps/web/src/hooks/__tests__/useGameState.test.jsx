@@ -71,6 +71,41 @@ const POINTS_UNAVAILABLE_MESSAGE = 'Saldo poin sementara tidak tersedia. Silakan
 const insufficientPointsReply = () => scenarioReply(403, { success: false, error: 'INSUFFICIENT_POINTS', message: INSUFFICIENT_POINTS_MESSAGE });
 const pointsUnavailableReply = () => scenarioReply(503, { success: false, error: 'POINTS_UNAVAILABLE', message: POINTS_UNAVAILABLE_MESSAGE });
 
+const chapterReply = (location) => scenarioReply(200, {
+  success: true,
+  result: { response: JSON.stringify({ ...validMockGameData, meta: { ...validMockGameData.meta, location } }) },
+});
+
+// A macrotask tick drains the promise chains between a settled request and
+// the hook's next fetch call.
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+// Chapter 1 answers at once; every later chapter request waits until the
+// test settles it, so a preload can be held in flight.
+const deferredScenarioFetch = () => {
+  const requests = [];
+  const pending = new Map();
+  const fetchMock = mock((_url, options) => {
+    const { chapter } = JSON.parse(options.body);
+    requests.push(chapter);
+    if (chapter === 1) return Promise.resolve(chapterReply('Chapter 1'));
+    return new Promise((resolve, reject) => {
+      pending.set(chapter, [...(pending.get(chapter) || []), { resolve, reject }]);
+    });
+  });
+  const settle = (chapter, action) => {
+    const waiting = pending.get(chapter) || [];
+    pending.delete(chapter);
+    waiting.forEach(action);
+  };
+  return {
+    fetchMock,
+    requests,
+    resolveChapter: (chapter, location) => settle(chapter, ({ resolve }) => resolve(chapterReply(location))),
+    rejectChapter: (chapter, error) => settle(chapter, ({ reject }) => reject(error)),
+  };
+};
+
 const originalConsoleError = console.error;
 
 import { useGameState } from '../useGameState';
@@ -265,6 +300,93 @@ describe('useGameState', () => {
     const result = await continueWithoutPreload(serverErrorReply);
     expect(result.current.errorMsg).toBe('Koneksi terputus. Mohon coba lagi.');
     expect(result.current.chapterCount).toBe(1);
+  });
+
+  const startWithPendingPreload = async () => {
+    const server = deferredScenarioFetch();
+    global.fetch = server.fetchMock;
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.setTopic('History'));
+    await act(async () => { await result.current.handleStartAdventure(); });
+    expect(server.requests).toEqual([1, 2]);
+    expect(result.current.nextGameData).toBeNull();
+    return { result, ...server };
+  };
+
+  const continueAndFlush = async (result) => {
+    let continuing;
+    await act(async () => {
+      continuing = result.current.handleContinue();
+      await flush();
+    });
+    // Wrapped so the async helper does not adopt the pending promise.
+    return { continuing };
+  };
+
+  test('continuing while the chapter 2 preload is in flight waits for it instead of requesting chapter 2 again', async () => {
+    const { result, requests, resolveChapter } = await startWithPendingPreload();
+
+    const { continuing } = await continueAndFlush(result);
+    expect(requests).toEqual([1, 2]);
+    expect(result.current.isLoading).toBe(true);
+
+    await act(async () => {
+      resolveChapter(2, 'Chapter 2');
+      await continuing;
+      await flush();
+    });
+
+    expect(requests.filter((chapter) => chapter === 2)).toHaveLength(1);
+    expect(result.current.gameData.meta.location).toBe('Chapter 2');
+    expect(result.current.chapterCount).toBe(2);
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  test('continuing after an awaited preload requests chapter 3 and never shows chapter 2 again', async () => {
+    const { result, requests, resolveChapter } = await startWithPendingPreload();
+
+    const { continuing: toChapterTwo } = await continueAndFlush(result);
+    await act(async () => {
+      resolveChapter(2, 'Chapter 2');
+      await toChapterTwo;
+      await flush();
+    });
+
+    const { continuing: toChapterThree } = await continueAndFlush(result);
+    await act(async () => {
+      resolveChapter(3, 'Chapter 3');
+      await toChapterThree;
+      await flush();
+    });
+
+    expect(requests).toContain(3);
+    expect(requests.filter((chapter) => chapter === 3)).toHaveLength(1);
+    expect(result.current.gameData.meta.location).toBe('Chapter 3');
+    expect(result.current.chapterCount).toBe(3);
+  });
+
+  test('continuing falls back to one chapter request when the in-flight preload rejects', async () => {
+    const { result, requests, resolveChapter, rejectChapter } = await startWithPendingPreload();
+
+    const { continuing } = await continueAndFlush(result);
+    expect(requests).toEqual([1, 2]);
+
+    await act(async () => {
+      rejectChapter(2, new Error('network down'));
+      await flush();
+    });
+    expect(requests).toEqual([1, 2, 2]);
+
+    await act(async () => {
+      resolveChapter(2, 'Chapter 2 retry');
+      await continuing;
+      await flush();
+    });
+
+    expect(requests.filter((chapter) => chapter === 2)).toHaveLength(2);
+    expect(result.current.gameData.meta.location).toBe('Chapter 2 retry');
+    expect(result.current.chapterCount).toBe(2);
+    expect(result.current.errorMsg).toBeNull();
   });
 
   test('handleStartAdventure shows auth modal if user is missing', async () => {
