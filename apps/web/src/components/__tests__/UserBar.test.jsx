@@ -73,18 +73,51 @@ describe('UserBar Component', () => {
     expect(mockLogin).toHaveBeenCalled();
   });
 
-  test('renders user avatar image and name when authenticated with picture', () => {
+  const GOOGLE_AVATAR = 'https://lh3.googleusercontent.com/a/ACg8ocTestAvatar=s96-c';
+
+  const signedIn = (picture) => {
     useAuthSpy = spyOn(AuthContextModule, 'useAuth').mockReturnValue({
-      user: { name: 'Ahmad Yani', email: 'ahmad@example.com', picture: 'https://example.com/avatar.jpg' },
+      user: { name: 'Ahmad Yani', email: 'ahmad@example.com', picture },
       loading: false,
       loginWithGoogle: mock(),
       logout: mock()
     });
+  };
+
+  test('renders the Google avatar image and name when authenticated with a Google picture', () => {
+    signedIn(GOOGLE_AVATAR);
 
     const { getByText, getByAltText } = render(<UserBar />);
     expect(getByText('Ahmad Yani')).toBeTruthy();
     const avatarImg = getByAltText('Ahmad Yani');
-    expect(avatarImg.getAttribute('src')).toBe('https://example.com/avatar.jpg');
+    expect(avatarImg.getAttribute('src')).toBe(GOOGLE_AVATAR);
+  });
+
+  test('loads the Google avatar without sending a referrer', () => {
+    signedIn(GOOGLE_AVATAR);
+
+    const { getByAltText } = render(<UserBar />);
+    expect(getByAltText('Ahmad Yani').getAttribute('referrerpolicy')).toBe('no-referrer');
+  });
+
+  test('shows the initial for an https picture outside the CSP-allowed Google host', () => {
+    for (const picture of ['https://example.com/avatar.jpg', 'https://googleusercontent.com.evil.example/a.png']) {
+      signedIn(picture);
+
+      const { getByText, queryByAltText, unmount } = render(<UserBar />);
+      expect(queryByAltText('Ahmad Yani')).toBeNull();
+      expect(getByText('A')).toBeTruthy();
+      unmount();
+    }
+  });
+
+  test('replaces a Google avatar that fails to load with the initial', () => {
+    signedIn(GOOGLE_AVATAR);
+
+    const { getByAltText, queryByAltText, getByText } = render(<UserBar />);
+    fireEvent.error(getByAltText('Ahmad Yani'));
+    expect(queryByAltText('Ahmad Yani')).toBeNull();
+    expect(getByText('A')).toBeTruthy();
   });
 
   test('renders name initial fallback when user has no picture', () => {
