@@ -33,7 +33,6 @@ export default function StartScreen({
 
       {immersiveEnabled ? <HistoricalEnvironment startScreen blocked={isLoading || showAuthModal} /> : <>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-900/40 via-stone-950 to-black animate-pulse"></div>
-        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/aged-paper.png')] opacity-20"></div>
       </>}
 
       <div className={`w-full max-w-md relative z-10 text-center space-y-8${immersiveEnabled ? ' history-start__form' : ''}`}>

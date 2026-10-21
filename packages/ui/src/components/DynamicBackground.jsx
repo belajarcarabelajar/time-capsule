@@ -62,7 +62,6 @@ const DynamicBackground = ({ scene, currentMood }) => {
         </div>
       ))}
       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60 pointer-events-none"></div>
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none"></div>
     </div>
   );
 };
