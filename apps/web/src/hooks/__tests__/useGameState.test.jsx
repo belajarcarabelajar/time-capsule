@@ -20,8 +20,9 @@ class MockAudioContext {
 window.AudioContext = MockAudioContext;
 window.webkitAudioContext = MockAudioContext;
 
-import { test, expect, describe, afterEach, mock, beforeEach } from 'bun:test';
+import { test, expect, describe, afterEach, mock, beforeEach, spyOn } from 'bun:test';
 import { renderHook, act } from '@testing-library/react';
+import * as AuthContextModule from '../../context/AuthContext.jsx';
 
 let fetchShouldFail = false;
 let authShouldFail = false;
@@ -30,9 +31,6 @@ const originalFetch = global.fetch;
 
 let mockUser = { id: '1', name: 'Test User' };
 const checkSession = mock(async () => {});
-mock.module('../../context/AuthContext', () => ({
-  useAuth: () => ({ user: mockUser, checkSession })
-}));
 
 mock.module('../utils/history', () => ({
   generateHistorySummary: () => 'mocked history'
@@ -86,6 +84,9 @@ describe('useGameState', () => {
     fetchShouldFail = false;
     authShouldFail = false;
     mockUser = { id: '1', name: 'Test User' };
+    // A spy, not mock.module: mock.restore() in afterEach undoes a spy, while a
+    // module mock stays for the whole bun process and broke the AuthContext tests.
+    spyOn(AuthContextModule, 'useAuth').mockImplementation(() => ({ user: mockUser, checkSession }));
 
     SoundEngine.ctx = null;
 
@@ -307,4 +308,14 @@ describe('useGameState', () => {
 
     expect(result.current.isWarpingHome).toBe(true);
   });
+});
+
+// bun runs every test file in one process, so a stand-in for AuthContext that
+// survives this file would replace the real module for every later file.
+test('the AuthContext stand-in does not outlive the useGameState tests', () => {
+  const { result } = renderHook(() => AuthContextModule.useAuth());
+  expect(result.current.user).toBeNull();
+  expect(result.current.loading).toBe(false);
+  expect(typeof result.current.logout).toBe('function');
+  expect(typeof result.current.loginWithGoogle).toBe('function');
 });
