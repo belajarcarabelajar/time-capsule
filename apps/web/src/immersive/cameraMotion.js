@@ -53,3 +53,7 @@ export function chooseCameraTransition({ initialized, motionEnabled, arriving, a
   }
   return { kind: 'cut', duration: 0 };
 }
+
+export function shouldSettle({ wasDrifting, drift, motionEnabled, exploring, selectedObject, moving }) {
+  return Boolean(wasDrifting && !drift && motionEnabled && !exploring && !selectedObject && !moving);
+}

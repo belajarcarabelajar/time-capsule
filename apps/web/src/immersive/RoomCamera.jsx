@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3, Spherical } from 'three';
 import { clampView } from './renderPolicy.js';
-import { advanceCameraMotion, chooseCameraTransition, createCameraMotion, driftPose } from './cameraMotion.js';
+import { advanceCameraMotion, chooseCameraTransition, createCameraMotion, driftPose, shouldSettle } from './cameraMotion.js';
 
 export default function RoomCamera({ room, visit, arriving, onArrivalComplete, exploring, selectedObject, motionEnabled, viewOffset, tourStop, drift }) {
   const { camera, gl, invalidate } = useThree();
@@ -15,6 +15,7 @@ export default function RoomCamera({ room, visit, arriving, onArrivalComplete, e
   const previousView = useRef(null);
   const previousTourStop = useRef(tourStop);
   const driftTime = useRef(0);
+  const previousDrift = useRef(drift);
   const completion = useRef(onArrivalComplete);
   completion.current = onArrivalComplete;
   const targets = useMemo(() => ({ position: new Vector3(), target: new Vector3(), direction: new Vector3(), spherical: new Spherical() }), []);
@@ -71,6 +72,15 @@ export default function RoomCamera({ room, visit, arriving, onArrivalComplete, e
     initialized.current = true;
     invalidate();
   }, [view, visit, arriving, exploring, motionEnabled, tourStop, selectedObject, applyPose, applyView, camera, targets, invalidate]);
+
+  // Declared after the view effect, so a glide it starts in the same commit counts as moving.
+  useEffect(() => {
+    const wasDrifting = previousDrift.current;
+    previousDrift.current = drift;
+    if (!shouldSettle({ wasDrifting, drift, motionEnabled, exploring, selectedObject, moving: Boolean(motion.current) })) return;
+    motion.current = createCameraMotion({ position: camera.position.toArray(), target: targets.target.toArray() }, view, 0.45);
+    invalidate();
+  }, [drift, motionEnabled, exploring, selectedObject, view, camera, targets, invalidate]);
 
   useEffect(() => {
     const previous = previousViewOffset.current;
