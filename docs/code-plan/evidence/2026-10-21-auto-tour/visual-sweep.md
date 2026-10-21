@@ -24,3 +24,15 @@ Reviewed frame by frame by the parent: 64 of 64 settled frames show the room fro
 ## Mid-glide frames (motion on)
 
 `render-states.json`: 11 of 64 mid-glide frames rendered in 3D (`mid-02` for every room, `mid-03` for rural-village, resistance-outpost, ancient-library); 53 show the poster because the frame monitor (`createFrameMonitor`, median frame over 40 ms) falls back under SwiftShader within seconds of continuous rendering. `tour-mid-glide.jpg` holds the 11 rendered frames: each is a pose between two stops with no geometry crossing. Glides into close-ups beyond `mid-03` are not covered by rendered frames; this is a limit of software rendering, recorded as follow-up F4, not a pass.
+
+## Rerun on the real GPU (closes the mid-glide gap)
+
+The SwiftShader limit above is a property of software rendering, so the whole tour spec, sweep included, ran again with the laptop GPU: a scratch wrapper with `args: ['--ignore-gpu-blocklist', '--use-gl=angle', '--use-angle=gl-egl']` (a probe confirmed the WebGL renderer as `ANGLE (Intel, Mesa Intel(R) UHD Graphics 630 (CML GT2), OpenGL ES 3.2)`, against `SwiftShader Device` with the repo flags).
+
+`TOUR_SHOTS=<scratch>/tour-shots-gpu bunx playwright test --config <gpu wrapper of playwright.tour.config.js>` exit 0, 4 passed (5.7 min); `render-states.json`: 64 of 64 mid-glide frames `ready` (3D), none on the poster.
+
+| Room | Sheet (glides into lines 2 to 9, about 1 s into each 2.4 s glide) | Finding |
+|---|---|---|
+| all 8 rooms | `tour-mid-glide-gpu-<room>.jpg` | every frame is a pose between two stops seen from the open side; no camera inside geometry; no empty background |
+
+Reviewed frame by frame by the parent: 64 of 64. Capture artifact, not product behavior: in the motion-on pass the empty dialogue box outline and a small header pill stay painted although `sceneOnly` hides their content. Not rendered by either sweep: drift extremes (at most 0.05 rad yaw and 1.5% dolly around a stop).
