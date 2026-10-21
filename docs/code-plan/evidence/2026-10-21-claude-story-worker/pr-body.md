@@ -39,27 +39,31 @@ sequenceDiagram
 
 | ID | Criterion | Task | Check | Evidence |
 |---|---|---|---|---|
-| AC1 | Body is exactly `{topic, chapter, history}`; other keys, out-of-range chapter, empty topic, oversized text give 400 with no Worker call and no charge | T1, T3 | `bun test packages/game-engine/src/__tests__/scenarioPrompt.test.js`; `bun test functions/api/scenario.test.js` | exit 0, 70 pass; exit 0, 40 pass |
+| AC1 | Body is exactly `{topic, chapter, history}`; other keys, out-of-range chapter, empty topic, oversized text give 400 with no Worker call and no charge | T1, T3 | `bun test packages/game-engine/src/__tests__/scenarioPrompt.test.js`; `bun test functions/api/scenario.test.js` | exit 0, 70 pass; exit 0, 49 pass |
 | AC2 | Body over 16384 bytes gives 413 | T3 | `bun test functions/api/scenario.test.js` | exit 0 (ASCII and multibyte cases) |
 | AC3 | The browser sends no prompt, model, token cap, or format | T4 | `bun test packages/game-engine/src/__tests__/scenarioClient.test.js` | exit 0, 20 pass |
 | AC4 | Claude call: `claude-haiku-5-5`, `max_tokens` 16000, adaptive thinking, `output_config` effort `medium` with `json_schema`, no sampling parameters, no `fallbacks` | T2 | `bun test apps/story-worker/src/index.test.js` | exit 0, 44 pass (captured request body) |
 | AC5 | Only Worker 502 `PRIMARY_UNAVAILABLE` reaches Groq, with the same server-built prompt | T3 | `bun test functions/api/scenario.test.js` | exit 0 |
-| AC6 | 422 `REFUSED` and 429 `RATE_LIMITED` never reach Groq or charge, and the visitor sees the server message | T3, review fix | `scenario.test.js`; `cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx` | exit 0; exit 0, 12 pass |
+| AC6 | 422 `REFUSED` and 429 `RATE_LIMITED` never reach Groq or charge, and the visitor sees the server message | T3, review fix | `scenario.test.js`; `cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx` | exit 0; exit 0, 18 pass |
 | AC7 | Missing binding, thrown call, or unknown Worker reply fail closed | T3 | `bun test functions/api/scenario.test.js` | exit 0 |
 | AC8 | 6 per 60 s per account and 20 per 60 s site-wide, after validation and before Claude | T2 | `bun test apps/story-worker/src/index.test.js` | exit 0 |
 | AC9 | No provider text, exception message, key, prompt, or user id in replies or logs | T2, T3 | Worker and Pages leak cases | exit 0 |
 | AC10 | `workers_dev: false`, `preview_urls: false`, no route | T2 | config test in `index.test.js` | exit 0; post-deploy host check is a separate gated step |
-| AC11 | Claude key never in browser code or the browser bundle | T6, review fix | `bun run test:script`; `grep -rqF sk-ant apps/web/dist` | exit 0, 12 pass; exit 1 (no match) |
+| AC11 | Claude key never in browser code or the browser bundle | T6, review fix | `bun run test:script`; `grep -rqF sk-ant apps/web/dist` | exit 0, 13 pass; exit 1 (no match) |
+| FU-1 | 403 and 503 points messages are shown; a reply without a JSON message never shows a bare code | T9 | `cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx` | exit 0, 18 pass |
+| FU-2 | A declared `Content-Length` over 16384 gets 413 before the body is read | T10 | `bun test functions/api/scenario.test.js` | exit 0, 49 pass |
+| FU-3 | The CI lint step runs eslint; a test rejects the no-op `bun --cwd <dir> run` form | T11 | `bun run test:script`; `bun run --cwd apps/web lint` | exit 0, 13 pass; exit 0, `$ eslint .` |
+| FU-4 | The former `packages/game-engine/tests/` file runs under the package test script | T12 | `bun test packages/game-engine/src/__tests__/scenarioClientPrompt.test.js` | exit 0, 4 pass |
 
 ## 4. Local Verification Evidence
 
-All rows ran on the machine holding the working tree at `77b304f` (code unchanged since), before any push.
+All rows ran on the machine holding the working tree at `ebd6fd4` (code unchanged since), before the push that carries them.
 
 | Gate | Command | Exit | Result |
 |---|---|---|---|
-| Workspace tests | `bun run test` | 1 | game-engine 114 pass, story-worker 44 pass, ui 57 pass, web 190 pass and 10 fail (pre-existing, section 7) |
-| Backend tests | `bun run test:backend` | 0 | 88 pass, 0 fail |
-| Script tests | `bun run test:script` | 0 | 12 pass, 0 fail |
+| Workspace tests | `bun run test` | 1 | game-engine 118 pass, story-worker 44 pass, ui 57 pass, web 196 pass and 10 fail (pre-existing, section 7) |
+| Backend tests | `bun run test:backend` | 0 | 97 pass, 0 fail |
+| Script tests | `bun run test:script` | 0 | 13 pass, 0 fail |
 | Asset checks | `bun run test:assets` | 0 | every room OK |
 | Lint | `bun run --cwd apps/web lint` | 0 | 0 errors, 0 warnings |
 | Build | `bun run build` | 0 | completed, 0 warnings |
@@ -77,6 +81,7 @@ Full log: `docs/code-plan/evidence/2026-10-21-claude-story-worker/verification.m
 - [x] A reviewer that did not produce the work read the diff (two rounds).
 - [x] The parent diff audit ran: every chunk's `git diff` inspected and its targeted tests re-run in the parent before staging by explicit path.
 - [x] Every qualifying finding is fixed in this PR: one P1 (visitor never saw the 422 and 429 messages) and three P3 (sanitizer lookalikes, no reversal test for AC11, `unknown` failures logged without a status).
+- [x] Debt-sweep follow-ups FU-1 to FU-4 were audited in the parent (diff read, targeted tests re-run) before staging; the audit caught one defect in FU-1 (a bare `POINTS_UNAVAILABLE` code shown to the visitor), fixed in the same commit.
 
 **Reviewer verdict:** `correct` (confidence 0.85). It would change on a full-suite failure in a touched file, or if the gated deploy shows the rate-limit binding rejected, the Worker reachable on `workers.dev`, or every smoke call logging `reason: unknown`.
 
@@ -94,7 +99,7 @@ Full log: `docs/code-plan/evidence/2026-10-21-claude-story-worker/verification.m
 ## 7. Pre-Existing Issues and Deferred Debt
 
 - `apps/web/src/context/__tests__/`: 10 `AuthContext` tests fail on `main` at `14cc4db` with the same names (fail-set `diff` exit 0), and GitHub Actions has been red on them since at least `386c664`. `defer: separate pull request (AGENTS.md A7), when the owner schedules it`.
-- `.github/workflows/quality.yml`: the lint step runs `bun --cwd apps/web run lint`, which prints Bun usage and exits 0 without running eslint on bun 1.4.3 (not yet verified on the runner's 1.4.2). `defer: separate pull request, when the CI fix is scheduled`.
-- `apps/web/src/hooks/useGameState.js`: 403 (not enough points) and 503 (points unavailable) server messages are still replaced by the fixed connection text. `defer: owner decision, then add the statuses to VISIBLE_SERVER_MESSAGE_STATUSES`.
-- `packages/game-engine/tests/`: not run by the package `test` script. `defer: move under src in a follow-up, when that folder next changes`.
-- `functions/api/scenario.js`: the body is buffered before the 16 KB check; a `Content-Length` pre-check would reject earlier. `defer: hardening follow-up, if oversized-body traffic appears in logs`.
+- Fixed here as FU-3: `.github/workflows/quality.yml` ran lint as `bun --cwd apps/web run lint`, which prints Bun usage and exits 0 on bun 1.4.3 and on the CI pin 1.4.2, so CI never ran eslint. With this PR the step lints for real; the tree has 0 findings.
+- Production Pages has no D1 binding, so only the verified admin account can generate. `defer: owner decision on creating the D1 database, when non-admin play is wanted`.
+- No Analytics Engine metric for Worker 429 replies. `defer: add when traffic needs a dashboard`.
+- Root `packageManager` pins `bun@1.4.2` while local machines run 1.4.3. `defer: bump with the repository-wide pin, when CI moves to 1.4.3`.
