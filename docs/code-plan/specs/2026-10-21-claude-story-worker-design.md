@@ -1,6 +1,6 @@
 # Spec: Claude story Worker with Groq fallback
 
-- **Status:** Draft
+- **Status:** Approved (`Spec` gate, 2026-10-21)
 - **Date:** 2026-10-21
 - **Path:** Architectural (adds a new deployable subsystem and changes the browser-to-server scenario contract)
 - **Related:** plan `docs/code-plan/plans/2026-10-21-claude-story-worker.md`; points accounting decision `docs/code-plan/points-accounting-decision.md`
@@ -123,4 +123,4 @@ flowchart LR
 | `Rate limit` | 6/min user, 20/min global | 2026-10-21 |
 | `Intent` | Lock intent | 2026-10-21 |
 | `Section A` to `Section D` | Approve all four | 2026-10-21 |
-| `Spec` | pending | |
+| `Spec` | Approve spec | 2026-10-21 |
