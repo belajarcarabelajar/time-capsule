@@ -44,7 +44,7 @@ function AmbientDust({ enabled }) {
   </points>;
 }
 
-export default function RoomCanvas({ room, visit, arriving, onArrivalComplete, mood, motionEnabled, exploring, selectedObject, onReady, onError, viewOffset }) {
+export default function RoomCanvas({ room, visit, arriving, onArrivalComplete, mood, motionEnabled, exploring, selectedObject, onReady, onError, viewOffset, tourStop, drift }) {
   const [ready, setReady] = useState(false);
   const loaded = useCallback(() => { setReady(true); onReady(); }, [onReady]);
   const muted = /😢|😭|🌧/.test(mood || '');
@@ -66,7 +66,7 @@ export default function RoomCanvas({ room, visit, arriving, onArrivalComplete, m
         onReady={loaded} onError={onError} />
       <RoomCamera room={room} visit={visit} arriving={ready && arriving} onArrivalComplete={onArrivalComplete}
         exploring={exploring} selectedObject={selectedObject}
-        motionEnabled={motionEnabled} viewOffset={viewOffset} />
+        motionEnabled={motionEnabled} viewOffset={viewOffset} tourStop={tourStop} drift={drift} />
       <AmbientDust enabled={motionEnabled && !exploring} />
       <RenderHealth active={motionEnabled && ready} onError={onError} />
     </Canvas>
