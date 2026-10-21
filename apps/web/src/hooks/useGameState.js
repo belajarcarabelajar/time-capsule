@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { SoundEngine, fetchScenarioData } from '@time-capsule/game-engine';
 import { generateHistorySummary } from '../utils/history';
 import { useAuth } from '../context/AuthContext';
@@ -59,19 +59,33 @@ ${errorDetail.stack || "N/A"}
   const [nextGameData, setNextGameData] = useState(null);
   const [isPreloading, setIsPreloading] = useState(false);
 
-  const preloadNextChapter = async (activeTopic, nextChapterNum, currentHistory = []) => {
-    if (isPreloading || !user) return;
+  // The in-flight preload lives in a ref because handlers created in an
+  // earlier render still see the old isPreloading state. handleContinue
+  // awaits it instead of generating the same chapter a second time.
+  const inFlightPreloadRef = useRef(null);
+
+  const preloadNextChapter = (activeTopic, nextChapterNum, currentHistory = []) => {
+    if (inFlightPreloadRef.current || !user) return;
+    const preload = { chapter: nextChapterNum, claimed: false, promise: null };
+    inFlightPreloadRef.current = preload;
     setIsPreloading(true);
-    try {
-      const historySummary = generateHistorySummary(currentHistory);
-      const data = await fetchScenarioData(activeTopic, nextChapterNum, historySummary);
-      setNextGameData(data);
-    } catch (e) {
-      // Preload failed, ignore silently as main load will retry
-    } finally {
-      void checkSession();
-      setIsPreloading(false);
-    }
+    preload.promise = (async () => {
+      try {
+        const historySummary = generateHistorySummary(currentHistory);
+        const data = await fetchScenarioData(activeTopic, nextChapterNum, historySummary);
+        // A claimed preload is shown directly by handleContinue; caching it
+        // too would replay this chapter as the following one.
+        if (!preload.claimed) setNextGameData(data);
+        return data;
+      } catch (e) {
+        // Preload failed; handleContinue falls back to its own request.
+        return null;
+      } finally {
+        if (inFlightPreloadRef.current === preload) inFlightPreloadRef.current = null;
+        void checkSession();
+        setIsPreloading(false);
+      }
+    })();
   };
 
   const handleStartAdventure = async (e) => {
@@ -152,8 +166,16 @@ ${errorDetail.stack || "N/A"}
     } else {
       setIsLoading(true);
       try {
-        const historySummary = generateHistorySummary(updatedHistory);
-        const data = await fetchScenarioData(topic, nextChapterNum, historySummary);
+        const inFlight = inFlightPreloadRef.current;
+        let data = null;
+        if (inFlight && inFlight.chapter === nextChapterNum) {
+          inFlight.claimed = true;
+          data = await inFlight.promise;
+        }
+        if (!data) {
+          const historySummary = generateHistorySummary(updatedHistory);
+          data = await fetchScenarioData(topic, nextChapterNum, historySummary);
+        }
         setGameData(data);
         setChapterCount(nextChapterNum);
 
