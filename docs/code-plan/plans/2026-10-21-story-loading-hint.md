@@ -1,0 +1,185 @@
+---
+schema: ultra-plan/v1
+plan_id: 2026-10-21-story-loading-hint
+status: Draft
+version: 1
+runner_contract: true
+defaults:
+  retry_transient_max: 1
+  step_timeout_s: 120
+  on_precondition_fail: stop-task-continue-independent
+  allow_loose_skip_if: []
+  require_impacts: true
+  allow_no_impacts: []
+  retry_if: any
+tasks:
+  - id: T1
+    depends_on: []
+    impacts: ["start screen loading text asserted by the web test - cd apps/web && bun test src/components/__tests__/StartScreen.test.jsx", "gameplay screen loading overlay - cd apps/web && bun test src/components/__tests__/GameplayScreen.test.jsx"]
+    files: { create: [], modify: [packages/ui/src/components/LoadingPanel.jsx], test: [packages/ui/src/components/LoadingPanel.test.jsx] }
+    idempotency_key: "T1:loading-time-hint"
+    skip_if: "cd packages/ui && bun test src/components/LoadingPanel.test.jsx"
+    verify_exit: 0
+    run:
+      - cmd: "cd packages/ui && bun test src/components/LoadingPanel.test.jsx"
+        expect_exit: 1
+        retry: 0
+      - cmd: "cd packages/ui && bun test src/components/LoadingPanel.test.jsx"
+        expect_exit: 0
+        retry: 1
+  - id: T2
+    depends_on: []
+    impacts: ["the open plan of the Claude story Worker session and its closeout status - bun $HOME/vivera/scripts/ultra-plan-runner.mjs docs/code-plan/plans/2026-10-21-claude-story-worker.md"]
+    files: { create: [docs/code-plan/evidence/2026-10-21-claude-story-worker/production.md], modify: [docs/code-plan/plans/2026-10-21-claude-story-worker.md], test: [] }
+    idempotency_key: "T2:story-worker-production-evidence"
+    skip_if: "false"
+    verify_exit: 0
+    run:
+      - cmd: "bun $HOME/vivera/scripts/ultra-plan-runner.mjs docs/code-plan/plans/2026-10-21-claude-story-worker.md"
+        expect_exit: 0
+        retry: 0
+  - id: T3
+    depends_on: [T1, T2]
+    impacts: ["every local gate, since CI is disabled by the owner - bun run test:script"]
+    files: { create: [], modify: [], test: [] }
+    idempotency_key: "T3:local-verification"
+    skip_if: "false"
+    verify_exit: 0
+    run:
+      - cmd: "cd packages/ui && bun run test"
+        expect_exit: 0
+        retry: 0
+      - cmd: "cd apps/web && bun test src/components/__tests__/StartScreen.test.jsx src/components/__tests__/GameplayScreen.test.jsx"
+        expect_exit: 0
+        retry: 0
+      - cmd: "bun run --cwd apps/web lint"
+        expect_exit: 0
+        retry: 0
+      - cmd: "bun run build"
+        expect_exit: 0
+        retry: 0
+        timeout_s: 600
+      - cmd: "bun $HOME/vivera/scripts/check-copy-rules.mjs --diff origin/main"
+        expect_exit: 0
+        retry: 0
+---
+# Story Loading Hint Implementation Plan
+
+> For agentic workers: REQUIRED EXECUTION METHOD: inline plan execution (one component and its test; see Execution).
+
+**Goal:** Tell the visitor how long a chapter takes while Claude writes it, so the roughly 30 second wait no longer looks stuck.
+
+**Architecture:** `LoadingPanel` (shared by the start screen and the gameplay screen) gains a `hint` prop with a default estimate line rendered under the existing subtitle. No logic, timer, or API change.
+
+**Tech Stack:** React 18 in `@time-capsule/ui`, bun:test with `react-test-renderer`.
+
+**Active Project Profile:** repository `/home/belajarcarabelajar/Proyek/time-capsule`, worktree `time-capsule-wt/story-loading-hint`, branch `2026-10-21-story-loading-hint/story-loading-hint`, base `origin/main` at `38ded6e`. CI is disabled by the owner (2026-10-21), so every gate runs locally.
+
+**Project Commands:** `cd packages/ui && bun test src/components/LoadingPanel.test.jsx`; `cd apps/web && bun test <file>`; `bun run --cwd apps/web lint`; `bun run build`.
+
+**Protected Boundaries:** the heading texts "MEMBUKA PORTAL WAKTU...", "MEMBUKA PORTAL SEJARAH...", and "MENYIAPKAN BABAK BERIKUTNYA..." stay unchanged (asserted by `LoadingPanel.test.jsx` and `StartScreen.test.jsx`).
+
+**Spec:** none (Bounded path); the design was shown in chat and approved at the `Design` gate.
+
+**Scope:** the estimate line in `LoadingPanel`; recording the production evidence of the previous session in its open plan.
+
+**Non-Goals:** changing effort, timeout, or model; streaming; an elapsed-time counter; the duplicate request when a visitor continues before the preload finishes (debt sweep).
+
+**Visual Map:**
+
+```mermaid
+flowchart LR
+    accTitle: Story loading hint plan
+    accDescr: The loading hint and the production evidence record run independently, then one local verification task gates the pull request.
+    G0{{"Design gate"}} --> T1["T1 loading hint in LoadingPanel"]
+    G0 --> T2["T2 record production evidence of PR #45"]
+    T1 --> T3["T3 local verification"]
+    T2 --> T3
+    T3 --> PR(["Pull request"])
+```
+
+**Reasoning Lenses:** intent (owner: "lama loadingnya"), investigative (measured 28 to 33 s per chapter at effort medium, two live requests 32.6 s and 33.1 s), user-centered (a wait with no estimate reads as stuck), test-first, verification.
+
+**Acceptance Criteria:**
+- AC1: the loading panel shows "AI sedang menulis babak ini. Biasanya butuh sekitar 30 detik." under the subtitle by default, on both screens.
+- AC2: a caller can override the line through the `hint` prop; the heading texts stay unchanged.
+- AC3: the previous plan records the T7 and T8 production evidence with the live-test result as measured, and stays open per its closeout trigger.
+
+**Traceability:** AC1, AC2 → T1 → `LoadingPanel.test.jsx`, `StartScreen.test.jsx`; AC3 → T2 → runner validation of the previous plan.
+
+**Assumptions & Open Questions:** "sekitar 30 detik" matches the measured 28 to 33 s; if the effort changes, the default text changes with it.
+
+**Dependencies & Impact:** `LoadingPanel` consumers: `StartScreen.jsx:32`, `GameplayScreen.jsx:61`.
+
+**Risks & Rollback:** cosmetic; revert the merge commit and redeploy Pages.
+
+**Security & Compatibility:** none; static text.
+
+**Operations & Rollout:** merge, then deploy Pages behind its own approval.
+
+**CI/Review Gate:** local gates only (CI disabled); parent self-review documented in the PR.
+
+**Documentation:** none beyond this plan.
+
+**Definition of Done:** T1 to T3 green with exit codes, PR open and registered.
+
+**Plan Status & Version:** Draft, version 1.
+
+**Reproducibility:** bun 1.4.3 locally, lockfile unchanged.
+
+**Test Reliability:** pure render tests, no timers or network.
+
+**Privacy & Data Governance:** N/A, no data.
+
+**Dependencies & Supply Chain:** no dependency change.
+
+**UX States:** loading state only; text is Indonesian like the rest of the UI.
+
+**Persistent State & Artifact Storage:** N/A.
+
+**Entity & Sourcing Verification:** timing from this repository's measurements on 2026-10-21 (`docs/code-plan/evidence/2026-10-21-claude-story-worker/production.md`).
+
+**Verification:** T3 commands and exit codes in the PR body.
+
+## Global Constraints
+
+- No em dash in any diff line or commit message; no co-author trailer.
+
+### Task T1: loading hint in LoadingPanel
+
+**Files:** Modify `packages/ui/src/components/LoadingPanel.jsx`; Test `packages/ui/src/components/LoadingPanel.test.jsx`.
+**Interfaces:** `LoadingPanel({ text, hint })`, `hint` defaults to the AC1 text.
+- [ ] Step 1: RED tests for the default hint and the override | cmd: `cd packages/ui && bun test src/components/LoadingPanel.test.jsx` | expect: exit 1
+- [ ] Step 2: add the `hint` prop and its paragraph | same command, expect: exit 0
+- [ ] Step 3: Commit (parent) by explicit path.
+
+### Task T2: record production evidence of PR #45
+
+**Files:** Create `docs/code-plan/evidence/2026-10-21-claude-story-worker/production.md`; Modify `docs/code-plan/plans/2026-10-21-claude-story-worker.md` (session checklist and closeout status only).
+- [ ] Step 1: write the deploy, binding, secret, `workers.dev`, analytics, and timing evidence as measured.
+- [ ] Step 2: tick the merge and deploy checklist items with that evidence; keep the plan open (T6 still blocked) | cmd: `bun $HOME/vivera/scripts/ultra-plan-runner.mjs docs/code-plan/plans/2026-10-21-claude-story-worker.md` | expect: exit 0
+- [ ] Step 3: Commit (parent) by explicit path.
+
+### Task T3: local verification
+
+- [ ] Step 1: run the `run[]` commands and record exit codes in the PR body.
+
+## Execution
+
+Inline, by the parent: one component with its test plus one documentation update, under a minute of work each; a subagent would only wrap a single step (AGENTS.md A24).
+
+## Session checklist
+
+- [ ] Design and plan approved at the `Design` gate.
+- [ ] T1: RED then GREEN of `LoadingPanel.test.jsx`.
+- [ ] T2: previous plan validates with the production evidence recorded.
+- [ ] T3: local gates exit 0.
+- [ ] Deliver: PR opened through `pr-registry.mjs open`.
+- [ ] Merge and deploy Pages, each at its own gate.
+
+## Approval
+
+| Gate | Answer | Date |
+|---|---|---|
+| `Loading` | Medium + loading hint | 2026-10-21 |
+| `Design` | pending | |
