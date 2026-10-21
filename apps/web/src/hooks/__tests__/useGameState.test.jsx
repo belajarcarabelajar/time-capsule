@@ -32,10 +32,6 @@ const originalFetch = global.fetch;
 let mockUser = { id: '1', name: 'Test User' };
 const checkSession = mock(async () => {});
 
-mock.module('../utils/history', () => ({
-  generateHistorySummary: () => 'mocked history'
-}));
-
 const validMockGameData = {
   meta: { location: "Test Loc", themeColor: "#000000" },
   characters: {
@@ -110,6 +106,7 @@ const originalConsoleError = console.error;
 
 import { useGameState } from '../useGameState';
 import { SoundEngine } from '@time-capsule/game-engine';
+import { generateHistorySummary } from '../../utils/history.js';
 
 describe('useGameState', () => {
   let originalClipboard;
@@ -300,6 +297,18 @@ describe('useGameState', () => {
     const result = await continueWithoutPreload(serverErrorReply);
     expect(result.current.errorMsg).toBe('Koneksi terputus. Mohon coba lagi.');
     expect(result.current.chapterCount).toBe(1);
+  });
+
+  test('uses the real history summary', async () => {
+    // A failing foreground reply keeps the helper at three requests; a
+    // successful one would start a chapter 3 preload.
+    await continueWithoutPreload(serverErrorReply);
+    const [, foregroundOptions] = global.fetch.mock.calls[2];
+    const { chapter, history } = JSON.parse(foregroundOptions.body);
+    expect(chapter).toBe(2);
+    expect(history).toBe(generateHistorySummary([validMockGameData]));
+    expect(history).not.toBe('mocked history');
+    expect(history).toContain('Lokasi: Test Loc');
   });
 
   const startWithPendingPreload = async () => {
