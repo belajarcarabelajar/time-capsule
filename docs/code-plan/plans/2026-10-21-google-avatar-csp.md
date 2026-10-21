@@ -1,7 +1,7 @@
 ---
 schema: ultra-plan/v1
 plan_id: 2026-10-21-google-avatar-csp
-status: Approved
+status: Complete
 version: 1
 runner_contract: true
 defaults:
@@ -113,7 +113,7 @@ flowchart LR
 
 **Definition of Done:** T1 and T2 green with exit codes; PR open and registered.
 
-**Plan Status & Version:** Approved, version 1.
+**Plan Status & Version:** Complete, version 1.
 
 **Reproducibility:** bun 1.4.3 locally; lockfile unchanged.
 
@@ -138,24 +138,30 @@ flowchart LR
 ### Task T1: CSP img-src and UserBar avatar
 
 **Files:** Modify `apps/web/public/_headers`, `apps/web/src/components/UserBar.jsx`; Test `scripts/build-website.test.js`, `apps/web/src/components/__tests__/UserBar.test.jsx`.
-- [ ] Step 1: RED tests for AC1 to AC3 | cmd: `cd apps/web && bun test src/components/__tests__/UserBar.test.jsx` | expect: exit 1
-- [ ] Step 2: change the CSP line and `UserBar` | expect: same command exit 0, `bun run test:script` exit 0
-- [ ] Step 3: Commit (parent) by explicit path.
+- [x] Step 1: RED tests for AC1 to AC3 | cmd: `cd apps/web && bun test src/components/__tests__/UserBar.test.jsx` | expect: exit 1
+- [x] Step 2: change the CSP line and `UserBar` | expect: same command exit 0, `bun run test:script` exit 0
+- [x] Step 3: Commit (parent) by explicit path.
 
 ### Task T2: local verification
 
-- [ ] Step 1: run the `run[]` commands and record exit codes in the PR body.
+- [x] Step 1: run the `run[]` commands and record exit codes in the PR body.
 
 ## Execution
 
 Inline, by the parent: one CSP line and one component change with their tests (AGENTS.md A24).
+
+## Closeout status
+
+- **Decision:** `Mark Complete` (`Close plan` gate, 2026-10-21), chosen by the owner on a `NEEDS-HUMAN` verdict.
+- **Readiness:** `bun ~/vivera/scripts/plan-closeout.mjs --readiness docs/code-plan/plans/2026-10-21-google-avatar-csp.md` exit 3, `NEEDS-HUMAN` (2026-10-21): T1 `DONE`; T2 `UNPROVEN` (`skip_if: "false"`), its runner run `PASSED`; 0 open step boxes.
+- **Note:** the skill rule (sucp-debt-sweep 6.5.5) applies `Mark Complete` on `READY` only; the owner decided `NEEDS-HUMAN` explicitly. The remaining checklist line (merge and Pages deploy) is a delivery step after this PR merges and is recorded in the session report, not in a follow-up PR.
 
 ## Session checklist
 
 - [x] Design and plan approved at the `Design` gate. Evidence: `Design` answered "Approve design" 2026-10-21; runner validation exit 0.
 - [x] T1: RED then GREEN with the CSP and UserBar tests. Evidence: RED UserBar exit 1 (3 fail: referrer, host, onError), `test:script` exit 1 (CSP img-src); GREEN UserBar exit 0, 13 pass, `test:script` exit 0, 13 pass; commit `1f6c393`.
 - [x] T2: local gates exit 0. Evidence: UserBar and App tests exit 0, 20 pass; lint exit 0, 0 warnings; build exit 0; `test:client-assets` exit 0; `dist/_headers` contains `googleusercontent`; copy rules exit 0.
-- [ ] Deliver: PR opened through `pr-registry.mjs open`.
+- [x] Deliver: PR opened through `pr-registry.mjs open`. Evidence: exit 0, `https://github.com/belajarcarabelajar/time-capsule/pull/48`, recorded PR #48 (open).
 - [ ] Merge and deploy Pages, each at its own gate.
 
 ## Approval
