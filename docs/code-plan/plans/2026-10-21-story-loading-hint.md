@@ -222,21 +222,21 @@ flowchart LR
 
 **Files:** Modify `apps/web/src/hooks/useGameState.js`; Test `apps/web/src/hooks/__tests__/useGameState.test.jsx`.
 **Behavior & Acceptance:** continuing while the preload for that chapter is still running waits for it instead of requesting the chapter again; exactly one Claude request per chapter; the next continue never shows a duplicate of the chapter just shown.
-- [ ] Step 1: RED hook test with a pending preload | cmd: `cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx` | expect: exit 1
-- [ ] Step 2: track the in-flight preload in a ref and await it in `handleContinue` | same command, expect: exit 0
-- [ ] Step 3: Commit (parent) by explicit path.
+- [x] Step 1: RED hook test with a pending preload | cmd: `cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx` | expect: exit 1
+- [x] Step 2: track the in-flight preload in a ref and await it in `handleContinue` | same command, expect: exit 0
+- [x] Step 3: Commit (parent) by explicit path.
 
 ### Task T5: follow-up, Claude timeout 90 s and local dev date
 
 **Files:** Modify `apps/story-worker/src/claude.js`, `apps/story-worker/wrangler.jsonc`; Test `apps/story-worker/src/index.test.js`.
 **Behavior & Acceptance:** the SDK timeout is 90000 ms (measured single attempts 28 to 33 s); `compatibility_date` is `2026-09-10` so `wrangler dev` starts with the bundled workerd.
-- [ ] Step 1: RED assertions for the timeout and the date | cmd: `bun test apps/story-worker/src/index.test.js` | expect: exit 1
-- [ ] Step 2: change both values; `wrangler dev` reaches `Ready on` | expect: test exit 0, `bun run --cwd apps/story-worker check` exit 0
-- [ ] Step 3: Commit (parent) by explicit path.
+- [x] Step 1: RED assertions for the timeout and the date | cmd: `bun test apps/story-worker/src/index.test.js` | expect: exit 1
+- [x] Step 2: change both values; `wrangler dev` reaches `Ready on` | expect: test exit 0, `bun run --cwd apps/story-worker check` exit 0
+- [x] Step 3: Commit (parent) by explicit path.
 
 ### Task T6: follow-up verification
 
-- [ ] Step 1: run the `run[]` commands and record exit codes in the PR body.
+- [x] Step 1: run the `run[]` commands and record exit codes in the PR body.
 
 ## Follow-up backlog (debt sweep 2026-10-21)
 
@@ -246,10 +246,18 @@ Selected: T4, T5. Deferred:
 - Prompt adherence: 1 of 5 medium scenarios ended on a quiz instead of the narrator slide; slides 19 to 27 against 15 to 20. `defer: an eval over 10 or more topics, before any prompt change`.
 - Worker cold-start CPU 29.1 ms against the Workers Free 10 ms figure. `defer: watch Worker errors for exceededCpu, act on the first one`.
 - A tail-captured `"outcome":"ok"` line from a browser request. `defer: the next time the owner plays with wrangler tail running`.
+- Re-pass (found while executing T4): a preload still running when the visitor finishes and starts a new topic can land in the new topic's `nextGameData` (`apps/web/src/hooks/useGameState.js`, existed before T4). `defer: next change to the hook, with a reset test that clears the in-flight ref`.
 
 ## Execution
 
 Inline, by the parent: one component with its test plus one documentation update, under a minute of work each; a subagent would only wrap a single step (AGENTS.md A24).
+
+## Closeout status
+
+- **Decision:** `Keep it open` (`Close plan` gate, 2026-10-21).
+- **Readiness:** `bun ~/vivera/scripts/plan-closeout.mjs --readiness docs/code-plan/plans/2026-10-21-story-loading-hint.md` exit 3, `NEEDS-HUMAN` (2026-10-21): T1, T4, T5 `DONE`; T2, T3, T6 `UNPROVEN` (`skip_if: "false"`, runner `PASSED`); 0 open step boxes; 1 other open box (merge and deploy).
+- **What remains:** merge PR #46, deploy the story Worker (timeout and date) and Pages (hint and preload fix), each at its own gate.
+- **Reopen trigger:** the next session's PR records the merge and deploy evidence and decides `Complete`.
 
 ## Session checklist
 
