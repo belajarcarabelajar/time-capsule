@@ -7,13 +7,13 @@ Time Capsule presents a contextual authored environment behind the existing dial
 The normal web command enables the contextual path:
 
 ```bash
-bun --filter web run dev
+bun run --filter web dev
 ```
 
 The old gradient and particle background remains an explicit rollback path:
 
 ```bash
-VITE_IMMERSIVE_ENABLED=false bun --filter web run dev
+VITE_IMMERSIVE_ENABLED=false bun run --filter web dev
 ```
 
 The build gate is evaluated at build time. Only the exact string `false` disables the contextual renderer. A missing value or `true` enables it.

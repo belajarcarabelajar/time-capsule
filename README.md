@@ -109,7 +109,7 @@ cp .env.example .env
 | `TIME_CAPSULE_FUNCTIONS_ORIGIN`  | Vite dev proxy                   | Local Pages Functions origin       |
 
 > [!NOTE]
-> In **local dev**, Vite proxies `/api/*` to the local Pages Functions host at `http://127.0.0.1:8788` by default. Start it with `bun run dev:pages` in a second terminal, then run `bun --filter web run dev`. Set `TIME_CAPSULE_FUNCTIONS_ORIGIN` only when the local Functions host uses another origin. In **production**, the `functions/api/*` Pages Functions read server-only values from the Cloudflare environment. There is no client-side `apiKey` constant.
+> In **local dev**, Vite proxies `/api/*` to the local Pages Functions host at `http://127.0.0.1:8788` by default. Start it with `bun run dev:pages` in a second terminal, then run `bun run --filter web dev`. Set `TIME_CAPSULE_FUNCTIONS_ORIGIN` only when the local Functions host uses another origin. In **production**, the `functions/api/*` Pages Functions read server-only values from the Cloudflare environment. There is no client-side `apiKey` constant.
 
 > [!WARNING]
 > Do not commit real keys to version control. `.env` is gitignored.
@@ -151,7 +151,7 @@ To verify after configuring and redeploying: run `./node_modules/.bin/wrangler t
 bun run dev
 
 # or only the web app
-bun --filter web run dev
+bun run --filter web dev
 ```
 
 Open the URL Vite prints (default `http://localhost:5173`).
@@ -163,19 +163,20 @@ The web app uses the authored historical environment by default. A supported top
 To use the legacy gradient background explicitly:
 
 ```bash
-VITE_IMMERSIVE_ENABLED=false bun --filter web run dev
+VITE_IMMERSIVE_ENABLED=false bun run --filter web dev
 ```
 
 The browser checks use mocked scenario and session responses and do not call AI providers or Google. `test:tour` covers the auto-tour camera per dialogue line and `test:profile` the profile picture after login:
 
 ```bash
-bun --filter web run test:immersive
-bun --filter web run test:immersive:fallback
-bun --filter web run test:tour
-bun --filter web run test:profile
+bun run --filter web test:immersive
+bun run --filter web test:immersive:chromium
+bun run --filter web test:immersive:fallback
+bun run --filter web test:tour
+bun run --filter web test:profile
 ```
 
-The browser checks need Playwright's Chromium (`bunx playwright install chromium`) or a system Chromium through `PLAYWRIGHT_CHROMIUM=/path/to/chromium`. They render WebGL with SwiftShader by default; `PLAYWRIGHT_GPU=1` uses the GPU instead. The WebKit projects run only on Linux distributions that Playwright supports (Ubuntu, Debian); on other systems, such as Arch, use `--project chromium`.
+The browser checks need Playwright's Chromium (`bunx playwright install chromium`) or a system Chromium through `PLAYWRIGHT_CHROMIUM=/path/to/chromium`. They render WebGL with SwiftShader by default; `PLAYWRIGHT_GPU=1` uses the GPU instead. The WebKit projects run only on Linux distributions that Playwright supports (Ubuntu, Debian); on other systems, such as Arch, run `test:immersive:chromium` instead of `test:immersive`.
 
 See [`docs/history-environments.md`](docs/history-environments.md) for room scope, fallback rules, asset authoring, and verification prerequisites.
 
