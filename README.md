@@ -166,12 +166,16 @@ To use the legacy gradient background explicitly:
 VITE_IMMERSIVE_ENABLED=false bun --filter web run dev
 ```
 
-The main room checks use mocked scenario responses and do not call AI providers:
+The browser checks use mocked scenario and session responses and do not call AI providers or Google. `test:tour` covers the auto-tour camera per dialogue line and `test:profile` the profile picture after login:
 
 ```bash
 bun --filter web run test:immersive
 bun --filter web run test:immersive:fallback
+bun --filter web run test:tour
+bun --filter web run test:profile
 ```
+
+The browser checks need Playwright's Chromium (`bunx playwright install chromium`) or a system Chromium through `PLAYWRIGHT_CHROMIUM=/path/to/chromium`. They render WebGL with SwiftShader by default; `PLAYWRIGHT_GPU=1` uses the GPU instead.
 
 See [`docs/history-environments.md`](docs/history-environments.md) for room scope, fallback rules, asset authoring, and verification prerequisites.
 

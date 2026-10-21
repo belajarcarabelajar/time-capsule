@@ -136,6 +136,19 @@ describe('DynamicBackground', () => {
     });
   });
 
+  describe('Remote assets', () => {
+    it('requests no remote texture', () => {
+      const scene = { elements: ['🌲'] };
+      const { container } = render(<DynamicBackground scene={scene} currentMood="😄" />);
+
+      const remote = /https?:\/\//;
+      const offenders = [...container.querySelectorAll('*')]
+        .map((el) => `${el.getAttribute('class') ?? ''} ${el.getAttribute('style') ?? ''}`)
+        .filter((attrs) => remote.test(attrs));
+      expect(offenders).toEqual([]);
+    });
+  });
+
   describe('Scene elements', () => {
     it('renders nothing for scene elements when empty', () => {
       const { container } = render(<DynamicBackground />);

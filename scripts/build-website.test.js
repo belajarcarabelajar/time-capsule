@@ -247,3 +247,61 @@ test("client asset verification is part of the post-build quality workflow", () 
   );
   expect(workflow).toContain("bun run test:client-assets");
 });
+
+const swiftShaderArgs = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"];
+const gpuArgs = ["--ignore-gpu-blocklist", "--use-gl=angle", "--use-angle=gl-egl"];
+const loadLaunchHelper = () => import(join(root, "apps/web/playwright.launch.js"));
+
+test("Playwright launch options keep SwiftShader when no override is set", async () => {
+  const { chromiumLaunchOptions } = await loadLaunchHelper();
+  expect(chromiumLaunchOptions({})).toStrictEqual({ args: swiftShaderArgs });
+  expect(chromiumLaunchOptions({ PLAYWRIGHT_CHROMIUM: "", PLAYWRIGHT_GPU: "0" }))
+    .toStrictEqual({ args: swiftShaderArgs });
+  expect(chromiumLaunchOptions({ PLAYWRIGHT_GPU: "true" })).toStrictEqual({ args: swiftShaderArgs });
+});
+
+test("PLAYWRIGHT_CHROMIUM sets the executable and PLAYWRIGHT_GPU swaps the flags", async () => {
+  const { chromiumLaunchOptions } = await loadLaunchHelper();
+  expect(chromiumLaunchOptions({ PLAYWRIGHT_CHROMIUM: "/usr/bin/chromium" })).toStrictEqual({
+    args: swiftShaderArgs,
+    executablePath: "/usr/bin/chromium",
+  });
+  expect(chromiumLaunchOptions({ PLAYWRIGHT_GPU: "1" })).toStrictEqual({ args: gpuArgs });
+  expect(chromiumLaunchOptions({ PLAYWRIGHT_GPU: "1", PLAYWRIGHT_CHROMIUM: "/opt/chromium/chrome" }))
+    .toStrictEqual({ args: gpuArgs, executablePath: "/opt/chromium/chrome" });
+});
+
+function playwrightPortProblems(files) {
+  const problems = [];
+  const owners = new Map();
+  for (const { name, text } of files) {
+    const command = text.match(/command:\s*'([^']*)'/)?.[1] ?? "";
+    const ports = {
+      command: command.match(/--port (\d+)/)?.[1] ?? null,
+      url: text.match(/\burl:\s*'http:\/\/127\.0\.0\.1:(\d+)/)?.[1] ?? null,
+      baseURL: text.match(/baseURL:\s*'http:\/\/127\.0\.0\.1:(\d+)/)?.[1] ?? null,
+    };
+    const values = new Set(Object.values(ports));
+    if (values.has(null) || values.size !== 1) {
+      problems.push(`${name}: ports disagree ${JSON.stringify(ports)}`);
+      continue;
+    }
+    const port = ports.command;
+    if (owners.has(port)) problems.push(`${name}: port ${port} already used by ${owners.get(port)}`);
+    else owners.set(port, name);
+  }
+  return problems;
+}
+
+test("every Playwright config uses its own dev server port", () => {
+  const webDirectory = join(root, "apps/web");
+  const files = readdirSync(webDirectory)
+    .filter((file) => /^playwright\..+\.config\.js$/.test(file))
+    .sort()
+    .map((name) => ({ name, text: readFileSync(join(webDirectory, name), "utf8") }));
+  expect(files.length).toBeGreaterThanOrEqual(6);
+  // Negative control: the checker must flag a copy of a real config under another name.
+  expect(playwrightPortProblems([...files, { ...files[0], name: "playwright.copy.config.js" }]))
+    .toContain(`playwright.copy.config.js: port ${files[0].text.match(/--port (\d+)/)?.[1]} already used by ${files[0].name}`);
+  expect(playwrightPortProblems(files)).toEqual([]);
+});

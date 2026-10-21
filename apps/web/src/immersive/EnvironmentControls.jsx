@@ -2,7 +2,8 @@ import React from 'react';
 
 export default function EnvironmentControls({ exploring, onExploreChange, motionEnabled,
   onMotionChange, audioEnabled, onAudioChange, audioAvailable, audioFailed, objects,
-  onInspect, selectedObject, mode, onModeChange, failed, onRetry, exploreRef, motionLocked, onLook }) {
+  onInspect, selectedObject, mode, onModeChange, failed, onRetry, exploreRef, motionLocked, onLook,
+  tourAvailable, tourPaused, onTourChange }) {
   return <div className="history-controls" onClick={event => event.stopPropagation()}
     onKeyDown={event => { event.stopPropagation(); if (event.key === 'Escape') onExploreChange(false); }}>
     <div className="history-controls__bar">
@@ -12,6 +13,9 @@ export default function EnvironmentControls({ exploring, onExploreChange, motion
       <button type="button" aria-label={mode === '3d' ? 'Gunakan gambar' : 'Aktifkan 3D'}
         onClick={() => onModeChange(mode === '3d' ? 'static' : '3d')}>
         <span aria-hidden="true" className="history-controls__icon">{mode === '3d' ? '🖼️' : '✨'}</span><span className="history-controls__label">{mode === '3d' ? 'Gunakan gambar' : 'Aktifkan 3D'}</span></button>
+      {tourAvailable && <button type="button" aria-label={tourPaused ? 'Lanjutkan tur' : 'Jeda tur'}
+        onClick={() => onTourChange(!tourPaused)}>
+        <span aria-hidden="true" className="history-controls__icon">{tourPaused ? '▶️' : '⏸️'}</span><span className="history-controls__label">{tourPaused ? 'Lanjutkan tur' : 'Jeda tur'}</span></button>}
       {failed && <button type="button" onClick={onRetry}>Coba 3D lagi</button>}
     </div>
     {exploring && <div className="history-inspection">

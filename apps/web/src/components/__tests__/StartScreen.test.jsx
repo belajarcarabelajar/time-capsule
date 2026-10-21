@@ -83,6 +83,24 @@ describe("StartScreen", () => {
     expect(button.disabled).toBe(true);
   });
 
+  test("legacy start screen requests no remote texture", () => {
+    const { container } = render(
+      <StartScreen
+        topic=""
+        setTopic={mock()}
+        handleStartAdventure={mock()}
+        isLoading={false}
+        immersiveEnabled={false}
+      />
+    );
+
+    const remote = /https?:\/\//;
+    const offenders = [...container.querySelectorAll("*")]
+      .map((el) => `${el.getAttribute("class") ?? ""} ${el.getAttribute("style") ?? ""}`)
+      .filter((attrs) => remote.test(attrs));
+    expect(offenders).toEqual([]);
+  });
+
   test("displays error state correctly", () => {
     const handleCopyError = mock();
 
