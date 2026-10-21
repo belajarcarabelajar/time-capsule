@@ -4,7 +4,8 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "dev:pages": "bash scripts/build-website.sh && ./node_modules/.bin/wrangler pages dev apps/web/dist --port 8788",
+    "dev:pages": "bash scripts/build-website.sh && ./node_modules/.bin/wrangler pages dev apps/web/dist --port 8788 --service STORY_WORKER=time-capsule-story",
+    "dev:story": "bun run --cwd apps/story-worker dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{js,jsx,json,md,ts,tsx,yaml,yml,css}\"",
     "test": "turbo test",

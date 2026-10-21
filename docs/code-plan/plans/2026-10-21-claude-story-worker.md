@@ -41,13 +41,13 @@ tasks:
       - cmd: "bun test apps/story-worker/src/index.test.js"
         expect_exit: 0
         retry: 1
-      - cmd: "bun --cwd apps/story-worker run check"
+      - cmd: "bun run --cwd apps/story-worker check"
         expect_exit: 0
         retry: 1
         timeout_s: 180
   - id: T3
     depends_on: [T1]
-    impacts: ["browser client reads result.response and the error message field - bun test packages/game-engine/src/__tests__/scenarioClient.test.js", "points accounting and story persistence helpers - bun test functions/api/_ai_utils.test.js", "web app tests mock /api/scenario replies with the unchanged success shape - bun --cwd apps/web run test"]
+    impacts: ["browser client reads result.response and the error message field - bun test packages/game-engine/src/__tests__/scenarioClient.test.js", "points accounting and story persistence helpers - bun test functions/api/_ai_utils.test.js", "web app tests mock /api/scenario replies with the unchanged success shape - bun run --cwd apps/web test"]
     files: { create: [], modify: [functions/api/scenario.js], test: [functions/api/scenario.test.js] }
     idempotency_key: "T3:scenario-pages-function"
     skip_if: "bun test functions/api/scenario.test.js"
@@ -64,7 +64,7 @@ tasks:
         retry: 0
   - id: T4
     depends_on: [T1]
-    impacts: ["useGameState calls fetchScenarioData with an unchanged signature - bun --cwd apps/web run test", "accounting status terminal errors - bun test packages/game-engine/src/__tests__/accountingStatus.test.js"]
+    impacts: ["useGameState calls fetchScenarioData with an unchanged signature - bun run --cwd apps/web test", "accounting status terminal errors - bun test packages/game-engine/src/__tests__/accountingStatus.test.js"]
     files: { create: [], modify: [packages/game-engine/src/scenarioClient.js], test: [packages/game-engine/src/__tests__/scenarioClient.test.js, packages/game-engine/tests/scenarioClient.test.js] }
     idempotency_key: "T4:scenario-client-request"
     skip_if: "bun test packages/game-engine/src/__tests__/scenarioClient.test.js"
@@ -112,7 +112,7 @@ tasks:
         expect_exit: 0
         retry: 0
         timeout_s: 900
-      - cmd: "bun --cwd apps/web run lint"
+      - cmd: "bun run --cwd apps/web lint"
         expect_exit: 0
         retry: 0
       - cmd: "bun run build"
@@ -125,7 +125,7 @@ tasks:
       - cmd: "grep -rqF sk-ant apps/web/dist"
         expect_exit: 1
         retry: 0
-      - cmd: "bun --cwd apps/story-worker run check"
+      - cmd: "bun run --cwd apps/story-worker check"
         expect_exit: 0
         retry: 1
         timeout_s: 180
@@ -165,10 +165,10 @@ tasks:
 
 **Project Commands:**
 - Targeted tests: `bun test <file>` from the worktree root.
-- CI gate: `bun run test:quality`, `bun --cwd apps/web run lint`, `bun run build`, `bun run test:client-assets`.
-- Worker bundle check: `bun --cwd apps/story-worker run check` (`wrangler deploy --dry-run --outdir dist`).
+- CI gate: `bun run test:quality`, `bun run --cwd apps/web lint`, `bun run build`, `bun run test:client-assets`.
+- Worker bundle check: `bun run --cwd apps/story-worker check` (`wrangler deploy --dry-run --outdir dist`).
 - Pages bundle check: `./node_modules/.bin/wrangler pages functions build functions --outdir .wrangler/tmp/pages-functions-check`.
-- Deploy (gated, never run by the runner): `bun --cwd apps/story-worker run deploy`; secret via stdin to `wrangler secret put ANTHROPIC_API_KEY --name time-capsule-story`; Pages via `scripts/deploy-website.sh`.
+- Deploy (gated, never run by the runner): `bun run --cwd apps/story-worker deploy`; secret via stdin to `wrangler secret put ANTHROPIC_API_KEY --name time-capsule-story`; Pages via `scripts/deploy-website.sh`.
 
 **Protected Boundaries:**
 - `scripts/build-website.test.js` asserts root scripts: `test:backend` stays `bun test functions/api`, `dev:pages` keeps `./node_modules/.bin/wrangler` and no `npx`, `packageManager` stays `bun@1.4.2`, engine `test` stays `bun test src`.
@@ -364,7 +364,7 @@ Worker reply bodies: `{ success: true, provider: "claude", response: "<scenario 
 - [ ] Step 2: Run: verify fail | cmd: `bun test apps/story-worker/src/index.test.js` | expect: exit 1 | retry: 0 | on_fail: n/a
 - [ ] Step 3: Implement `src/claude.js` and `src/index.js`.
 - [ ] Step 4: Run: verify pass | cmd: `bun test apps/story-worker/src/index.test.js` | expect: exit 0 | retry: 1 | on_fail: mark FAILED, halt T5 to T8
-- [ ] Step 5: Run: bundle | cmd: `bun --cwd apps/story-worker run check` | expect: exit 0 | retry: 1 | on_fail: mark FAILED
+- [ ] Step 5: Run: bundle | cmd: `bun run --cwd apps/story-worker check` | expect: exit 0 | retry: 1 | on_fail: mark FAILED
 - [ ] Step 6: Commit (parent): stage the five files plus `bun.lock` by path.
 
 ### Task T3: scenario Pages Function
@@ -433,7 +433,7 @@ Worker reply bodies: `{ success: true, provider: "claude", response: "<scenario 
 **Behavior & Acceptance:**
 - README: About, Tech stack, layout, environment table, and production section describe Claude primary through the story Worker, Groq fallback, limits, statuses, the key expiry, and the gated deploy order. No secret values.
 - `.env.example`: `ANTHROPIC_API_KEY=` with a comment that it belongs to the story Worker.
-- `package.json`: `dev:pages` gains `--service STORY_WORKER=time-capsule-story`; new `dev:story` = `bun --cwd apps/story-worker run dev`.
+- `package.json`: `dev:pages` gains `--service STORY_WORKER=time-capsule-story`; new `dev:story` = `bun run --cwd apps/story-worker dev`.
 
 **Deliberate Shortcuts & Deferrals:** None.
 
@@ -451,7 +451,7 @@ Worker reply bodies: `{ success: true, provider: "claude", response: "<scenario 
 
 No `run[]`: production changes happen only after the `Deploy Worker` gate.
 
-- [ ] Step 1: `bun --cwd apps/story-worker run deploy`; record the output (proves the `ratelimits` bindings on this plan).
+- [ ] Step 1: `bun run --cwd apps/story-worker deploy`; record the output (proves the `ratelimits` bindings on this plan).
 - [ ] Step 2: pipe the value from the root `.env` into `./node_modules/.bin/wrangler secret put ANTHROPIC_API_KEY --name time-capsule-story` without echoing it.
 - [ ] Step 3: `curl -sS -o /dev/null -w '%{http_code}' https://time-capsule-story.<account-subdomain>.workers.dev/v1/story` must not return a Worker reply (AC10).
 - [ ] Step 4: `skip_if` exits 0.
@@ -465,17 +465,29 @@ No `run[]`: production changes happen only after the `Pages deploy` gate.
 - [ ] Step 3: run `./node_modules/.bin/wrangler tail time-capsule-story --format pretty` while the owner plays one chapter; record status and reason lines only.
 - [ ] Step 4: `skip_if` exits 0.
 
+## Batch manifest (written before dispatch, 2026-10-21)
+
+T1 ran inline (single file plus test, and the contract the other three consume). T2 to T4 fan out to three implementer subagents in the session worktree; the parent ran `bun install` (lockfile) and owns `apps/story-worker/package.json`, `bun.lock`, and every git write.
+
+| Chunk | Scope | Owner | Permitted files | Expected output | Verification |
+|---|---|---|---|---|---|
+| C-T2 | story Worker | chef | `apps/story-worker/wrangler.jsonc`, `apps/story-worker/src/index.js`, `apps/story-worker/src/claude.js`, `apps/story-worker/src/index.test.js` | status contract, limiters, Claude call, config test | `bun test apps/story-worker/src/index.test.js`; `bun run --cwd apps/story-worker check` |
+| C-T3 | scenario Pages Function | hoggy | `functions/api/scenario.js`, `functions/api/scenario.test.js` | fallback table, fail closed, body limit, generic errors | `bun test functions/api/scenario.test.js`; `bun test functions/api/_ai_utils.test.js` |
+| C-T4 | scenario client | nappy | `packages/game-engine/src/scenarioClient.js`, `packages/game-engine/src/__tests__/scenarioClient.test.js`, `packages/game-engine/tests/scenarioClient.test.js` | structured request body, unchanged reply parsing | `bun test packages/game-engine/src/__tests__/scenarioClient.test.js`; `bun test packages/game-engine/tests/scenarioClient.test.js`; `bun test packages/game-engine/src/__tests__/accountingStatus.test.js` |
+
+Unowned impact surfaces and their owner: web app tests (`bun run --cwd apps/web test`) and docs are the parent's, in T5 and T6. Chunk boundary check: one owner per chunk, every planned unit covered, no shared file.
+
 ## Session checklist
 
 - [x] Explore and lock intent. Evidence: `Intent` gate answered "Lock intent" 2026-10-21; key check `GET /v1/models/claude-haiku-5-5` returned HTTP 200.
 - [x] Design sections A to D approved. Evidence: `Section A` to `Section D` gates answered "Approve" 2026-10-21.
 - [x] Spec committed on the session branch and approved at the `Spec` gate. Evidence: commit `e28df23`; `Spec` gate answered "Approve spec" 2026-10-21.
 - [x] Plan body written, `ultra-plan-runner.mjs` validation exit 0, approved at the plan gate. Evidence: `bun ~/vivera/scripts/ultra-plan-runner.mjs <plan>` exit 0 (8 tasks, empty Error Ledger); `Plan` gate answered "Approve plan" 2026-10-21. Publish: `plan-sync.mjs` exit 1 (time-capsule not registered in vivera `plans.publish.json` or `plan.issues.json`), carried to the debt sweep.
-- [ ] T1 scenario prompt module: RED test first, then its test file exit 0.
-- [ ] T2 story Worker: its tests exit 0 and `wrangler deploy --dry-run` exit 0.
-- [ ] T3 scenario Pages Function: `bun test functions/api/scenario.test.js` exit 0.
-- [ ] T4 scenario client: game-engine tests exit 0.
-- [ ] T5 docs and config: README, `.env.example`, dev scripts updated; copy-rules check exit 0.
+- [x] T1 scenario prompt module: RED test first, then its test file exit 0. Evidence: RED `bun test packages/game-engine/src/__tests__/scenarioPrompt.test.js` exit 1 (`Cannot find module '../scenarioPrompt.js'`); GREEN same command exit 0, 36 pass, 0 fail; `bun test packages/game-engine/src` exit 0, 75 pass; commit `1aae6e5`.
+- [x] T2 story Worker: its tests exit 0 and `wrangler deploy --dry-run` exit 0. Evidence: subagent RED `bun test apps/story-worker/src/index.test.js` exit 1 (`Cannot find module './index.js'`), 10 of 10 deliberate mutations caught; parent re-run exit 0, 41 pass; `bun run --cwd apps/story-worker check` exit 0, `Total Upload: 904.06 KiB / gzip: 157.39 KiB`, both ratelimit bindings listed; `sk-ant` count in bundle 0; commit `1e74ed6`. Found on the way: `bun --cwd <dir> run <script>` prints Bun usage and exits 0 without running the script (bun 1.4.3), so every such command in this plan became `bun run --cwd <dir> <script>`.
+- [x] T3 scenario Pages Function: `bun test functions/api/scenario.test.js` exit 0. Evidence: subagent RED same command exit 1 (36 of 40 fail, for example "Expected: 413, Received: 200"), fallback-rule mutation caught (2 fail); parent re-run exit 0, 40 pass; `_ai_utils.test.js` exit 0, 10 pass; `bun test functions/api` exit 0, 88 pass; commit `988570d`.
+- [x] T4 scenario client: game-engine tests exit 0. Evidence: subagent RED `bun test packages/game-engine/src/__tests__/scenarioClient.test.js` exit 1 (3 fail on the new body assertions); parent re-run of the same file exit 0, 18 pass; `packages/game-engine/tests/scenarioClient.test.js` exit 0, 4 pass; `accountingStatus.test.js` exit 0, 9 pass; commit `c6de622`.
+- [x] T5 docs and config: README, `.env.example`, dev scripts updated; copy-rules check exit 0. Evidence: `bun run test:script` exit 0, 10 pass; `bun ~/vivera/scripts/check-copy-rules.mjs --diff origin/main` exit 0 (2380 added lines, 18 files, 6 commit messages since `14cc4dba`).
 - [ ] Verify: `bun run test:quality` exit 0, web lint exit 0, `bun run build` exit 0, no `sk-ant` string in `apps/web/dist`.
 - [ ] Review: parent diff audit and an independent reviewer report with no open P0/P1.
 - [ ] Deliver: PR opened through `pr-registry.mjs open`, session state `open`.
