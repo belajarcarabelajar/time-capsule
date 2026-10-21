@@ -200,6 +200,110 @@ describe("onRequestPost scenario request", () => {
     }
   });
 
+  describe("Content-Length precheck", () => {
+    const PAYLOAD_TOO_LARGE = {
+      success: false,
+      error: "PAYLOAD_TOO_LARGE",
+      message: "Permintaan cerita terlalu besar.",
+    };
+
+    // highWaterMark 0 stops the stream from pulling on its own, so any pull
+    // means the handler started reading the body.
+    function unreadableBodyRequest(token, contentLength, pulls) {
+      const headers = { "Content-Type": "application/json", "Content-Length": contentLength };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const body = new ReadableStream(
+        {
+          pull(controller) {
+            pulls.count += 1;
+            controller.error(new Error(UPSTREAM_DETAIL));
+          },
+        },
+        { highWaterMark: 0 },
+      );
+      return new Request("http://localhost/api/scenario", { method: "POST", headers, body, duplex: "half" });
+    }
+
+    function declaredLengthRequest(token, contentLength, body = JSON.stringify(scenarioBody)) {
+      return new Request("http://localhost/api/scenario", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "Content-Length": contentLength,
+        },
+        body,
+      });
+    }
+
+    it("rejects an oversized Content-Length header with 413 PAYLOAD_TOO_LARGE without reading the body", async () => {
+      const pulls = { count: 0 };
+      const worker = primarySuccess();
+      const request = unreadableBodyRequest(await userToken(), "999999", pulls);
+      expect(request.headers.get("Content-Length")).toBe("999999");
+      const response = await onRequestPost({ request, env: envWith({ STORY_WORKER: worker }) });
+      expect(response.status).toBe(413);
+      expect(await response.json()).toEqual(PAYLOAD_TOO_LARGE);
+      expect(pulls.count).toBe(0);
+      expect(request.bodyUsed).toBe(false);
+      expect(worker.calls).toHaveLength(0);
+      await expectNothingCharged();
+    });
+
+    it("keeps the 401 ahead of the Content-Length precheck for an unauthenticated request", async () => {
+      const pulls = { count: 0 };
+      const response = await onRequestPost({
+        request: unreadableBodyRequest(null, "999999", pulls),
+        env: envWith(),
+      });
+      expect(response.status).toBe(401);
+      expect(pulls.count).toBe(0);
+    });
+
+    it("accepts a correct small Content-Length header on the primary provider success path", async () => {
+      const body = JSON.stringify(scenarioBody);
+      const worker = primarySuccess();
+      const request = declaredLengthRequest(
+        await userToken(),
+        String(new TextEncoder().encode(body).length),
+        body,
+      );
+      const response = await onRequestPost({ request, env: envWith({ STORY_WORKER: worker }) });
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ success: true, result: { response: SCENARIO_JSON } });
+      expect(worker.calls).toHaveLength(1);
+      expect(await fixturePoints()).toBe(40);
+    });
+
+    const fallThrough = [
+      ["a non-numeric", "abc"],
+      ["an empty", ""],
+      ["a fractional", "20000.5"],
+      ["a negative", "-1"],
+      ["an exactly 16384", "16384"],
+    ];
+    for (const [name, value] of fallThrough) {
+      it(`lets ${name} Content-Length header fall through to the normal parse`, async () => {
+        const worker = primarySuccess();
+        const request = declaredLengthRequest(await userToken(), value);
+        expect(request.headers.get("Content-Length")).toBe(value);
+        const response = await onRequestPost({ request, env: envWith({ STORY_WORKER: worker }) });
+        expect(response.status).toBe(200);
+        expect(worker.calls).toHaveLength(1);
+      });
+    }
+
+    it("still applies the byte check after reading when a non-numeric header falls through", async () => {
+      const worker = primarySuccess();
+      const request = declaredLengthRequest(await userToken(), "abc", bodyOfBytes(16385));
+      const response = await onRequestPost({ request, env: envWith({ STORY_WORKER: worker }) });
+      expect(response.status).toBe(413);
+      expect(await response.json()).toEqual(PAYLOAD_TOO_LARGE);
+      expect(worker.calls).toHaveLength(0);
+      await expectNothingCharged();
+    });
+  });
+
   describe("primary provider success", () => {
     it("sends the sanitized scenario request with the user id to the story Worker", async () => {
       const worker = primarySuccess();

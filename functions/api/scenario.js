@@ -146,6 +146,13 @@ export async function onRequestPost(context) {
       });
     }
 
+    // Refuses a declared oversized body before buffering it; the byte check
+    // below still covers a missing or unparsable header.
+    const declaredLength = request.headers.get("Content-Length") ?? "";
+    if (/^\d+$/.test(declaredLength) && Number(declaredLength) > MAX_BODY_BYTES) {
+      return failure(413, PAYLOAD_TOO_LARGE);
+    }
+
     const raw = await request.text();
     if (new TextEncoder().encode(raw).length > MAX_BODY_BYTES) {
       return failure(413, PAYLOAD_TOO_LARGE);
