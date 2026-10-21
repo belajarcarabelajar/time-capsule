@@ -57,3 +57,9 @@ export function chooseCameraTransition({ initialized, motionEnabled, arriving, a
 export function shouldSettle({ wasDrifting, drift, motionEnabled, exploring, selectedObject, moving }) {
   return Boolean(wasDrifting && !drift && motionEnabled && !exploring && !selectedObject && !moving);
 }
+
+// Leaving explore also resets the offset; applying that reset would cut through the glide back to the stop.
+export function shouldApplyLookOffset({ previous, next, exploring }) {
+  if (!exploring || !next) return false;
+  return previous?.yaw !== next.yaw || previous?.pitch !== next.pitch;
+}

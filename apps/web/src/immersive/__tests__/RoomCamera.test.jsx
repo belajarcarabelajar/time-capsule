@@ -7,6 +7,7 @@ import { PerspectiveCamera, Vector3 } from 'three';
 import { roomManifest } from '../rooms.js';
 import { resolveVisit } from '../visualVisits.js';
 import { buildTour } from '../tourStops.js';
+import { orbitPose } from '../cameraMotion.js';
 
 // mock.module lasts for the whole bun process, so the web test script runs this file in its own process.
 const frames = { current: null };
@@ -75,5 +76,37 @@ describe('RoomCamera', () => {
     expectPose(wide);
     view.rerender({ tourStop: tour[1] });
     expectPose(sweepLeft);
+  });
+
+  test('settles: pausing the tour glides onto the exact stop', () => {
+    const view = mount({ tourStop: tour[0], drift: true });
+    tick(4);
+    expect(distanceTo(wide.position)).toBeGreaterThan(1e-3);
+    view.rerender({ drift: false });
+    tick(0.2);
+    expect(distanceTo(wide.position)).toBeGreaterThan(1e-3);
+    tick(0.3);
+    expectPose(wide);
+  });
+
+  test('keyboard look-around while exploring applies immediately', () => {
+    const view = mount({ tourStop: tour[0], exploring: true, viewOffset: { yaw: 0, pitch: 0 } });
+    expectPose(wide);
+    view.rerender({ viewOffset: { yaw: 0.2, pitch: 0 } });
+    expectPose(orbitPose(wide, 0.2, 0));
+  });
+
+  test('exit glide: leaving explore after keyboard look glides back', () => {
+    const view = mount({ tourStop: tour[0], exploring: true, viewOffset: { yaw: 0, pitch: 0 } });
+    view.rerender({ viewOffset: { yaw: 0.2, pitch: 0 } });
+    const looked = state.camera.position.toArray();
+    expect(distanceTo(wide.position)).toBeGreaterThan(0.05);
+    // One rerender for both props, the way HistoricalEnvironment.leaveExplore batches its state updates.
+    view.rerender({ exploring: false, viewOffset: { yaw: 0, pitch: 0 } });
+    tick(0.2);
+    expect(distanceTo(looked)).toBeGreaterThan(0.05);
+    expect(distanceTo(wide.position)).toBeGreaterThan(0.05);
+    tick(0.3);
+    expectPose(wide);
   });
 });

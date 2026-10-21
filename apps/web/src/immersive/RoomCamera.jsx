@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3, Spherical } from 'three';
 import { clampView } from './renderPolicy.js';
-import { advanceCameraMotion, chooseCameraTransition, createCameraMotion, driftPose, shouldSettle } from './cameraMotion.js';
+import { advanceCameraMotion, chooseCameraTransition, createCameraMotion, driftPose, shouldApplyLookOffset, shouldSettle } from './cameraMotion.js';
 
 export default function RoomCamera({ room, visit, arriving, onArrivalComplete, exploring, selectedObject, motionEnabled, viewOffset, tourStop, drift }) {
   const { camera, gl, invalidate } = useThree();
@@ -85,7 +85,7 @@ export default function RoomCamera({ room, visit, arriving, onArrivalComplete, e
   useEffect(() => {
     const previous = previousViewOffset.current;
     previousViewOffset.current = viewOffset;
-    if (!viewOffset || (previous?.yaw === viewOffset.yaw && previous?.pitch === viewOffset.pitch)) return;
+    if (!shouldApplyLookOffset({ previous, next: viewOffset, exploring })) return;
     offset.current = clampView(viewOffset, room.camera);
     motion.current = null;
     applyView();

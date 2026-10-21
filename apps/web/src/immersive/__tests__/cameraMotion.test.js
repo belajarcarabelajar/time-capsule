@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { advanceCameraMotion, chooseCameraTransition, createCameraMotion, driftPose, shouldSettle } from '../cameraMotion.js';
+import { advanceCameraMotion, chooseCameraTransition, createCameraMotion, driftPose, shouldApplyLookOffset, shouldSettle } from '../cameraMotion.js';
 
 const start = { position: [0, 2, 8], target: [0, 0, 0] };
 const end = { position: [2, 3, 5], target: [1, 1, -1] };
@@ -174,5 +174,24 @@ describe('settle on the tour stop when the tour pauses', () => {
 
   test('a glide in flight does not settle because it already ends on the stop', () => {
     expect(shouldSettle({ ...paused, moving: true })).toBe(false);
+  });
+});
+
+describe('keyboard look offset', () => {
+  const still = { yaw: 0, pitch: 0 };
+  const rows = [
+    ['a yaw change while exploring applies', still, { yaw: 0.2, pitch: 0 }, true, true],
+    ['a pitch change while exploring applies', still, { yaw: 0, pitch: 0.08 }, true, true],
+    ['the first offset while exploring applies', undefined, { yaw: 0.12, pitch: 0 }, true, true],
+    ['an unchanged offset while exploring does not apply', { yaw: 0.2, pitch: 0 }, { yaw: 0.2, pitch: 0 }, true, false],
+    ['the reset when leaving explore does not apply', { yaw: 0.2, pitch: 0 }, still, false, false],
+    ['a change outside explore does not apply', still, { yaw: 0.2, pitch: 0 }, false, false],
+    ['a missing offset does not apply', { yaw: 0.2, pitch: 0 }, undefined, true, false],
+  ];
+
+  test('applies only while exploring and only when yaw or pitch changed', () => {
+    for (const [label, previous, next, exploring, expected] of rows) {
+      expect([label, shouldApplyLookOffset({ previous, next, exploring })]).toEqual([label, expected]);
+    }
   });
 });
