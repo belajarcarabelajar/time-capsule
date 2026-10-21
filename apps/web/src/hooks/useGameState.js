@@ -3,6 +3,13 @@ import { SoundEngine, fetchScenarioData } from '@time-capsule/game-engine';
 import { generateHistorySummary } from '../utils/history';
 import { useAuth } from '../context/AuthContext';
 
+// Only these server messages are written for visitors; every other failure
+// keeps the fixed text and its detail stays in errorDetail.
+const VISIBLE_SERVER_MESSAGE_STATUSES = new Set([422, 429]);
+
+const visibleErrorMessage = (err, fallback) =>
+  VISIBLE_SERVER_MESSAGE_STATUSES.has(err?.status) && err.message ? err.message : fallback;
+
 export function useGameState() {
   const { user, checkSession } = useAuth();
   const [inputMode, setInputMode] = useState(true);
@@ -94,7 +101,7 @@ ${errorDetail.stack || "N/A"}
       if (isAuthErr) {
         setShowAuthModal(true);
       } else {
-        setErrorMsg("Gagal membuka portal. Coba lagi.");
+        setErrorMsg(visibleErrorMessage(err, "Gagal membuka portal. Coba lagi."));
         setErrorDetail({
           message: err.message,
           stack: err.stack,
@@ -153,7 +160,7 @@ ${errorDetail.stack || "N/A"}
         if (isAuthErr) {
           setShowAuthModal(true);
         } else {
-          setErrorMsg("Koneksi terputus. Mohon coba lagi.");
+          setErrorMsg(visibleErrorMessage(err, "Koneksi terputus. Mohon coba lagi."));
           setErrorDetail({
             message: err.message,
             stack: err.stack,

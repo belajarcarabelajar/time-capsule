@@ -312,9 +312,10 @@ describe('Input Validation & Scenario Request & Zod Schema Validation', () => {
       }), { status: 422, headers: { 'Content-Type': 'application/json' } });
     });
 
-    await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow(
-      new Error('Topik ini tidak dapat diproses. Coba topik sejarah lain.'),
-    );
+    const error = await fetchScenarioData('Test Topic', 1).catch((e) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe('Topik ini tidak dapat diproses. Coba topik sejarah lain.');
+    expect(error.status).toBe(422);
   });
 
   it('should reject with the server message when the scenario request returns 429', async () => {
@@ -325,9 +326,36 @@ describe('Input Validation & Scenario Request & Zod Schema Validation', () => {
       }), { status: 429, headers: { 'Content-Type': 'application/json' } });
     });
 
-    await expect(fetchScenarioData('Test Topic', 1)).rejects.toThrow(
-      new Error('Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.'),
-    );
+    const error = await fetchScenarioData('Test Topic', 1).catch((e) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe('Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.');
+    expect(error.status).toBe(429);
+  });
+
+  it('should reject with status 500 and the fallback message when the scenario request returns 500', async () => {
+    global.fetch = mock(async () => {
+      return new Response('Internal Server Error', { status: 500 });
+    });
+
+    const error = await fetchScenarioData('Test Topic', 1).catch((e) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe('Gagal menghubungi portal AI.');
+    expect(error.status).toBe(500);
+  });
+
+  it('should reject with status 403 and the server message on the terminal points branch', async () => {
+    global.fetch = mock(async () => {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'INSUFFICIENT_POINTS',
+        message: 'Poin Anda tidak mencukupi (0 poin). Diperlukan 10 poin.'
+      }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+    });
+
+    const error = await fetchScenarioData('Test Topic', 1).catch((e) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe('Poin Anda tidak mencukupi (0 poin). Diperlukan 10 poin.');
+    expect(error.status).toBe(403);
   });
 
   it('should strip forbidden characters <>{}[\] from inputs', async () => {

@@ -154,11 +154,15 @@ const fetchScenarioData = async (
   if ([401, 403, 503].includes(scenarioResponse.status)) {
     const defaultMessage = scenarioResponse.status === 401 ? 'Authentication required.'
       : scenarioResponse.status === 403 ? 'INSUFFICIENT_POINTS' : 'POINTS_UNAVAILABLE';
-    throw new Error(providerErrorMessage(data, defaultMessage));
+    const error = new Error(providerErrorMessage(data, defaultMessage));
+    error.status = scenarioResponse.status;
+    throw error;
   }
 
   if (!scenarioResponse.ok || data?.success === false) {
-    throw new Error(providerErrorMessage(data, "Gagal menghubungi portal AI."));
+    const error = new Error(providerErrorMessage(data, "Gagal menghubungi portal AI."));
+    error.status = scenarioResponse.status;
+    throw error;
   }
 
   rawText = data.result?.response;
