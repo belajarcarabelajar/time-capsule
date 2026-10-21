@@ -302,10 +302,10 @@ Worker reply bodies: `{ success: true, provider: "claude", response: "<scenario 
 - Produces: the Shared Contract exports above.
 
 **Preconditions:**
-- [ ] `bun --version` exits 0 (else `E_PRECOND_DEP`).
+- [x] `bun --version` exits 0 (else `E_PRECOND_DEP`).
 
 **Idempotency Check:**
-- [ ] Skip when `skip_if` exits 0.
+- [x] Skip when `skip_if` exits 0.
 
 **Behavior & Acceptance:**
 - AC1, AC3: strict key set, type and range checks, sanitizing; `buildScenarioPrompt` moves the chapter rules from the client verbatim, wraps topic in `<topik_pengguna>` and history in `<riwayat_cerita>`, and appends the KEAMANAN block and the JSON-only instruction to the system prompt.
@@ -325,11 +325,11 @@ Worker reply bodies: `{ success: true, provider: "claude", response: "<scenario 
 
 **Test Data & Determinism:** inline fixtures only.
 
-- [ ] Step 1: Write failing tests in `packages/game-engine/src/__tests__/scenarioPrompt.test.js`.
-- [ ] Step 2: Run: verify fail | cmd: `bun test packages/game-engine/src/__tests__/scenarioPrompt.test.js` | expect: exit 1 | retry: 0 | on_fail: n/a
-- [ ] Step 3: Implement `packages/game-engine/src/scenarioPrompt.js`.
-- [ ] Step 4: Run: verify pass | cmd: `bun test packages/game-engine/src/__tests__/scenarioPrompt.test.js` | expect: exit 0 | retry: 1 | on_fail: mark FAILED, halt T2 to T8
-- [ ] Step 5: Commit (parent): `git add packages/game-engine/src/scenarioPrompt.js packages/game-engine/src/__tests__/scenarioPrompt.test.js && git commit -m "feat(game-engine): add server-side scenario prompt module"`
+- [x] Step 1: Write failing tests in `packages/game-engine/src/__tests__/scenarioPrompt.test.js`.
+- [x] Step 2: Run: verify fail | cmd: `bun test packages/game-engine/src/__tests__/scenarioPrompt.test.js` | expect: exit 1 | retry: 0 | on_fail: n/a
+- [x] Step 3: Implement `packages/game-engine/src/scenarioPrompt.js`.
+- [x] Step 4: Run: verify pass | cmd: `bun test packages/game-engine/src/__tests__/scenarioPrompt.test.js` | expect: exit 0 | retry: 1 | on_fail: mark FAILED, halt T2 to T8
+- [x] Step 5: Commit (parent): `git add packages/game-engine/src/scenarioPrompt.js packages/game-engine/src/__tests__/scenarioPrompt.test.js && git commit -m "feat(game-engine): add server-side scenario prompt module"`
 
 ### Task T2: story Worker
 
@@ -343,8 +343,8 @@ Worker reply bodies: `{ success: true, provider: "claude", response: "<scenario 
 - Produces: default export `{ fetch(request, env, ctx) }` plus a named `handleStoryRequest(request, env, deps)` where `deps.fetch` is passed to the SDK client; `claude.js` exports `generateWithClaude({ apiKey, system, user, fetch })` returning `{ ok: true, response, usage } | { ok: false, refused: true } | { ok: false, reason }`.
 
 **Preconditions:**
-- [ ] T1 module exists (else `E_PRECOND_UPSTREAM`).
-- [ ] `apps/story-worker/node_modules/@anthropic-ai/sdk/package.json` or the hoisted root copy reports version 0.137.0 (else `E_PRECOND_DEP`).
+- [x] T1 module exists (else `E_PRECOND_UPSTREAM`).
+- [x] `apps/story-worker/node_modules/@anthropic-ai/sdk/package.json` or the hoisted root copy reports version 0.137.0 (else `E_PRECOND_DEP`).
 
 **Behavior & Acceptance:**
 - AC4, AC8, AC9, AC10. Route: only `POST /v1/story`; anything else 404. Order: method and path, JSON parse, `parseScenarioRequest`, `userId` non-empty string, user limiter, global limiter, key check, Claude call.
@@ -360,12 +360,12 @@ Worker reply bodies: `{ success: true, provider: "claude", response: "<scenario 
 
 **Test Data & Determinism:** fake `fetch` returns canned Messages API JSON; fake limiters return `{ success }` from a queue.
 
-- [ ] Step 1: Write failing tests in `apps/story-worker/src/index.test.js`.
-- [ ] Step 2: Run: verify fail | cmd: `bun test apps/story-worker/src/index.test.js` | expect: exit 1 | retry: 0 | on_fail: n/a
-- [ ] Step 3: Implement `src/claude.js` and `src/index.js`.
-- [ ] Step 4: Run: verify pass | cmd: `bun test apps/story-worker/src/index.test.js` | expect: exit 0 | retry: 1 | on_fail: mark FAILED, halt T5 to T8
-- [ ] Step 5: Run: bundle | cmd: `bun run --cwd apps/story-worker check` | expect: exit 0 | retry: 1 | on_fail: mark FAILED
-- [ ] Step 6: Commit (parent): stage the five files plus `bun.lock` by path.
+- [x] Step 1: Write failing tests in `apps/story-worker/src/index.test.js`.
+- [x] Step 2: Run: verify fail | cmd: `bun test apps/story-worker/src/index.test.js` | expect: exit 1 | retry: 0 | on_fail: n/a
+- [x] Step 3: Implement `src/claude.js` and `src/index.js`.
+- [x] Step 4: Run: verify pass | cmd: `bun test apps/story-worker/src/index.test.js` | expect: exit 0 | retry: 1 | on_fail: mark FAILED, halt T5 to T8
+- [x] Step 5: Run: bundle | cmd: `bun run --cwd apps/story-worker check` | expect: exit 0 | retry: 1 | on_fail: mark FAILED
+- [x] Step 6: Commit (parent): stage the five files plus `bun.lock` by path.
 
 ### Task T3: scenario Pages Function
 
@@ -390,12 +390,12 @@ Worker reply bodies: `{ success: true, provider: "claude", response: "<scenario 
 
 **Test Data & Determinism:** Miniflare D1 fixture from `functions/api/test-support/pointsDb.js`; fake `STORY_WORKER` object with a `fetch` method; `globalThis.fetch` stub for Groq restored in `afterEach`.
 
-- [ ] Step 1: Rewrite `functions/api/scenario.test.js` for the new contract.
-- [ ] Step 2: Run: verify fail | cmd: `bun test functions/api/scenario.test.js` | expect: exit 1 | retry: 0 | on_fail: n/a
-- [ ] Step 3: Implement `functions/api/scenario.js`.
-- [ ] Step 4: Run: verify pass | cmd: `bun test functions/api/scenario.test.js` | expect: exit 0 | retry: 1 | on_fail: mark FAILED, halt T5 to T8
-- [ ] Step 5: Run: helpers unchanged | cmd: `bun test functions/api/_ai_utils.test.js` | expect: exit 0 | retry: 0
-- [ ] Step 6: Commit (parent): stage both files by path.
+- [x] Step 1: Rewrite `functions/api/scenario.test.js` for the new contract.
+- [x] Step 2: Run: verify fail | cmd: `bun test functions/api/scenario.test.js` | expect: exit 1 | retry: 0 | on_fail: n/a
+- [x] Step 3: Implement `functions/api/scenario.js`.
+- [x] Step 4: Run: verify pass | cmd: `bun test functions/api/scenario.test.js` | expect: exit 0 | retry: 1 | on_fail: mark FAILED, halt T5 to T8
+- [x] Step 5: Run: helpers unchanged | cmd: `bun test functions/api/_ai_utils.test.js` | expect: exit 0 | retry: 0
+- [x] Step 6: Commit (parent): stage both files by path.
 
 ### Task T4: scenario client
 
@@ -417,12 +417,12 @@ Worker reply bodies: `{ success: true, provider: "claude", response: "<scenario 
 
 **Test Data & Determinism:** `global.fetch` mocks restored in `afterEach`.
 
-- [ ] Step 1: Update the request-shape tests in both test files.
-- [ ] Step 2: Run: verify fail | cmd: `bun test packages/game-engine/src/__tests__/scenarioClient.test.js` | expect: exit 1 | retry: 0 | on_fail: n/a
-- [ ] Step 3: Implement the body change.
-- [ ] Step 4: Run: verify pass | cmd: `bun test packages/game-engine/src/__tests__/scenarioClient.test.js` | expect: exit 0 | retry: 1 | on_fail: mark FAILED, halt T5 to T8
-- [ ] Step 5: Run: `bun test packages/game-engine/tests/scenarioClient.test.js` and `bun test packages/game-engine/src/__tests__/accountingStatus.test.js` | expect: exit 0
-- [ ] Step 6: Commit (parent): stage the three files by path.
+- [x] Step 1: Update the request-shape tests in both test files.
+- [x] Step 2: Run: verify fail | cmd: `bun test packages/game-engine/src/__tests__/scenarioClient.test.js` | expect: exit 1 | retry: 0 | on_fail: n/a
+- [x] Step 3: Implement the body change.
+- [x] Step 4: Run: verify pass | cmd: `bun test packages/game-engine/src/__tests__/scenarioClient.test.js` | expect: exit 0 | retry: 1 | on_fail: mark FAILED, halt T5 to T8
+- [x] Step 5: Run: `bun test packages/game-engine/tests/scenarioClient.test.js` and `bun test packages/game-engine/src/__tests__/accountingStatus.test.js` | expect: exit 0
+- [x] Step 6: Commit (parent): stage the three files by path.
 
 ### Task T5: docs and dev scripts
 
@@ -437,10 +437,10 @@ Worker reply bodies: `{ success: true, provider: "claude", response: "<scenario 
 
 **Deliberate Shortcuts & Deferrals:** None.
 
-- [ ] Step 1: Edit the three files.
-- [ ] Step 2: Run: `bun run test:script` | expect: exit 0 | retry: 0
-- [ ] Step 3: Run: `bun $HOME/vivera/scripts/check-copy-rules.mjs --diff origin/main` | expect: exit 0 | retry: 0
-- [ ] Step 4: Commit (parent): stage the three files by path.
+- [x] Step 1: Edit the three files.
+- [x] Step 2: Run: `bun run test:script` | expect: exit 0 | retry: 0
+- [x] Step 3: Run: `bun $HOME/vivera/scripts/check-copy-rules.mjs --diff origin/main` | expect: exit 0 | retry: 0
+- [x] Step 4: Commit (parent): stage the three files by path.
 
 ### Task T6: local verification
 
@@ -499,7 +499,7 @@ Unowned impact surfaces and their owner: web app tests (`bun run --cwd apps/web 
 - [x] T5 docs and config: README, `.env.example`, dev scripts updated; copy-rules check exit 0. Evidence: `bun run test:script` exit 0, 10 pass; `bun ~/vivera/scripts/check-copy-rules.mjs --diff origin/main` exit 0 (2380 added lines, 18 files, 6 commit messages since `14cc4dba`).
 - [ ] Verify: `bun run test:quality` exit 0, web lint exit 0, `bun run build` exit 0, no `sk-ant` string in `apps/web/dist`. Status 2026-10-21: every gate green except `bun run test:quality` exit 1, caused by 10 web `AuthContext` failures that are identical on `main` at `14cc4db` (fail-set `diff` exit 0; CI run `39405049592` red on the same tests). Evidence: `docs/code-plan/evidence/2026-10-21-claude-story-worker/verification.md`. Stays open until those failures are fixed in their own PR (A7).
 - [x] Review: parent diff audit and an independent reviewer report with no open P0/P1. Evidence: review 1 verdict `not correct` (one P1, three P3, `docs/code-plan/evidence/2026-10-21-claude-story-worker/review-1.md`); fixes `646c08b` and `77b304f` audited and re-tested in the parent (hook 12 pass, client 20 pass, prompt 70 pass, Worker 44 pass, test:script 12 pass, all exit 0); review 2 verdict `correct` (`review-2.md`); full rerun at `77b304f` in `verification.md`.
-- [ ] Deliver: PR opened through `pr-registry.mjs open`, session state `open`.
+- [x] Deliver: PR opened through `pr-registry.mjs open`, session state `open`. Evidence: `bun scripts/pr-registry.mjs open claude-story-worker ...` exit 0, `https://github.com/belajarcarabelajar/time-capsule/pull/45`, recorded PR #45 (open).
 - [ ] Merge: approved at its own gate, session state `merged`.
 - [ ] Deploy story Worker and set `ANTHROPIC_API_KEY` secret (own gate); public URL check fails to connect.
 - [ ] Add `STORY_WORKER` binding to Pages production and deploy Pages (own gate); smoke test with `wrangler tail`.
