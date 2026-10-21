@@ -5,8 +5,18 @@ import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import HistoricalEnvironment from '../HistoricalEnvironment.jsx';
 
+const hiddenDescriptor = Object.getOwnPropertyDescriptor(document, 'hidden');
+const restoreHidden = () => {
+  if (hiddenDescriptor) Object.defineProperty(document, 'hidden', hiddenDescriptor);
+  else delete document.hidden;
+};
+const setHidden = hidden => act(() => {
+  Object.defineProperty(document, 'hidden', { configurable: true, get: () => hidden });
+  document.dispatchEvent(new Event('visibilitychange'));
+});
+
 beforeEach(() => { sessionStorage.setItem('history-render-mode', '3d'); });
-afterEach(() => { cleanup(); sessionStorage.clear(); });
+afterEach(() => { cleanup(); sessionStorage.clear(); restoreHidden(); });
 
 function harness() {
   const history = [];
@@ -187,6 +197,30 @@ describe('auto-tour', () => {
       update({ storyStep: 2 });
       expect(h.current().tourStop?.id).toBe('archive:close-instrument');
     } finally { window.matchMedia = original; }
+  });
+
+  test('a tab hidden mid-arrival cancels the arrival without replay when the tab returns', async () => {
+    const { h, view, root } = await mount({ storyStep: 0 });
+    expect(h.current().arriving).toBe(true);
+    expect(view.queryByRole('button', { name: 'Lewati perjalanan' })).toBeTruthy();
+    setHidden(true);
+    expect(h.current().arriving).toBe(false);
+    setHidden(false);
+    expect(h.current().arriving).toBe(false);
+    expect(root().getAttribute('data-journey')).toBe('reading');
+    expect(view.queryByRole('button', { name: 'Lewati perjalanan' })).toBeNull();
+  });
+
+  test('a tab hidden while blocked, before the arrival starts, only defers it', async () => {
+    const { h, view, root, update } = await mount({ storyStep: 0, blocked: true });
+    expect(h.current().arriving).toBe(false);
+    setHidden(true);
+    update({ storyStep: 0, blocked: false });
+    expect(h.current().arriving).toBe(false);
+    setHidden(false);
+    expect(h.current().arriving).toBe(true);
+    expect(root().getAttribute('data-journey')).toBe('arrival');
+    expect(view.queryByRole('button', { name: 'Lewati perjalanan' })).toBeTruthy();
   });
 
   test('storage that throws on read and write does not break the tour or its toggle', async () => {

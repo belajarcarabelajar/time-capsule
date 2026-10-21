@@ -80,11 +80,11 @@ export default function HistoricalEnvironment({ topic = '', location = '', envir
   }, [motionEnabled, motionLocked, mode, finishArrival]);
   useEffect(() => {
     if (arriving) prevArriving.current = true;
-    else if (prevArriving.current && (blocked || exploring)) {
+    else if (prevArriving.current && (blocked || exploring || !visible)) {
       prevArriving.current = false;
       finishArrival();
     }
-  }, [arriving, blocked, exploring, finishArrival]);
+  }, [arriving, blocked, exploring, visible, finishArrival]);
   useEffect(() => {
     if (storyStep > 0) finishArrival();
   }, [storyStep, finishArrival]);
