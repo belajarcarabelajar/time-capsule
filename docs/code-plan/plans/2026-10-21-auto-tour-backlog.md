@@ -1,7 +1,7 @@
 ---
 schema: ultra-plan/v1
 plan_id: 2026-10-21-auto-tour-backlog
-status: Approved
+status: InProgress
 version: 1
 runner_contract: true
 defaults:
@@ -196,46 +196,53 @@ flowchart LR
 
 `apps/web/src/hooks/__tests__/useGameState.test.jsx:35` mocks `../utils/history`, which resolves to the missing `src/hooks/utils/history`; nothing asserts `'mocked history'`. Repointing it would add a process-wide module mock (the leak class fixed in PR #47), so delete it and add a test that the hook uses the real helper.
 
-- [ ] Step 1: add "uses the real history summary" and delete the mock | `cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx` exit 0
-- [ ] Step 2: `cd apps/web && bun run test` exit 0
-- [ ] Step 3: Commit (parent) by path.
+- [x] Step 1: add "uses the real history summary" and delete the mock | `cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx` exit 0
+- [x] Step 2: `cd apps/web && bun run test` exit 0
+- [x] Step 3: Commit (parent) by path.
+- Evidence: `a00ba49`; the new test passed with the dead mock (proving it never applied) and failed (exit 1) when the mock was temporarily repointed to the real module; `useGameState.test.jsx` exit 0 (23 pass); `bun run test` exit 0.
 
 ### Task T2: RoomCamera test harness
 
 New `RoomCamera.test.jsx`: `mock.module('@react-three/fiber', ...)` returns `useThree` with a real `PerspectiveCamera`, a stub canvas element, and `invalidate`, and `useFrame` that registers the callback so the test advances time by hand. Add it to the web `test` script's separate run (next to `RoomModel.test.jsx`), so its module mock cannot leak.
 
-- [ ] Step 1: harness tests for a 2.4 s glide on a tour stop change and a cut with motion off | exit 0 (behavior exists; prove red by mutating `TOUR_GLIDE_SECONDS` once and restoring)
-- [ ] Step 2: update the `test` script; `cd apps/web && bun run test` exit 0; `bun run test:script` exit 0
-- [ ] Step 3: Commit (parent) by path.
+- [x] Step 1: harness tests for a 2.4 s glide on a tour stop change and a cut with motion off | exit 0 (behavior exists; prove red by mutating `TOUR_GLIDE_SECONDS` once and restoring)
+- [x] Step 2: update the `test` script; `cd apps/web && bun run test` exit 0; `bun run test:script` exit 0
+- [x] Step 3: Commit (parent) by path.
+- Evidence: `e139209`; mutation `TOUR_GLIDE_SECONDS = 0.1` turned the glide test red (exit 1), restored (`cmp` exit 0); `RoomCamera.test.jsx` exit 0; web `test` script now runs it in its own process; `bun run test` exit 0; `test:script` exit 0.
 
 ### Task T3: pause settle runtime proof
 
-- [ ] Step 1: "settles" test in `RoomCamera.test.jsx` | exit 0; mutation without the settle effect | exit 1; restore and diff against a pristine copy
-- [ ] Step 2: Commit (parent) by path.
+- [x] Step 1: "settles" test in `RoomCamera.test.jsx` | exit 0; mutation without the settle effect | exit 1; restore and diff against a pristine copy
+- [x] Step 2: Commit (parent) by path.
+- Evidence: `bcf5b5c` (shares the test file with T4); removing the settle effect left the camera 0.658 off the stop (exit 1), restored (`cmp` exit 0); `RoomCamera.test.jsx` exit 0 (5 pass).
 
 ### Task T4: explore exit glide
 
 Today, leaving explore resets `viewOffset` and the `viewOffset` effect (`RoomCamera.jsx:86-93`) cuts, cancelling the 0.45 s glide the view effect started. Fix with a pure `shouldApplyLookOffset({ previous, next, exploring })` in `cameraMotion.js` (apply only while exploring and changed) used by that effect.
 
-- [ ] Step 1: RED "exit glide" in `RoomCamera.test.jsx` and the table test in `cameraMotion.test.js` | exit 1
-- [ ] Step 2: implement | both files exit 0; `bun test src/immersive` exit 0
-- [ ] Step 3: Commit (parent) by path.
+- [x] Step 1: RED "exit glide" in `RoomCamera.test.jsx` and the table test in `cameraMotion.test.js` | exit 1
+- [x] Step 2: implement | both files exit 0; `bun test src/immersive` exit 0
+- [x] Step 3: Commit (parent) by path.
+- Evidence: `bcf5b5c`; RED exit 1 (camera already on the stop at 0.2 s, the cut) and `shouldApplyLookOffset` missing; GREEN `RoomCamera.test.jsx` exit 0 (5), `cameraMotion.test.js` exit 0 (26), `bun test src/immersive` exit 0 (230), eslint exit 0.
 
 ### Task T5: WebKit on this laptop
 
 Playwright supports WebKit on Ubuntu and Debian, not Arch, so this is a probe with a recorded outcome.
 
-- [ ] Step 1: `cd apps/web && bunx playwright install webkit` | record exit
-- [ ] Step 2: immersive `--project webkit` | exit 0 means F3 closed; otherwise record the first launch error, remove `~/.cache/ms-playwright/webkit-*`, and add one README sentence that WebKit runs only on Playwright-supported Linux
-- [ ] Step 3: Commit (parent) by path.
+- [x] Step 1: `cd apps/web && bunx playwright install webkit` | record exit
+- [x] Step 2: immersive `--project webkit` | exit 0 means F3 closed; otherwise record the first launch error, remove `~/.cache/ms-playwright/webkit-*`, and add one README sentence that WebKit runs only on Playwright-supported Linux
+- [x] Step 3: Commit (parent) by path.
+- Evidence: `0c283ee`; `bunx playwright install webkit` exit 0 (`webkit-2359`, 294 MB), immersive `--project webkit` exit 1, 11 failed at launch: the Ubuntu build needs ICU 74 (Arch has 78), `libxml2.so.2` (Arch ships `.so.16`), and flite. Download removed again; README states WebKit needs a Playwright-supported Linux. F3 stays a documented environment limit.
 
 ### Task T6: vivera scratch rule
 
 In the vivera session worktree: add a "Scratch folder" row to section 1 of `templates/subagent-contract-template.md` (own subfolder, cleanup limited to it), then `bun run ci:targeted` exit 0 and `check-copy-rules` exit 0; open the vivera PR.
 
-- [ ] Step 1: edit and checks
-- [ ] Step 2: Commit and PR in vivera (parent).
+- [x] Step 1: edit and checks
+- [x] Step 2: Commit and PR in vivera (parent).
+- Evidence: vivera `1c949ac`, PR belajarcarabelajar/vivera#155; `bun run ci:targeted` exit 0 (validate-skill, file-size, 745 tests, copy-rules PASS).
 
 ### Task T7: local verification
 
-- [ ] Step 1: run the `run[]` commands; record exit codes in `docs/code-plan/evidence/2026-10-21-auto-tour-backlog/verification.md`.
+- [x] Step 1: run the `run[]` commands; record exit codes in `docs/code-plan/evidence/2026-10-21-auto-tour-backlog/verification.md`.
+- Evidence: `docs/code-plan/evidence/2026-10-21-auto-tour-backlog/verification.md`; every gate step exit 0.
