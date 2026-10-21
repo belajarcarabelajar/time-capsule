@@ -11,7 +11,8 @@
     "test": "bun test src --path-ignore-patterns 'src/immersive/__tests__/RoomModel.test.jsx' && bun test src/immersive/__tests__/RoomModel.test.jsx",
     "dev:immersive": "VITE_IMMERSIVE_ENABLED=true vite",
     "test:immersive": "playwright test --config playwright.immersive.config.js",
-    "test:immersive:fallback": "playwright test --config playwright.fallback.config.js"
+    "test:immersive:fallback": "playwright test --config playwright.fallback.config.js",
+    "test:tour": "playwright test --config playwright.tour.config.js"
   },
   "dependencies": {
     "@fontsource/source-serif-4": "5.3.0",
