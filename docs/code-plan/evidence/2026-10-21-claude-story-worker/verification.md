@@ -1,7 +1,7 @@
 # Local verification: Claude story Worker (T6)
 
 - **Date:** 2026-10-21
-- **Worktree:** `time-capsule-wt/claude-story-worker`, branch `2026-10-21-claude-story-worker/claude-story-worker`, first run at `776fc13`, rerun at `77b304f` after the review fixes
+- **Worktree:** `time-capsule-wt/claude-story-worker`, branch `2026-10-21-claude-story-worker/claude-story-worker`, first run at `776fc13`, reruns at `77b304f` (review fixes) and `ebd6fd4` (debt-sweep follow-ups)
 - **Toolchain:** bun 1.4.3 (local; CI pins 1.4.2), wrangler 4.129.0, `@anthropic-ai/sdk` 0.137.0
 - **Machine state before the suite:** 2595 MB available; one headless Chromium from another session was running and left untouched (A12, A30).
 
@@ -39,6 +39,24 @@ Because `test:quality` chains its steps with `&&`, the red turbo step stopped th
 | Worker bundle | `bun run --cwd apps/story-worker check` | 0 | `Total Upload: 904.91 KiB / gzip: 157.68 KiB` |
 | Pages Functions bundle | `./node_modules/.bin/wrangler pages functions build functions --outdir .wrangler/tmp/pages-functions-check` | 0 | compiled |
 
+## Rerun at `ebd6fd4` (after debt-sweep follow-ups T9 to T12)
+
+| Gate | Command | Exit | Result |
+|---|---|---|---|
+| Install | `bun install --frozen-lockfile` | 0 | lockfile matches |
+| Workspace tests | `bun run test` (first step of `test:quality`) | 1 | game-engine 118 pass 0 fail (the moved tests now run); story-worker 44 pass 0 fail; ui 57 pass 0 fail; web 196 pass 10 fail (same pre-existing set, `diff` exit 0) |
+| Backend tests | `bun run test:backend` | 0 | 97 pass, 0 fail |
+| Script tests | `bun run test:script` | 0 | 13 pass, 0 fail |
+| Asset checks | `bun run test:assets` | 0 | every room OK |
+| Web lint | `bun run --cwd apps/web lint` | 0 | `$ eslint .`, 0 warnings |
+| Build | `bun run build` | 0 | 0 warning lines |
+| Client assets | `bun run test:client-assets` | 0 | passed |
+| No key in the browser bundle | `grep -rqF sk-ant apps/web/dist` | 1 | no match |
+| Worker bundle | `bun run --cwd apps/story-worker check` | 0 | `Total Upload: 904.91 KiB / gzip: 157.68 KiB` |
+| Pages Functions bundle | `./node_modules/.bin/wrangler pages functions build functions --outdir .wrangler/tmp/pages-functions-check` | 0 | compiled |
+
+The old CI lint form `bun --cwd apps/web run lint` was also run with the bun 1.4.2 binary (the CI pin): it printed Bun's usage text and exited 0, so the GitHub Actions lint step never ran eslint before T11.
+
 ## Pre-existing web failures
 
 The same 10 tests fail on `main` at `14cc4db` before this branch: `bun run --cwd apps/web test` in the main checkout exits 1 with 185 pass and 10 fail. Comparing the sorted failure names of both runs with `diff` exits 0 (identical sets). GitHub Actions run `39405049592` on `main` (`14cc4db`, 2026-10-20) fails at the "Run quality tests" step with the same tests, and runs on `4ad15a0` and `386c664` failed too.
@@ -60,4 +78,4 @@ None of them touch a file this branch changes. Per AGENTS.md rule A7 they are fi
 
 ## Found while verifying
 
-`bun --cwd <dir> run <script>` prints Bun's usage text and exits 0 without running the script (bun 1.4.3). `bun run --cwd <dir> <script>` runs it. `.github/workflows/quality.yml` uses the first form for its "Lint web application" step; whether bun 1.4.2 on the runner behaves the same is not verified.
+`bun --cwd <dir> run <script>` prints Bun's usage text and exits 0 without running the script (bun 1.4.3). `bun run --cwd <dir> <script>` runs it. `.github/workflows/quality.yml` used the first form for its "Lint web application" step; bun 1.4.2 behaves the same (measured), and T11 fixed the step.

@@ -1,7 +1,7 @@
 ---
 schema: ultra-plan/v1
 plan_id: 2026-10-21-claude-story-worker
-status: Approved
+status: InProgress
 version: 1
 runner_contract: true
 defaults:
@@ -15,7 +15,7 @@ defaults:
 tasks:
   - id: T1
     depends_on: []
-    impacts: ["scenario Pages Function imports the prompt module - bun test functions/api/scenario.test.js", "story Worker imports the prompt module - bun test apps/story-worker/src/index.test.js", "SCENARIO_SYSTEM_PROMPT stays exported from the engine index for existing tests - bun test packages/game-engine/tests/scenarioClient.test.js"]
+    impacts: ["scenario Pages Function imports the prompt module - bun test functions/api/scenario.test.js", "story Worker imports the prompt module - bun test apps/story-worker/src/index.test.js", "SCENARIO_SYSTEM_PROMPT stays exported from the engine index for existing tests - bun test packages/game-engine/src/__tests__/scenarioClientPrompt.test.js"]
     files: { create: [packages/game-engine/src/scenarioPrompt.js], modify: [], test: [packages/game-engine/src/__tests__/scenarioPrompt.test.js] }
     idempotency_key: "T1:scenario-prompt-module"
     skip_if: "bun test packages/game-engine/src/__tests__/scenarioPrompt.test.js"
@@ -65,7 +65,7 @@ tasks:
   - id: T4
     depends_on: [T1]
     impacts: ["useGameState calls fetchScenarioData with an unchanged signature - bun run --cwd apps/web test", "accounting status terminal errors - bun test packages/game-engine/src/__tests__/accountingStatus.test.js"]
-    files: { create: [], modify: [packages/game-engine/src/scenarioClient.js], test: [packages/game-engine/src/__tests__/scenarioClient.test.js, packages/game-engine/tests/scenarioClient.test.js] }
+    files: { create: [], modify: [packages/game-engine/src/scenarioClient.js], test: [packages/game-engine/src/__tests__/scenarioClient.test.js, packages/game-engine/src/__tests__/scenarioClientPrompt.test.js] }
     idempotency_key: "T4:scenario-client-request"
     skip_if: "bun test packages/game-engine/src/__tests__/scenarioClient.test.js"
     verify_exit: 0
@@ -76,7 +76,7 @@ tasks:
       - cmd: "bun test packages/game-engine/src/__tests__/scenarioClient.test.js"
         expect_exit: 0
         retry: 1
-      - cmd: "bun test packages/game-engine/tests/scenarioClient.test.js"
+      - cmd: "bun test packages/game-engine/src/__tests__/scenarioClientPrompt.test.js"
         expect_exit: 0
         retry: 0
       - cmd: "bun test packages/game-engine/src/__tests__/accountingStatus.test.js"
@@ -147,6 +147,56 @@ tasks:
     idempotency_key: "T8:pages-binding-and-deploy"
     skip_if: 'curl -sf -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/time-capsule" | jq -e ".result.deployment_configs.production.services.STORY_WORKER.service == \"time-capsule-story\""'
     verify_exit: 0
+  - id: T9
+    depends_on: [T4]
+    impacts: ["start screen and continue prompt render errorMsg - bun test apps/web/src/__tests__/App.test.jsx"]
+    files: { create: [], modify: [apps/web/src/hooks/useGameState.js], test: [apps/web/src/hooks/__tests__/useGameState.test.jsx] }
+    idempotency_key: "T9:visible-points-messages"
+    skip_if: "cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx"
+    verify_exit: 0
+    run:
+      - cmd: "cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx"
+        expect_exit: 0
+        retry: 1
+  - id: T10
+    depends_on: [T3]
+    impacts: ["browser requests carry a small Content-Length - bun test packages/game-engine/src/__tests__/scenarioClient.test.js"]
+    files: { create: [], modify: [functions/api/scenario.js], test: [functions/api/scenario.test.js] }
+    idempotency_key: "T10:early-content-length-413"
+    skip_if: "bun test functions/api/scenario.test.js"
+    verify_exit: 0
+    run:
+      - cmd: "bun test functions/api/scenario.test.js"
+        expect_exit: 0
+        retry: 1
+  - id: T11
+    depends_on: [T5]
+    impacts: ["GitHub Actions quality job lint step - bun run test:script"]
+    files: { create: [], modify: [.github/workflows/quality.yml, scripts/build-website.test.js], test: [scripts/build-website.test.js] }
+    idempotency_key: "T11:ci-lint-runs"
+    skip_if: "bun run test:script"
+    verify_exit: 0
+    run:
+      - cmd: "bun run test:script"
+        expect_exit: 0
+        retry: 0
+      - cmd: "bun run --cwd apps/web lint"
+        expect_exit: 0
+        retry: 0
+  - id: T12
+    depends_on: [T4]
+    impacts: ["game-engine package test script now runs the moved file - bun test packages/game-engine/src"]
+    files: { create: [packages/game-engine/src/__tests__/scenarioClientPrompt.test.js], modify: [], test: [packages/game-engine/src/__tests__/scenarioClientPrompt.test.js] }
+    idempotency_key: "T12:orphaned-engine-tests"
+    skip_if: "bun test packages/game-engine/src/__tests__/scenarioClientPrompt.test.js"
+    verify_exit: 0
+    run:
+      - cmd: "bun test packages/game-engine/src/__tests__/scenarioClientPrompt.test.js"
+        expect_exit: 0
+        retry: 0
+      - cmd: "test ! -e packages/game-engine/tests"
+        expect_exit: 0
+        retry: 0
 ---
 # Claude Story Worker Implementation Plan
 
@@ -201,6 +251,10 @@ flowchart LR
     G1{{"Deploy Worker gate"}} --> T7
     T7 --> T8["T8 Pages binding, deploy, smoke"]
     G2{{"Pages deploy gate"}} --> T8
+    T4 --> T9["T9 follow-up: 403 and 503 messages visible, later-chapter 422 test"]
+    T3 --> T10["T10 follow-up: early 413 by Content-Length"]
+    T5 --> T11["T11 follow-up: CI lint step runs eslint"]
+    T4 --> T12["T12 follow-up: orphaned engine tests run"]
 ```
 
 **Reasoning Lenses:** intent (owner's three asks plus four answered decisions); investigative (open proxy at `functions/api/scenario.js:62-66`, missing D1 binding, unreadable Groq secret); computational (fallback decision table); systems and contract (Worker status codes); security and privacy (prompt injection, error hygiene, secret placement, rate limits); compatibility (unchanged success shape, legacy body rejected with 400); operational (key expiry 2026-11-20, fail closed, `wrangler tail`); test-first; verification.
@@ -252,7 +306,7 @@ flowchart LR
 
 **Definition of Done:** T1 to T6 green in this session with exit codes; PR open and registered; T7 and T8 done after their gates or recorded as pending with the reason.
 
-**Plan Status & Version:** Approved, version 1.
+**Plan Status & Version:** InProgress (debt-sweep follow-ups T9 to T12), version 1.
 
 **Reproducibility:** Bun 1.4.2 lockfile; tests use injected fakes and Miniflare D1, no network.
 
@@ -465,6 +519,37 @@ No `run[]`: production changes happen only after the `Pages deploy` gate.
 - [ ] Step 3: run `./node_modules/.bin/wrangler tail time-capsule-story --format pretty` while the owner plays one chapter; record status and reason lines only.
 - [ ] Step 4: `skip_if` exits 0.
 
+### Task T9: follow-up, points messages visible and later-chapter 422 test
+
+**Files:** Modify `apps/web/src/hooks/useGameState.js`; Test `apps/web/src/hooks/__tests__/useGameState.test.jsx`.
+**Behavior & Acceptance:** 403 (not enough points) and 503 (points unavailable) show the server message like 422 and 429; every other failure keeps the fixed text; a later-chapter 422 shows the REFUSED message.
+- [x] Step 1: RED hook tests for 403, 503, later-chapter 422 | cmd: `cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx` | expect: exit 1
+- [x] Step 2: add 403 and 503 to `VISIBLE_SERVER_MESSAGE_STATUSES` | expect: same command exit 0
+- [x] Step 3: Commit (parent) by explicit path.
+
+### Task T10: follow-up, early 413 by Content-Length
+
+**Files:** Modify `functions/api/scenario.js`; Test `functions/api/scenario.test.js`.
+**Behavior & Acceptance:** a request whose `Content-Length` header declares more than 16384 bytes gets 413 before the body is read; the byte check after reading stays for bodies without the header.
+- [x] Step 1: RED case with a declared oversized length and a body stream that must not be read | cmd: `bun test functions/api/scenario.test.js` | expect: exit 1
+- [x] Step 2: implement the header check | expect: same command exit 0
+- [x] Step 3: Commit (parent) by explicit path.
+
+### Task T11: follow-up, CI lint step runs eslint
+
+**Files:** Modify `.github/workflows/quality.yml`, `scripts/build-website.test.js`.
+**Behavior & Acceptance:** the workflow lint step is `bun run --cwd apps/web lint`; a script test fails if any `package.json` script or workflow step uses `bun --cwd <dir> run` (MEMORY.md M1).
+- [x] Step 1: RED guard test against the current workflow | cmd: `bun run test:script` | expect: exit 1
+- [x] Step 2: fix the workflow line | expect: same command exit 0; `bun run --cwd apps/web lint` exit 0
+- [x] Step 3: Commit (parent) by explicit path.
+
+### Task T12: follow-up, orphaned engine tests run
+
+**Files:** move `packages/game-engine/tests/scenarioClient.test.js` to `packages/game-engine/src/__tests__/scenarioClientPrompt.test.js` (parent, `git mv`), imports adjusted.
+**Behavior & Acceptance:** `bun test src` in the engine package runs the 4 moved tests; `packages/game-engine/tests` no longer exists.
+- [x] Step 1: `git mv` and fix the relative imports | cmd: `bun test packages/game-engine/src/__tests__/scenarioClientPrompt.test.js` | expect: exit 0
+- [x] Step 2: Commit (parent) by explicit path.
+
 ## Batch manifest (written before dispatch, 2026-10-21)
 
 T1 ran inline (single file plus test, and the contract the other three consume). T2 to T4 fan out to three implementer subagents in the session worktree; the parent ran `bun install` (lockfile) and owns `apps/story-worker/package.json`, `bun.lock`, and every git write.
@@ -486,6 +571,25 @@ Same-class peer left for the debt sweep (not approved): the 403 "Poin Anda tidak
 
 Unowned impact surfaces and their owner: web app tests (`bun run --cwd apps/web test`) and docs are the parent's, in T5 and T6. Chunk boundary check: one owner per chunk, every planned unit covered, no shared file.
 
+## Follow-up backlog (debt sweep 2026-10-21)
+
+Selected and executed in this PR: T9 to T12. Deferred:
+
+- 10 `AuthContext` web tests red on `main` since at least `386c664` (`apps/web/src/context/__tests__/`). `defer: separate pull request per AGENTS.md A7, when the owner schedules it`.
+- Production Pages project has no D1 binding, so only the verified admin can generate. `defer: owner decision on creating the D1 database, when non-admin play is wanted`.
+- Unused Pages secrets `VITE_CF_API_TOKEN` and `VITE_GEMINI_API_KEY`. `defer: asked separately as a destructive action, when the owner approves the delete`.
+- `time-capsule` missing from vivera `plans.publish.json` and `plan.issues.json`, so `plan-sync.mjs` exits 1. `defer: registration in the vivera repository, when the owner approves a public issue mirror`.
+- vivera `ultra-plan-runner` classifies `<tool> | grep -q` in `skip_if` as a loose file probe although its contract calls it behavioural. `defer: vivera follow-up, next time the runner contract is edited`.
+- No Analytics Engine metric for Worker 429 replies. `defer: add when traffic needs a dashboard`.
+- Root `packageManager` pins `bun@1.4.2` while the machine runs 1.4.3. `defer: bump with the repository-wide bun pin, when CI moves to 1.4.3`.
+
+## Closeout status
+
+- **Decision:** `Keep it open` (`Close plan` gate, 2026-10-21).
+- **Readiness:** `bun ~/vivera/scripts/plan-closeout.mjs --readiness docs/code-plan/plans/2026-10-21-claude-story-worker.md` exit 1, `NOT-READY` (2026-10-21, after the follow-ups at `ebd6fd4`): T1 to T5 and T9 to T12 `DONE`; T6 `UNPROVEN` (`skip_if: "false"`; its `bun run test:quality` step fails only on the 10 `AuthContext` web tests that also fail on `main`); T7 and T8 `OPEN` (Worker not deployed, Pages binding absent); 10 open step boxes (T6, T7, T8).
+- **What remains:** the gated Worker deploy and secret (T7), the Pages binding, deploy, and smoke test (T8), and a green `bun run test:quality`.
+- **Reopen trigger:** when T7 and T8 are done and the `AuthContext` fix PR (AGENTS.md A7) has merged, that fix PR re-runs readiness and carries `status: Complete` for this plan.
+
 ## Session checklist
 
 - [x] Explore and lock intent. Evidence: `Intent` gate answered "Lock intent" 2026-10-21; key check `GET /v1/models/claude-haiku-5-5` returned HTTP 200.
@@ -503,7 +607,7 @@ Unowned impact surfaces and their owner: web app tests (`bun run --cwd apps/web 
 - [ ] Merge: approved at its own gate, session state `merged`.
 - [ ] Deploy story Worker and set `ANTHROPIC_API_KEY` secret (own gate); public URL check fails to connect.
 - [ ] Add `STORY_WORKER` binding to Pages production and deploy Pages (own gate); smoke test with `wrangler tail`.
-- [ ] Session-close debt sweep, learning ledger, graphify sync, plan closeout.
+- [ ] Session-close debt sweep, learning ledger, graphify sync, plan closeout. Status 2026-10-21: sweep closed (5 follow-ups T9 to T12 done, 7 deferred, re-pass 0, `docs/code-plan/evidence/2026-10-21-claude-story-worker/follow-ups.md`); ledger `learning-ledger.md` and `MEMORY.md` M1 to M3; plan kept open (Closeout status above); graphify sync pending.
 
 ## Approval
 
