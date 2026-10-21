@@ -14,8 +14,8 @@ Rules learned from past sessions in this repository, in `WHEN → DO, NOT` form.
 
 | # | Rule |
 |---|---|
-| M4 | WHEN a plan or contract names a Playwright command for this repository → DO check that a browser launches first (this laptop has no Playwright-bundled browser; system Chromium is `/usr/bin/chromium`, WebKit is absent), NOT copy the package script and assume it runs. |
-| M5 | WHEN adding a Playwright config → DO pick a dev server port no other `apps/web/playwright.*.config.js` uses (`rg -n -o 'port [0-9]+' apps/web/playwright.*.config.js`), NOT reuse one. Mechanical: keep only until a test asserts unique ports. |
+| M4 | WHEN running this repository's Playwright configs on this laptop → DO set `PLAYWRIGHT_CHROMIUM=/usr/bin/chromium` (no Playwright-bundled browser here; WebKit is absent, so add `--project chromium` where a config has a WebKit project), NOT run the package scripts bare and read the launch error as a test failure. |
+| M5 | Replaced by the check `every Playwright config uses its own dev server port` in `scripts/build-website.test.js` (2026-10-21). |
 | M6 | WHEN a RED run must observe the base code while implementers edit the same worktree → DO run it in a separate checkout or before they start, NOT in the shared worktree. |
 | M7 | WHEN visual evidence needs motion-on WebGL frames in headless Chromium → DO launch with `--ignore-gpu-blocklist --use-gl=angle --use-angle=gl-egl` (renderer `Mesa Intel UHD Graphics 630`), NOT SwiftShader, whose slow frames trip the frame monitor's poster fallback within seconds. |
 | M8 | WHEN several subagents share a scratch root → DO give each its own subfolder and limit its cleanup to that subfolder, NOT one shared folder that any agent may delete. |

@@ -42,3 +42,21 @@ Available memory before each browser run: 2.6 to 3.2 GB (A12). A headless Chromi
 
 After the review fixes: `bun test src/immersive` exit 0 (215 pass); `bun run test:script` exit 0 (14 pass); eslint on the changed specs exit 0; mutation probes turned the new blocked test and the exact CSP test red (exit 1) before restoring.
 | `playwright.tour.config.js` with the laptop GPU (`--use-angle=gl-egl`) and `TOUR_SHOTS` | 0 | 4 passed (5.7 min), 64 of 64 mid-glide frames rendered in 3D |
+
+## Final run on the merged tree (after follow-ups T8 to T13 and the merge of `main` at `513ce33`)
+
+| Step | Command | Exit | Result |
+|---|---|---|---|
+| Lockfile | `bun install --frozen-lockfile` | 0 | unchanged |
+| Quality gate | `bun run test:quality` | 0 | web 302 pass + RoomModel 2 pass, ui 60, game-engine 118, story-worker 45, backend 97, script 16, assets 8 rooms; 0 fail (turbo 4 of 4 tasks) |
+| Web lint | `bun run --cwd apps/web lint` | 0 | clean |
+| Build | `bun run build` | 0 | completed |
+| Client assets | `bun run test:client-assets` | 0 | clean |
+| Tour | `PLAYWRIGHT_CHROMIUM=/usr/bin/chromium bunx playwright test --config playwright.tour.config.js` | 0 | 3 passed, 1 skipped |
+| Profile | same variable, `playwright.profile.config.js` | 0 | 2 passed (against #48's avatar behavior) |
+| Immersive | same variable, `playwright.immersive.config.js --project chromium` | 0 | 11 passed |
+| Enrichment | same variable, `playwright.enrichment.config.js` (desktop and 390 px) | 0 | 18 passed |
+| Journeys | same variable, `playwright.journeys.config.js --project chromium` | 0 | 4 passed |
+| Fallback | same variable, `playwright.fallback.config.js` (now port 5178) | 0 | 1 passed |
+
+The 10 web failures recorded above are fixed by T10 (`86a4c42`); the quality gate is green end to end for the first time since CI was disabled. Available memory before browser runs 2.4 to 3.6 GB; no Chromium left afterwards.
