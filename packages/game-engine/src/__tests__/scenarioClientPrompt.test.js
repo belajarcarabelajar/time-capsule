@@ -1,7 +1,7 @@
 import { describe, it, expect, mock, beforeEach, afterEach, spyOn } from "bun:test";
-import { fetchScenarioData } from "../src/scenarioClient.js";
-import { HISTORY_ENVIRONMENT_KEYS } from "../src/historyEnvironmentKeys.js";
-import { SCENARIO_SYSTEM_PROMPT } from "../src/systemPrompt.js";
+import { fetchScenarioData } from "../scenarioClient.js";
+import { HISTORY_ENVIRONMENT_KEYS } from "../historyEnvironmentKeys.js";
+import { SCENARIO_SYSTEM_PROMPT } from "../systemPrompt.js";
 
 describe("fetchScenarioData", () => {
   let originalFetch;
