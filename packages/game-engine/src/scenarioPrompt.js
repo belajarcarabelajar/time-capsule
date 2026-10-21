@@ -13,10 +13,23 @@ export const SCENARIO_REQUEST_LIMITS = Object.freeze({
 const REQUEST_KEYS = ["chapter", "history", "topic"];
 const INVALID = Object.freeze({ ok: false, error: "INVALID_REQUEST" });
 
-// Zero-width, bidi-override, and Unicode tag characters can hide instructions
-// that a reader of the topic box never sees.
-const INVISIBLE =
-  /[​-‏‪-‮⁠-⁤⁦-⁩﻿]|[\u{E0000}-\u{E007F}]/gu;
+// Characters that render as nothing can hide instructions that a reader of
+// the topic box never sees.
+const ZERO_WIDTH_AND_BIDI = "\\u200B-\\u200F\\u202A-\\u202E\\u2060-\\u2064\\u2066-\\u2069\\uFEFF";
+const UNICODE_TAGS = "\\u{E0000}-\\u{E007F}";
+const VARIATION_SELECTORS = "\\uFE00-\\uFE0F\\u{E0100}-\\u{E01EF}";
+const FILLERS = "\\u00AD\\u034F\\u061C\\u115F\\u1160\\u17B4\\u17B5\\u180E\\u3164\\uFFA0";
+const INVISIBLE = new RegExp(
+  `[${ZERO_WIDTH_AND_BIDI}${UNICODE_TAGS}${VARIATION_SELECTORS}${FILLERS}]`,
+  "gu",
+);
+
+// A model can read fullwidth, CJK, and math lookalikes of < > { } [ ] as tag
+// or JSON delimiters, so they are stripped along with the ASCII ones.
+const ASCII_DELIMITERS = "<>{}\\[\\]";
+const LOOKALIKE_DELIMITERS =
+  "\\uFF1C\\uFF1E\\uFF5B\\uFF5D\\uFF3B\\uFF3D\\u2039\\u203A\\u2329\\u232A\\u3008\\u3009\\u300A\\u300B\\uFE64\\uFE65";
+const DELIMITERS = new RegExp(`[${ASCII_DELIMITERS}${LOOKALIKE_DELIMITERS}]`, "gu");
 // eslint-disable-next-line no-control-regex
 const CONTROL = /[\u0000-\u0008\u000B-\u001F\u007F]/g;
 
@@ -26,7 +39,7 @@ export function sanitizeUserText(text) {
     .replace(/\t/g, " ")
     .replace(CONTROL, "")
     .replace(INVISIBLE, "")
-    .replace(/[<>{}[\]]/g, "")
+    .replace(DELIMITERS, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }

@@ -24,7 +24,13 @@ export async function generateWithClaude({ apiKey, system, user, schema, fetch }
     });
     return interpretMessage(message);
   } catch (error) {
-    return { ok: false, reason: classifyError(error) };
+    const reason = classifyError(error);
+    // The status alone, never the message, tells the operator which unexpected
+    // upstream reply this was (for example a 400 from a schema the API rejects).
+    if (reason === "unknown" && error instanceof Anthropic.APIError && typeof error.status === "number") {
+      return { ok: false, reason, upstream_status: error.status };
+    }
+    return { ok: false, reason };
   }
 }
 

@@ -89,7 +89,12 @@ export async function handleStoryRequest(request, env, deps = {}) {
   return reply(
     502,
     { success: false, error: "PRIMARY_UNAVAILABLE", reason: result.reason },
-    { outcome: "primary_unavailable", reason: result.reason, ...tokens },
+    {
+      outcome: "primary_unavailable",
+      reason: result.reason,
+      upstream_status: result.upstream_status,
+      ...tokens,
+    },
   );
 }
 

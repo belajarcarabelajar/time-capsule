@@ -376,7 +376,42 @@ describe("logging", () => {
     const lines = loggedLines();
     expect(lines).toHaveLength(1);
     expect(lines[0]).not.toContain(UPSTREAM_SECRET);
-    expect(JSON.parse(lines[0])).toMatchObject({ event: "story", status: 502, reason: "auth" });
+    const entry = JSON.parse(lines[0]);
+    expect(entry).toMatchObject({ event: "story", status: 502, reason: "auth" });
+    expect(entry).not.toHaveProperty("upstream_status");
+  });
+
+  for (const [status, type] of [
+    [400, "invalid_request_error"],
+    [404, "not_found_error"],
+  ]) {
+    test(`an unclassified upstream ${status} logs upstream_status ${status} but replies with reason unknown only`, async () => {
+      const fetch = fakeFetch(apiError(status, type));
+      const { status: replyStatus, body, text } = await send(storyRequest(), makeEnv(), fetch);
+
+      expect(replyStatus).toBe(502);
+      expect(body).toEqual({ success: false, error: "PRIMARY_UNAVAILABLE", reason: "unknown" });
+      expect(fetch.calls).toHaveLength(1);
+      const lines = loggedLines();
+      expect(lines).toHaveLength(1);
+      expect(JSON.parse(lines[0])).toMatchObject({
+        event: "story",
+        status: 502,
+        reason: "unknown",
+        upstream_status: status,
+      });
+      expect(text).not.toContain(UPSTREAM_SECRET);
+      expect(lines[0]).not.toContain(UPSTREAM_SECRET);
+    });
+  }
+
+  test("an unknown failure without an upstream status logs no upstream_status", async () => {
+    await send(storyRequest(), makeEnv(), fakeFetch(new TypeError(`network down: ${UPSTREAM_SECRET}`)));
+
+    const entry = JSON.parse(loggedLines()[0]);
+    expect(entry).toMatchObject({ event: "story", status: 502, reason: "unknown" });
+    expect(entry).not.toHaveProperty("upstream_status");
+    expect(loggedLines()[0]).not.toContain(UPSTREAM_SECRET);
   });
 });
 

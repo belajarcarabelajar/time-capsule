@@ -2,6 +2,7 @@ import { afterEach, expect, test } from "bun:test";
 import {
   chmodSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -65,11 +66,43 @@ test("server credential paths do not use Vite-exposed variable names", () => {
     "functions/api/scenario.js",
     "functions/api/auth/callback.js",
     "functions/api/auth/login.js",
+    "apps/story-worker/src/index.js",
+    "apps/story-worker/src/claude.js",
   ];
   for (const file of files) {
     const source = readFileSync(join(root, file), "utf8");
-    expect(source).not.toMatch(/VITE_(CF|GEMINI|GOOGLE)_/);
+    expect(source).not.toMatch(/VITE_(CF|GEMINI|GOOGLE|ANTHROPIC)_/);
   }
+});
+
+function sourceFiles(directory) {
+  return readdirSync(join(root, directory), { withFileTypes: true }).flatMap(
+    (entry) => {
+      if (entry.name === "__tests__" || entry.name === "node_modules") return [];
+      const path = join(directory, entry.name);
+      return entry.isDirectory() ? sourceFiles(path) : [path];
+    },
+  );
+}
+
+test("browser-bundled sources never name the Claude key", () => {
+  const files = ["apps/web/src", "packages/game-engine/src", "packages/ui/src"]
+    .flatMap(sourceFiles);
+  expect(files).toContain("packages/game-engine/src/scenarioPrompt.js");
+  const offenders = files.filter((file) => {
+    const source = readFileSync(join(root, file), "utf8");
+    return source.includes("ANTHROPIC_API_KEY") || /VITE_ANTHROPIC/.test(source);
+  });
+  expect(offenders).toEqual([]);
+});
+
+test("story Worker reads the Claude key only from its env binding", () => {
+  const worker = readFileSync(join(root, "apps/story-worker/src/index.js"), "utf8");
+  const reads = worker.match(/[\w.$]*ANTHROPIC_API_KEY/g) ?? [];
+  expect(reads.length).toBeGreaterThan(0);
+  expect(new Set(reads)).toEqual(new Set(["env.ANTHROPIC_API_KEY"]));
+  const client = readFileSync(join(root, "apps/story-worker/src/claude.js"), "utf8");
+  expect(client).not.toMatch(/ANTHROPIC_API_KEY|process\.env|import\.meta\.env/);
 });
 
 test("Vite development API traffic uses an explicit local Pages Functions origin", () => {
