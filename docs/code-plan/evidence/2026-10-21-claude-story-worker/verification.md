@@ -1,7 +1,7 @@
 # Local verification: Claude story Worker (T6)
 
 - **Date:** 2026-10-21
-- **Worktree:** `time-capsule-wt/claude-story-worker`, branch `2026-10-21-claude-story-worker/claude-story-worker`, head `776fc13`
+- **Worktree:** `time-capsule-wt/claude-story-worker`, branch `2026-10-21-claude-story-worker/claude-story-worker`, first run at `776fc13`, rerun at `77b304f` after the review fixes
 - **Toolchain:** bun 1.4.3 (local; CI pins 1.4.2), wrangler 4.129.0, `@anthropic-ai/sdk` 0.137.0
 - **Machine state before the suite:** 2595 MB available; one headless Chromium from another session was running and left untouched (A12, A30).
 
@@ -22,6 +22,22 @@
 | Pages Functions bundle | `./node_modules/.bin/wrangler pages functions build functions --outdir .wrangler/tmp/pages-functions-check` | 0 | compiled; the relative import of `scenarioPrompt.js` resolves |
 
 Because `test:quality` chains its steps with `&&`, the red turbo step stopped the chain; the three later steps were run separately above.
+
+## Rerun at `77b304f` (after review fixes `646c08b` and `77b304f`)
+
+| Gate | Command | Exit | Result |
+|---|---|---|---|
+| Install | `bun install --frozen-lockfile` | 0 | lockfile matches |
+| Workspace tests | `bun run test` (first step of `test:quality`) | 1 | game-engine 114 pass 0 fail; story-worker 44 pass 0 fail; ui 57 pass 0 fail; web 190 pass 10 fail (the same 10 pre-existing failures, fail-set `diff` against `main` exit 0) |
+| Backend tests | `bun run test:backend` | 0 | 88 pass, 0 fail |
+| Script tests | `bun run test:script` | 0 | 12 pass, 0 fail |
+| Asset checks | `bun run test:assets` | 0 | every room OK |
+| Web lint | `bun run --cwd apps/web lint` | 0 | 0 warnings |
+| Build | `bun run build` | 0 | 0 warning lines |
+| Client assets | `bun run test:client-assets` | 0 | passed |
+| No key in the browser bundle | `grep -rqF sk-ant apps/web/dist` | 1 | no match |
+| Worker bundle | `bun run --cwd apps/story-worker check` | 0 | `Total Upload: 904.91 KiB / gzip: 157.68 KiB` |
+| Pages Functions bundle | `./node_modules/.bin/wrangler pages functions build functions --outdir .wrangler/tmp/pages-functions-check` | 0 | compiled |
 
 ## Pre-existing web failures
 

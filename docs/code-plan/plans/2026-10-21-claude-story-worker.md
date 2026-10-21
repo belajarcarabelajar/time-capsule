@@ -475,6 +475,15 @@ T1 ran inline (single file plus test, and the contract the other three consume).
 | C-T3 | scenario Pages Function | hoggy | `functions/api/scenario.js`, `functions/api/scenario.test.js` | fallback table, fail closed, body limit, generic errors | `bun test functions/api/scenario.test.js`; `bun test functions/api/_ai_utils.test.js` |
 | C-T4 | scenario client | nappy | `packages/game-engine/src/scenarioClient.js`, `packages/game-engine/src/__tests__/scenarioClient.test.js`, `packages/game-engine/tests/scenarioClient.test.js` | structured request body, unchanged reply parsing | `bun test packages/game-engine/src/__tests__/scenarioClient.test.js`; `bun test packages/game-engine/tests/scenarioClient.test.js`; `bun test packages/game-engine/src/__tests__/accountingStatus.test.js` |
 
+Review follow-up batch (independent review 2026-10-21, verdict `not correct` on one P1), dispatched to the same live subagents:
+
+| Chunk | Finding | Owner | Permitted files | Verification |
+|---|---|---|---|---|
+| C-R1 | P1: 422 and 429 server messages are replaced by a fixed generic string in `apps/web/src/hooks/useGameState.js:97,156` | nappy | `packages/game-engine/src/scenarioClient.js`, `packages/game-engine/src/__tests__/scenarioClient.test.js`, `apps/web/src/hooks/useGameState.js`, `apps/web/src/hooks/__tests__/useGameState.test.jsx` | `bun test packages/game-engine/src/__tests__/scenarioClient.test.js`; `cd apps/web && bun test src/hooks/__tests__/useGameState.test.jsx` |
+| C-R2 | P3: sanitizer misses variation selectors and lookalike brackets; P3: AC11 has no reversal-sensitive test; P3: `unknown` Claude failures log no upstream status | chef | `packages/game-engine/src/scenarioPrompt.js`, `packages/game-engine/src/__tests__/scenarioPrompt.test.js`, `apps/story-worker/src/claude.js`, `apps/story-worker/src/index.js`, `apps/story-worker/src/index.test.js`, `scripts/build-website.test.js` | `bun test packages/game-engine/src/__tests__/scenarioPrompt.test.js`; `bun test apps/story-worker/src/index.test.js`; `bun run test:script` |
+
+Same-class peer left for the debt sweep (not approved): the 403 "Poin Anda tidak mencukupi" and 503 points messages are masked by the same fixed string.
+
 Unowned impact surfaces and their owner: web app tests (`bun run --cwd apps/web test`) and docs are the parent's, in T5 and T6. Chunk boundary check: one owner per chunk, every planned unit covered, no shared file.
 
 ## Session checklist
@@ -489,7 +498,7 @@ Unowned impact surfaces and their owner: web app tests (`bun run --cwd apps/web 
 - [x] T4 scenario client: game-engine tests exit 0. Evidence: subagent RED `bun test packages/game-engine/src/__tests__/scenarioClient.test.js` exit 1 (3 fail on the new body assertions); parent re-run of the same file exit 0, 18 pass; `packages/game-engine/tests/scenarioClient.test.js` exit 0, 4 pass; `accountingStatus.test.js` exit 0, 9 pass; commit `c6de622`.
 - [x] T5 docs and config: README, `.env.example`, dev scripts updated; copy-rules check exit 0. Evidence: `bun run test:script` exit 0, 10 pass; `bun ~/vivera/scripts/check-copy-rules.mjs --diff origin/main` exit 0 (2380 added lines, 18 files, 6 commit messages since `14cc4dba`).
 - [ ] Verify: `bun run test:quality` exit 0, web lint exit 0, `bun run build` exit 0, no `sk-ant` string in `apps/web/dist`. Status 2026-10-21: every gate green except `bun run test:quality` exit 1, caused by 10 web `AuthContext` failures that are identical on `main` at `14cc4db` (fail-set `diff` exit 0; CI run `39405049592` red on the same tests). Evidence: `docs/code-plan/evidence/2026-10-21-claude-story-worker/verification.md`. Stays open until those failures are fixed in their own PR (A7).
-- [ ] Review: parent diff audit and an independent reviewer report with no open P0/P1.
+- [x] Review: parent diff audit and an independent reviewer report with no open P0/P1. Evidence: review 1 verdict `not correct` (one P1, three P3, `docs/code-plan/evidence/2026-10-21-claude-story-worker/review-1.md`); fixes `646c08b` and `77b304f` audited and re-tested in the parent (hook 12 pass, client 20 pass, prompt 70 pass, Worker 44 pass, test:script 12 pass, all exit 0); review 2 verdict `correct` (`review-2.md`); full rerun at `77b304f` in `verification.md`.
 - [ ] Deliver: PR opened through `pr-registry.mjs open`, session state `open`.
 - [ ] Merge: approved at its own gate, session state `merged`.
 - [ ] Deploy story Worker and set `ANTHROPIC_API_KEY` secret (own gate); public URL check fails to connect.
