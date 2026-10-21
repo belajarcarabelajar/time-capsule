@@ -167,6 +167,16 @@ describe('auto-tour', () => {
     expect(view.queryByRole('button', { name: 'Jeda tur' })).toBeNull();
   });
 
+  test('a blocked lesson still moves the tour stop with each line, with motion off', async () => {
+    const { h, update } = await mount({ environmentKey: 'archive', chapterCount: 1, storyStep: 0, blocked: true });
+    expect(h.current().tourStop?.id).toBe('archive:wide');
+    for (const [storyStep, id] of [[1, 'archive:sweep-left'], [2, 'archive:close-instrument']]) {
+      update({ storyStep, blocked: true });
+      expect(h.current().tourStop?.id).toBe(id);
+      expect(h.current().motionEnabled).toBe(false);
+    }
+  });
+
   test('reduced motion turns motion off but the tour stop still follows each dialogue line', async () => {
     const original = window.matchMedia;
     window.matchMedia = () => ({ matches: true, addEventListener() {}, removeEventListener() {} });

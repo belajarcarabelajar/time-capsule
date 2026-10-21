@@ -100,6 +100,8 @@ async function waitSinceStopChange(page, ms) {
 }
 
 test('each dialogue line moves the camera to the next tour stop', async ({ page }) => {
+  // Reduced motion means no drift, no dust and a demand frameloop, so a frame differs only when the camera moves.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const room = await startLesson(page, archive);
   const stops = [];
   const frames = [];
@@ -116,6 +118,8 @@ test('each dialogue line moves the camera to the next tour stop', async ({ page 
 });
 
 test('Jeda tur holds the stop and Lanjutkan tur resumes at the current line', async ({ page }) => {
+  // Reduced motion means no drift, no dust and a demand frameloop, so a frame differs only when the camera moves.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const room = await startLesson(page, archive);
   await advance(page, 0);
   await expect(room).toHaveAttribute('data-tour-stop', archiveTour[1]);
@@ -136,7 +140,7 @@ test('Jeda tur holds the stop and Lanjutkan tur resumes at the current line', as
   await expect(page.getByRole('button', { name: 'Jeda tur', exact: true })).toBeVisible();
 });
 
-test('motion on glides to the next stop', async ({ page }, testInfo) => {
+test('motion on advances the tour stop and records glide evidence frames', async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   const room = await startLesson(page, archive);
   await markStopChanges(room);
