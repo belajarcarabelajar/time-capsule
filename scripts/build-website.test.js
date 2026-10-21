@@ -223,6 +223,11 @@ test("Pages CSP allows GLTFLoader blob textures and the zone's Web Analytics bea
   expect(directive("connect-src")).toEqual(
     expect.arrayContaining(["'self'", "blob:", "https://cloudflareinsights.com"]),
   );
+  // Google profile pictures come from *.googleusercontent.com; images only, never a bare https: allowance.
+  expect(directive("img-src")).toEqual(
+    expect.arrayContaining(["'self'", "data:", "blob:", "https://*.googleusercontent.com"]),
+  );
+  expect(directive("img-src")).not.toContain("https:");
   // The belajarcarabelajar.com zone injects this beacon on the custom domain.
   expect(directive("script-src")).toEqual(
     expect.arrayContaining(["'self'", "https://static.cloudflareinsights.com"]),
