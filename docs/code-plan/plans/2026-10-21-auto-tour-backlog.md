@@ -122,6 +122,18 @@ tasks:
         expect_exit: 0
         retry: 1
         timeout_s: 300
+  - id: T8
+    depends_on: [T7]
+    impacts: ["README browser check commands - bun $HOME/vivera/scripts/check-copy-rules.mjs --diff origin/main"]
+    files: { create: [], modify: [apps/web/package.json, README.md], test: [] }
+    idempotency_key: "T8:immersive-chromium-script"
+    skip_if: "PLAYWRIGHT_CHROMIUM=/usr/bin/chromium bun run --filter web test:immersive:chromium"
+    verify_exit: 0
+    run:
+      - cmd: "PLAYWRIGHT_CHROMIUM=/usr/bin/chromium bun run --filter web test:immersive:chromium"
+        expect_exit: 0
+        retry: 1
+        timeout_s: 300
 ---
 
 # Auto-Tour Backlog Implementation Plan
@@ -163,6 +175,7 @@ flowchart LR
     T5 --> T7
     T6 --> T7
     T7 --> PR(["Pull requests: time-capsule and vivera"])
+    T7 --> T8["T8 follow-up: Chromium-only immersive script"]
 ```
 
 **Reasoning Lenses:** investigative (F9 traced to `RoomCamera.jsx:86-93`: on explore exit the offset reset cuts after the view effect started a 0.45 s glide); test-first; compatibility (WebKit on Arch is not a Playwright-supported Linux); supply chain (no new dependency); verification.
@@ -246,3 +259,18 @@ In the vivera session worktree: add a "Scratch folder" row to section 1 of `temp
 
 - [x] Step 1: run the `run[]` commands; record exit codes in `docs/code-plan/evidence/2026-10-21-auto-tour-backlog/verification.md`.
 - Evidence: `docs/code-plan/evidence/2026-10-21-auto-tour-backlog/verification.md`; every gate step exit 0.
+
+### Task T8: Chromium-only immersive script (debt-sweep follow-up)
+
+Selected by the owner at the debt sweep (2026-10-21): `test:immersive` runs the WebKit project too, which always fails at launch on Arch (T5). Add `test:immersive:chromium` and point the README at it.
+
+- [x] Step 1: script and README | `PLAYWRIGHT_CHROMIUM=/usr/bin/chromium bun run --filter web test:immersive:chromium` exit 0
+- [x] Step 2: Commit (parent) by path.
+- Evidence: `PLAYWRIGHT_CHROMIUM=/usr/bin/chromium bun run --filter web test:immersive:chromium` exit 0 (11 passed). The first attempt used the README's `bun --filter web run` form, which exits 1 on bun 1.4.3 (`Script "run" not found`); with the owner's approval (same-class question) all nine other doc lines moved to `bun run --filter web <script>`, each form proven (`--list` exit 0 for the four browser scripts, `dev` reached `ready in 447 ms`).
+
+## Closeout status
+
+- Owner answer at the debt sweep (2026-10-21): **Keep it open**; follow-up T8 selected.
+- Readiness (`--cwd` the time-capsule worktree, because without it the tool picked the vivera session's worktree): NEEDS-HUMAN; T1 to T4 DONE, T5 to T7 UNPROVEN (`skip_if: "false"`), evidence in `docs/code-plan/evidence/2026-10-21-auto-tour-backlog/verification.md`.
+- Backlog (LATER): `useGameState.test.jsx` is 18.2 KB, 91% of vivera's 20 KB file-size default; defer: split it when an edit pushes it past 20 KB. vivera `plan-closeout.mjs --readiness` picks the newest unfinished session's worktree even when that session lives in another repository; defer: fix in vivera when a second two-repo plan appears.
+- Reopen trigger: the owner merges PR #49 and vivera#155; then decide Complete.
