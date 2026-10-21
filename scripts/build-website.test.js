@@ -229,6 +229,21 @@ test("Pages CSP allows GLTFLoader blob textures and the zone's Web Analytics bea
   );
 });
 
+test("Pages CSP allows the Google profile picture host and nothing broader", () => {
+  const source = readFileSync(join(root, "apps/web/public/_headers"), "utf8");
+  const policy = source.match(/Content-Security-Policy: (.+)/)[1];
+  const imgSrc = policy
+    .split(";")
+    .map((part) => part.trim().split(/\s+/))
+    .find(([key]) => key === "img-src")
+    .slice(1);
+  // Google userinfo returns the avatar on this host, and UserBar renders it directly.
+  expect(imgSrc).toEqual(
+    expect.arrayContaining(["'self'", "data:", "blob:", "https://lh3.googleusercontent.com"]),
+  );
+  expect(imgSrc.filter((value) => value === "https:" || value.includes("*"))).toEqual([]);
+});
+
 test("client asset verification is part of the post-build quality workflow", () => {
   const rootPackage = JSON.parse(
     readFileSync(join(root, "package.json"), "utf8"),

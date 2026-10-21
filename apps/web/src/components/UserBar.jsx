@@ -14,6 +14,8 @@ const isSafeImageUrl = (url) => {
 export default function UserBar() {
   const { user, loading, loginWithGoogle, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
+  // Holding the failed URL, not a flag, lets a new picture URL get a fresh try.
+  const [failedPicture, setFailedPicture] = useState(null);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -69,8 +71,8 @@ export default function UserBar() {
           onClick={() => setShowDropdown(!showDropdown)}
           className="flex items-center gap-2.5 bg-stone-900/90 hover:bg-stone-800 text-amber-100 px-3 py-1.5 rounded-full border border-amber-600/50 shadow-md transition-all cursor-pointer"
         >
-          {isSafeImageUrl(user.picture) ? (
-            <img src={user.picture} alt={user.name} className="w-6 h-6 rounded-full border border-amber-500" />
+          {isSafeImageUrl(user.picture) && user.picture !== failedPicture ? (
+            <img src={user.picture} alt={user.name} onError={() => setFailedPicture(user.picture)} className="w-6 h-6 rounded-full border border-amber-500" />
           ) : (
             <div className="w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center text-xs font-bold text-stone-900">
               {user.name?.[0] || 'U'}

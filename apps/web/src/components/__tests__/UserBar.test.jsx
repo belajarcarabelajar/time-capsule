@@ -87,6 +87,50 @@ describe('UserBar Component', () => {
     expect(avatarImg.getAttribute('src')).toBe('https://example.com/avatar.jpg');
   });
 
+  test('a profile picture that fails to load falls back to the initial', () => {
+    useAuthSpy = spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+      user: { name: 'Penjelajah', email: 'p@example.com', picture: 'https://lh3.googleusercontent.com/a/test=s96-c', points: 50, maxPoints: 50 },
+      loading: false,
+      loginWithGoogle: mock(),
+      logout: mock()
+    });
+
+    const { getByAltText, queryByAltText, getByText } = render(<UserBar />);
+    fireEvent.error(getByAltText('Penjelajah'));
+    expect(queryByAltText('Penjelajah')).toBeNull();
+    expect(getByText('P')).toBeTruthy();
+  });
+
+  test('a new picture URL after a failed one gets a fresh try', () => {
+    const auth = (picture) => ({
+      user: { name: 'Penjelajah', email: 'p@example.com', picture, points: 50, maxPoints: 50 },
+      loading: false,
+      loginWithGoogle: mock(),
+      logout: mock()
+    });
+    useAuthSpy = spyOn(AuthContextModule, 'useAuth').mockReturnValue(auth('https://lh3.googleusercontent.com/a/test=s96-c'));
+
+    const { getByAltText, rerender } = render(<UserBar />);
+    fireEvent.error(getByAltText('Penjelajah'));
+    useAuthSpy.mockReturnValue(auth('https://lh3.googleusercontent.com/a/other=s96-c'));
+    rerender(<UserBar />);
+    expect(getByAltText('Penjelajah').getAttribute('src')).toBe('https://lh3.googleusercontent.com/a/other=s96-c');
+  });
+
+  test('a loaded picture shows the image', () => {
+    useAuthSpy = spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+      user: { name: 'Penjelajah', email: 'p@example.com', picture: 'https://lh3.googleusercontent.com/a/test=s96-c', points: 50, maxPoints: 50 },
+      loading: false,
+      loginWithGoogle: mock(),
+      logout: mock()
+    });
+
+    const { getByAltText, queryByText } = render(<UserBar />);
+    fireEvent.load(getByAltText('Penjelajah'));
+    expect(getByAltText('Penjelajah').getAttribute('src')).toBe('https://lh3.googleusercontent.com/a/test=s96-c');
+    expect(queryByText('P')).toBeNull();
+  });
+
   test('renders name initial fallback when user has no picture', () => {
     useAuthSpy = spyOn(AuthContextModule, 'useAuth').mockReturnValue({
       user: { name: 'Siti Rahma', email: 'siti@example.com', picture: null },
