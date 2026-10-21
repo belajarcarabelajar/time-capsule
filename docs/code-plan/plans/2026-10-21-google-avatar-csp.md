@@ -1,7 +1,7 @@
 ---
 schema: ultra-plan/v1
 plan_id: 2026-10-21-google-avatar-csp
-status: Draft
+status: Approved
 version: 1
 runner_contract: true
 defaults:
@@ -113,7 +113,7 @@ flowchart LR
 
 **Definition of Done:** T1 and T2 green with exit codes; PR open and registered.
 
-**Plan Status & Version:** Draft, version 1.
+**Plan Status & Version:** Approved, version 1.
 
 **Reproducibility:** bun 1.4.3 locally; lockfile unchanged.
 
@@ -152,9 +152,9 @@ Inline, by the parent: one CSP line and one component change with their tests (A
 
 ## Session checklist
 
-- [ ] Design and plan approved at the `Design` gate.
-- [ ] T1: RED then GREEN with the CSP and UserBar tests.
-- [ ] T2: local gates exit 0.
+- [x] Design and plan approved at the `Design` gate. Evidence: `Design` answered "Approve design" 2026-10-21; runner validation exit 0.
+- [x] T1: RED then GREEN with the CSP and UserBar tests. Evidence: RED UserBar exit 1 (3 fail: referrer, host, onError), `test:script` exit 1 (CSP img-src); GREEN UserBar exit 0, 13 pass, `test:script` exit 0, 13 pass; commit `1f6c393`.
+- [x] T2: local gates exit 0. Evidence: UserBar and App tests exit 0, 20 pass; lint exit 0, 0 warnings; build exit 0; `test:client-assets` exit 0; `dist/_headers` contains `googleusercontent`; copy rules exit 0.
 - [ ] Deliver: PR opened through `pr-registry.mjs open`.
 - [ ] Merge and deploy Pages, each at its own gate.
 
@@ -162,4 +162,4 @@ Inline, by the parent: one CSP line and one component change with their tests (A
 
 | Gate | Answer | Date |
 |---|---|---|
-| `Design` | pending | |
+| `Design` | Approve design | 2026-10-21 |
