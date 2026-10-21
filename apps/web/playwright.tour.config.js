@@ -1,4 +1,5 @@
 import { defineConfig } from '@playwright/test';
+import { chromiumLaunchOptions } from './playwright.launch.js';
 
 export default defineConfig({
   testDir: './e2e',
@@ -15,7 +16,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     reducedMotion: 'reduce',
     viewport: { width: 1440, height: 960 },
-    launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] },
+    launchOptions: chromiumLaunchOptions(),
   },
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
   webServer: {

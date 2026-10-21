@@ -175,6 +175,8 @@ bun --filter web run test:tour
 bun --filter web run test:profile
 ```
 
+The browser checks need Playwright's Chromium (`bunx playwright install chromium`) or a system Chromium through `PLAYWRIGHT_CHROMIUM=/path/to/chromium`. They render WebGL with SwiftShader by default; `PLAYWRIGHT_GPU=1` uses the GPU instead.
+
 See [`docs/history-environments.md`](docs/history-environments.md) for room scope, fallback rules, asset authoring, and verification prerequisites.
 
 ### Build
