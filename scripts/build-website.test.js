@@ -1,6 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 import {
   chmodSync,
+  existsSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
@@ -161,6 +162,44 @@ test("workspace quality commands cover package tests without shell-specific disc
   expect(enginePackage.scripts.test).toBe("bun test src");
   expect(enginePackage.scripts.build).toBeUndefined();
   expect(uiPackage.scripts.test).not.toMatch(/find|xargs/);
+});
+
+test("bun commands put --cwd after run so the script really runs", () => {
+  // Bun 1.4.2 and 1.4.3 treat `bun --cwd <dir> run <script>` as a bare
+  // `bun run`: they print usage and exit 0, so a CI step passes without
+  // running anything.
+  const brokenCwd = /\bbun\s+--cwd(?:=|\s+)\S+\s+run\b/;
+  expect(brokenCwd.test("bun --cwd apps/web run lint")).toBe(true);
+  expect(brokenCwd.test("bun run --cwd apps/web lint")).toBe(false);
+
+  const packageFiles = [
+    "package.json",
+    ...["apps", "packages"].flatMap((directory) =>
+      readdirSync(join(root, directory), { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => `${directory}/${entry.name}/package.json`)
+        .filter((file) => existsSync(join(root, file))),
+    ),
+  ];
+  const workflowFiles = readdirSync(join(root, ".github/workflows")).map(
+    (name) => `.github/workflows/${name}`,
+  );
+  expect(packageFiles).toContain("apps/web/package.json");
+  expect(workflowFiles).toContain(".github/workflows/quality.yml");
+
+  const offenders = [
+    ...packageFiles.flatMap((file) =>
+      Object.entries(JSON.parse(readFileSync(join(root, file), "utf8")).scripts ?? {})
+        .filter(([, command]) => brokenCwd.test(command))
+        .map(([name]) => `${file} scripts.${name}`),
+    ),
+    ...workflowFiles.flatMap((file) =>
+      readFileSync(join(root, file), "utf8")
+        .split("\n")
+        .flatMap((line, index) => (brokenCwd.test(line) ? [`${file}:${index + 1}`] : [])),
+    ),
+  ];
+  expect(offenders).toEqual([]);
 });
 
 test("Pages headers enforce the same-origin CSP used by the current app", () => {

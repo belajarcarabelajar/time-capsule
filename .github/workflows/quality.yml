@@ -28,7 +28,7 @@ jobs:
         run: bun run test:quality
 
       - name: Lint web application
-        run: bun --cwd apps/web run lint
+        run: bun run --cwd apps/web lint
 
       - name: Build
         run: bun run build
