@@ -10,15 +10,15 @@ export default defineConfig({
   outputDir: '/tmp/time-capsule-profile-results',
   reporter: [['list']],
   use: {
-    baseURL: 'http://127.0.0.1:5175',
+    baseURL: 'http://127.0.0.1:5177',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] },
   },
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
   webServer: {
-    command: 'bun run dev --host 127.0.0.1 --port 5175',
-    url: 'http://127.0.0.1:5175',
+    command: 'bun run dev --host 127.0.0.1 --port 5177 --strictPort',
+    url: 'http://127.0.0.1:5177',
     reuseExistingServer: false,
     timeout: 30000,
   },
