@@ -136,7 +136,7 @@ test("workspace quality commands cover package tests without shell-specific disc
   const enginePackage = JSON.parse(
     readFileSync(join(root, "packages/game-engine/package.json"), "utf8"),
   );
-  expect(rootPackage.packageManager).toBe("bun@1.4.2");
+  expect(rootPackage.packageManager).toBe("bun@1.4.4");
   expect(rootPackage.devDependencies.prettier).toBe("3.5.3");
   expect(rootPackage.scripts.format).toContain(
     "**/*.{js,jsx,json,md,ts,tsx,yaml,yml,css}",
