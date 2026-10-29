@@ -166,7 +166,7 @@ To use the legacy gradient background explicitly:
 VITE_IMMERSIVE_ENABLED=false bun run --filter web dev
 ```
 
-The browser checks use mocked scenario and session responses and do not call AI providers or Google. `test:tour` covers the auto-tour camera per dialogue line and `test:profile` the profile picture after login:
+The browser checks are manual only: CI no longer runs them (owner decision 2026-10-29, too slow), so run them only when asked. They use mocked scenario and session responses and do not call AI providers or Google. `test:tour` covers the auto-tour camera per dialogue line and `test:profile` the profile picture after login:
 
 ```bash
 bun run --filter web test:immersive

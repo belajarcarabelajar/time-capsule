@@ -35,25 +35,3 @@ jobs:
       - name: Verify client assets
         run: bun run test:client-assets
 
-  browser:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.4
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Install Playwright browsers
-        working-directory: apps/web
-        run: bunx playwright install --with-deps chromium webkit
-
-      - name: Run immersive browser checks
-        working-directory: apps/web
-        run: bun run test:immersive && bun run test:immersive:fallback
