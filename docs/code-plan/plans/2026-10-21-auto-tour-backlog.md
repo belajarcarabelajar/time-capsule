@@ -1,7 +1,7 @@
 ---
 schema: ultra-plan/v1
 plan_id: 2026-10-21-auto-tour-backlog
-status: InProgress
+status: Complete
 version: 1
 runner_contract: true
 defaults:
@@ -274,3 +274,4 @@ Selected by the owner at the debt sweep (2026-10-21): `test:immersive` runs the 
 - Readiness (`--cwd` the time-capsule worktree, because without it the tool picked the vivera session's worktree): NEEDS-HUMAN; T1 to T4 DONE, T5 to T7 UNPROVEN (`skip_if: "false"`), evidence in `docs/code-plan/evidence/2026-10-21-auto-tour-backlog/verification.md`.
 - Backlog (LATER): `useGameState.test.jsx` is 18.2 KB, 91% of vivera's 20 KB file-size default; defer: split it when an edit pushes it past 20 KB. vivera `plan-closeout.mjs --readiness` picks the newest unfinished session's worktree even when that session lives in another repository; defer: fix in vivera when a second two-repo plan appears.
 - Reopen trigger: the owner merges PR #49 and vivera#155; then decide Complete.
+- Decision 2026-10-31 (owner, batch closeout of merged plans): `Complete`. All registry sessions merged (`auto-tour-backlog`, `scratch-rule`); previous status `InProgress`; task step boxes open: 0 of 19. `--readiness` was not run (owner's batch decision).
