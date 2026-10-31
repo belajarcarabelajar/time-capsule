@@ -1,7 +1,7 @@
 ---
 schema: ultra-plan/v1
 plan_id: 2026-10-21-story-loading-hint
-status: InProgress
+status: Complete
 version: 1
 runner_contract: true
 defaults:
@@ -274,3 +274,4 @@ Inline, by the parent: one component with its test plus one documentation update
 |---|---|---|
 | `Loading` | Medium + loading hint | 2026-10-21 |
 | `Design` | Approve design | 2026-10-21 |
+- Decision 2026-10-31 (owner, batch closeout of merged plans): `Complete`. All registry sessions merged (`story-loading-hint`); previous status `InProgress`; task step boxes open: 0 of 14. `--readiness` was not run (owner's batch decision).

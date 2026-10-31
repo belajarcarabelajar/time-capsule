@@ -618,3 +618,4 @@ Selected and executed in this PR: T9 to T12. Deferred:
 | `Section A` to `Section D` | Approve | 2026-10-21 |
 | `Spec` | Approve spec | 2026-10-21 |
 | `Plan` | Approve plan | 2026-10-21 |
+- Decision 2026-10-31 (owner, batch closeout of merged plans): kept open. All registry sessions merged (`claude-story-worker`), but 3 of 52 task step boxes are open, so completion is not recorded from evidence. Reopen trigger: tick the steps from evidence (`plan-mark-done --from <runner.log>`) or an owner review, then ask `Close plan` again.
