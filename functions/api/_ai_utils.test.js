@@ -5,7 +5,8 @@ let fixture;
 beforeEach(async () => { fixture = await createPointsDb(); });
 afterEach(async () => { await fixture?.dispose(); });
 const authUser = { sub: 'google-user' };
-const adminUser = { sub: 'google-user', email: 'Kurniawaniwan7906@gmail.com', verified_email: true };
+const adminUser = { sub: 'google-user', email: 'Admin@Example.com', verified_email: true };
+const adminEnv = { ADMIN_EMAILS: ' other@example.com , ADMIN@example.com ' };
 const debit = () => deductPointsAndSaveStory({ authUser, env: { DB: fixture.db }, currentPoints: 50 });
 const row = () => fixture.db.prepare('SELECT points FROM users').first();
 const count = async table => (await fixture.db.prepare(`SELECT count(*) n FROM ${table}`).first()).n;
@@ -44,12 +45,22 @@ test('missing binding, absent user and database errors fail closed', async () =>
 });
 
 test('verified admin email bypasses quota without a database', async () => {
-  const result = await checkUserPoints({ ...adminUser, sub: 'missing' }, {});
+  const result = await checkUserPoints({ ...adminUser, sub: 'missing' }, adminEnv);
   expect(result).toEqual({ success: true, unlimited: true, currentPoints: null });
 });
 
+test('missing or empty ADMIN_EMAILS grants nobody the admin bypass', async () => {
+  for (const env of [{}, { ADMIN_EMAILS: '' }, { ADMIN_EMAILS: ' , ' }]) {
+    for (const identity of [adminUser, { ...adminUser, email: '' }]) {
+      const result = await checkUserPoints({ ...identity, sub: 'missing' }, env);
+      expect(result.success).toBe(false);
+      expect(result.errorResponse.status).toBe(503);
+    }
+  }
+});
+
 test('admin story persistence never decrements points', async () => {
-  await deductPointsAndSaveStory({ authUser: adminUser, env: { DB: fixture.db } });
+  await deductPointsAndSaveStory({ authUser: adminUser, env: { ...adminEnv, DB: fixture.db } });
   expect((await row()).points).toBe(50);
   expect((await fixture.db.prepare('SELECT points_spent FROM stories').first()).points_spent).toBe(0);
   expect((await fixture.db.prepare("SELECT amount, type FROM point_transactions WHERE type='ADMIN_GENERATE'").first()))
@@ -59,7 +70,7 @@ test('admin story persistence never decrements points', async () => {
 test('admin generation remains available when story persistence fails', async () => {
   const result = await deductPointsAndSaveStory({
     authUser: adminUser,
-    env: { DB: { batch: async () => { throw new Error('injected persistence failure'); } } },
+    env: { ...adminEnv, DB: { batch: async () => { throw new Error('injected persistence failure'); } } },
   });
   expect(result).toBeNull();
 });
@@ -67,9 +78,9 @@ test('admin generation remains available when story persistence fails', async ()
 test('unverified or near-match emails do not receive the admin bypass', async () => {
   for (const identity of [
     { ...adminUser, verified_email: false },
-    { ...adminUser, email: 'kurniawaniwan7906+test@gmail.com' },
+    { ...adminUser, email: 'admin+test@example.com' },
   ]) {
-    const result = await checkUserPoints({ ...identity, sub: 'missing' }, {});
+    const result = await checkUserPoints({ ...identity, sub: 'missing' }, adminEnv);
     expect(result.success).toBe(false);
     expect(result.errorResponse.status).toBe(503);
   }

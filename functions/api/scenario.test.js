@@ -26,7 +26,7 @@ const sanitizedScenario = { topic: "Kekaisaran Romawi", chapter: 2, history: "Ba
 const userToken = () => signJwt({ sub: "google-user" }, JWT_SECRET);
 const adminToken = () =>
   signJwt(
-    { sub: "admin-user", email: "kurniawaniwan7906@gmail.com", verified_email: true },
+    { sub: "admin-user", email: "admin@example.com", verified_email: true },
     JWT_SECRET,
   );
 
@@ -573,7 +573,7 @@ describe("onRequestPost scenario request", () => {
       const worker = primarySuccess();
       const response = await onRequestPost({
         request: scenarioRequest(await adminToken()),
-        env: envWith({ DB: undefined, STORY_WORKER: worker }),
+        env: envWith({ DB: undefined, STORY_WORKER: worker, ADMIN_EMAILS: "admin@example.com" }),
       });
       expect(response.status).toBe(200);
       expect(await response.json()).toEqual({ success: true, result: { response: SCENARIO_JSON } });

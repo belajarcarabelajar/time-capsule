@@ -34,7 +34,7 @@ export async function onRequestGet(context) {
 
   let points = null;
   let maxPoints = null;
-  const unlimitedQuota = isUnlimitedQuotaUser(payload);
+  const unlimitedQuota = isUnlimitedQuotaUser(payload, env);
   if (!unlimitedQuota) {
     try {
       const row = await readUserPoints(payload, env);

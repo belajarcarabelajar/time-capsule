@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Give only the verified Google identity `kurniawaniwan7906@gmail.com` an unlimited generation quota without changing the quota policy for other users.
+**Goal:** Give only the owner's verified Google identity (now listed in the `ADMIN_EMAILS` secret) an unlimited generation quota without changing the quota policy for other users.
 
 **Architecture:** The server recognizes the admin from the signed OAuth JWT email and verified-email claim. Quota checks bypass D1 only for that identity; generated stories are persisted best-effort with zero point cost when D1 is available, while ordinary users remain fail-closed. `/api/auth/me` and the user badge expose an explicit unlimited state.
 

@@ -6,12 +6,17 @@ export class PointsError extends Error {
   }
 }
 
-const UNLIMITED_QUOTA_EMAIL = 'kurniawaniwan7906@gmail.com';
+function adminEmails(env) {
+  if (typeof env?.ADMIN_EMAILS !== 'string') return [];
+  return env.ADMIN_EMAILS.split(',')
+    .map(email => email.trim().toLowerCase())
+    .filter(Boolean);
+}
 
-export function isUnlimitedQuotaUser(authUser) {
+export function isUnlimitedQuotaUser(authUser, env) {
   return authUser?.verified_email === true
     && typeof authUser.email === 'string'
-    && authUser.email.trim().toLowerCase() === UNLIMITED_QUOTA_EMAIL;
+    && adminEmails(env).includes(authUser.email.trim().toLowerCase());
 }
 
 export function pointsErrorResponse(error) {
@@ -57,7 +62,7 @@ export async function readUserPoints(authUser, env) {
 }
 
 export async function checkUserPoints(authUser, env, cost = 10) {
-  if (isUnlimitedQuotaUser(authUser)) {
+  if (isUnlimitedQuotaUser(authUser, env)) {
     return { success: true, unlimited: true, currentPoints: null };
   }
   try {
@@ -75,7 +80,7 @@ export async function deductPointsAndSaveStory({
   storyTitle = 'Time Capsule Chapter', promptSnippet = 'Time Capsule Story',
   contentStr = '{}', dataObj,
 }) {
-  const unlimited = isUnlimitedQuotaUser(authUser);
+  const unlimited = isUnlimitedQuotaUser(authUser, env);
   if (!authUser || (!env.DB && !unlimited)) throw new PointsError();
   if (unlimited && !env.DB) return null;
   const db = env.DB;
