@@ -78,7 +78,21 @@ describe("onRequestGet - me.js", () => {
 
   it("marks the verified admin session as unlimited without D1", async () => {
     const payload = {
-      sub: "admin-user", email: "KURNIAWANIWAN7906@GMAIL.COM", verified_email: true,
+      sub: "admin-user", email: "ADMIN@EXAMPLE.COM", verified_email: true,
+    };
+    const token = await signJwt(payload, jwtSecret);
+    const response = await onRequestGet({
+      request: new Request("http://localhost/api/auth/me", { headers: { Cookie: `auth_token=${token}` } }),
+      env: { JWT_SECRET: jwtSecret, ADMIN_EMAILS: "admin@example.com" },
+    });
+    const json = await response.json();
+    expect(json.user.unlimitedQuota).toBe(true);
+    expect(json.user.pointsAvailable).toBe(true);
+  });
+
+  it("does not mark a verified session as unlimited when ADMIN_EMAILS is missing", async () => {
+    const payload = {
+      sub: "admin-user", email: "admin@example.com", verified_email: true,
     };
     const token = await signJwt(payload, jwtSecret);
     const response = await onRequestGet({
@@ -86,8 +100,8 @@ describe("onRequestGet - me.js", () => {
       env: { JWT_SECRET: jwtSecret },
     });
     const json = await response.json();
-    expect(json.user.unlimitedQuota).toBe(true);
-    expect(json.user.pointsAvailable).toBe(true);
+    expect(json.user.unlimitedQuota).toBe(false);
+    expect(json.user.pointsAvailable).toBe(false);
   });
 
   it("should authenticate successfully when valid token is in Authorization header", async () => {

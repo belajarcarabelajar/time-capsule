@@ -8,6 +8,10 @@
 [![Vite](https://img.shields.io/badge/Vite-React-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
 [![Cloudflare](https://img.shields.io/badge/Cloudflare-Pages%20%2B%20D1-F38020?logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/pages/)
 
+**Live demo:** https://time-capsule.belajarcarabelajar.com/
+
+[![Time Capsule start screen: a 3D study room with bookshelves, a desk, and the topic search box](docs/images/screenshot.png)](https://time-capsule.belajarcarabelajar.com/)
+
 ## About
 
 **Time Capsule** is an open-source educational adventure app. You enter a historical topic (for example a battle, kingdom, or figure), and the app generates a multi-chapter dialogue scenario: you are a time traveler talking with 3–4 NPCs, making diplomacy/quiz choices, and unlocking narrator "history insights" at the end of each section.
@@ -106,6 +110,7 @@ cp .env.example .env
 | `GOOGLE_CLIENT_SECRET`           | `functions/api/auth/callback.js` | Google OAuth client secret         |
 | `GOOGLE_REDIRECT_URI`            | auth                             | OAuth callback URL                 |
 | `JWT_SECRET`                     | auth                             | Signs the `auth_token` session JWT |
+| `ADMIN_EMAILS`                   | Pages Functions                  | Comma-separated verified Google emails with unlimited quota (case-insensitive) |
 | `TIME_CAPSULE_FUNCTIONS_ORIGIN`  | Vite dev proxy                   | Local Pages Functions origin       |
 
 > [!NOTE]
@@ -124,6 +129,7 @@ The `functions/api/*` Pages Functions read server-only values from the Cloudflar
 | `PROVIDER_API_KEY` | for the fallback | When Claude is unavailable, the request ends with `502` `STORY_UNAVAILABLE` instead of reaching Groq |
 | `JWT_SECRET` | yes | Authentication fails on every request |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | yes | OAuth login fails |
+| `ADMIN_EMAILS` (secret, comma-separated emails) | no | Nobody gets the unlimited admin quota; every account uses points |
 
 The story Worker keeps its own secret: set `ANTHROPIC_API_KEY` with `wrangler secret put ANTHROPIC_API_KEY --name time-capsule-story` (value from stdin). The Worker has no public URL (`workers_dev` and preview URLs are off, no route); only the Pages service binding reaches it.
 
