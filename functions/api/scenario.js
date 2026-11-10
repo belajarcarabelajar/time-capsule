@@ -1,9 +1,10 @@
 import { getUserFromRequest } from "./auth/_utils.js";
 import {
-  checkUserPoints,
-  deductPointsAndSaveStory,
   PointsError,
   pointsErrorResponse,
+  refundPoints,
+  reservePoints,
+  saveStory,
 } from "./_ai_utils.js";
 import {
   buildScenarioPrompt,
@@ -124,12 +125,79 @@ async function askFallbackProvider(env, scenario) {
     return null;
   }
   const data = reply.ok ? await readJson(reply) : null;
-  const content = data?.choices?.[0]?.message?.content;
+  const choice = data?.choices?.[0];
+  const content = choice?.message?.content;
   if (!isFilledString(content)) {
     console.error("Scenario fallback provider error:", reply.status);
     return null;
   }
+  // json_object mode carries no schema, so a cut-off or non-JSON reply is the
+  // only unusable output that can be told apart here.
+  if (choice.finish_reason === "length") {
+    console.error("Scenario fallback provider output rejected:", "truncated");
+    return null;
+  }
+  try {
+    JSON.parse(content);
+  } catch {
+    console.error("Scenario fallback provider output rejected:", "invalid_json");
+    return null;
+  }
   return content;
+}
+
+// Resolves to the body text, null when the request has no body, or
+// { tooLarge: true } once the stream passes the byte cap.
+async function readCappedBody(request) {
+  if (!request.body) return null;
+  const reader = request.body.getReader();
+  const chunks = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_BODY_BYTES) {
+      await reader.cancel();
+      return { tooLarge: true };
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+// Runs after the reservation; every reply other than a 200 is refunded by the caller.
+async function generateAndSave({ authUser, env, binding, scenario }) {
+  const { topic, chapter } = scenario;
+  const primary = await askStoryWorker(binding, { userId: authUser.sub, ...scenario });
+  if (primary.outcome) return primary.outcome;
+
+  let provider = "claude";
+  let response = primary.response;
+  if (primary.fallback) {
+    console.warn("Scenario primary provider unavailable:", primary.fallback);
+    response = await askFallbackProvider(env, scenario);
+    if (!response) return failure(502, STORY_UNAVAILABLE);
+    provider = "fallback";
+  }
+
+  await saveStory({
+    authUser,
+    env,
+    cost: COST,
+    transactionDescription: "Generasi cerita time capsule",
+    storyTitle: "Time Capsule Chapter",
+    promptSnippet: `${topic} (bagian ${chapter})`,
+    contentStr: JSON.stringify({ provider, response }),
+  });
+
+  return jsonResponse(200, { success: true, result: { response } });
 }
 
 export async function onRequestPost(context) {
@@ -146,17 +214,15 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Refuses a declared oversized body before buffering it; the byte check
+    // Refuses a declared oversized body before reading it; the streamed read
     // below still covers a missing or unparsable header.
     const declaredLength = request.headers.get("Content-Length") ?? "";
     if (/^\d+$/.test(declaredLength) && Number(declaredLength) > MAX_BODY_BYTES) {
       return failure(413, PAYLOAD_TOO_LARGE);
     }
 
-    const raw = await request.text();
-    if (new TextEncoder().encode(raw).length > MAX_BODY_BYTES) {
-      return failure(413, PAYLOAD_TOO_LARGE);
-    }
+    const raw = await readCappedBody(request);
+    if (raw?.tooLarge) return failure(413, PAYLOAD_TOO_LARGE);
 
     let parsed;
     try {
@@ -167,43 +233,37 @@ export async function onRequestPost(context) {
     if (!parsed?.ok) return failure(400, INVALID_REQUEST);
     const { topic, chapter, history } = parsed.value;
 
-    const pointCheck = await checkUserPoints(authUser, env, COST);
-    if (!pointCheck.success) return pointCheck.errorResponse;
-
+    // Checked before the reservation so a missing binding needs no refund.
     const binding = env.STORY_WORKER;
     if (typeof binding?.fetch !== "function") {
       console.error("Scenario story Worker binding STORY_WORKER is missing");
       return failure(500, STORY_UNAVAILABLE);
     }
 
-    const primary = await askStoryWorker(binding, {
-      userId: authUser.sub,
-      topic,
-      chapter,
-      history,
-    });
-    if (primary.outcome) return primary.outcome;
+    // The points leave the balance before any paid call, so parallel or
+    // cancelled requests cannot generate for free.
+    const reservation = await reservePoints(authUser, env, COST);
 
-    let provider = "claude";
-    let response = primary.response;
-    if (primary.fallback) {
-      console.warn("Scenario primary provider unavailable:", primary.fallback);
-      response = await askFallbackProvider(env, { topic, chapter, history });
-      if (!response) return failure(502, STORY_UNAVAILABLE);
-      provider = "fallback";
+    let outcome;
+    try {
+      outcome = await generateAndSave({
+        authUser,
+        env,
+        binding,
+        scenario: { topic, chapter, history },
+      });
+    } catch (err) {
+      if (err instanceof PointsError) {
+        outcome = pointsErrorResponse(err);
+      } else {
+        console.error("Scenario request failed unexpectedly");
+        outcome = failure(500, STORY_UNAVAILABLE);
+      }
     }
-
-    await deductPointsAndSaveStory({
-      authUser,
-      env,
-      cost: COST,
-      transactionDescription: "Generasi cerita time capsule",
-      storyTitle: "Time Capsule Chapter",
-      promptSnippet: `${topic} (bagian ${chapter})`,
-      contentStr: JSON.stringify({ provider, response }),
-    });
-
-    return jsonResponse(200, { success: true, result: { response } });
+    if (outcome.status !== 200 && !reservation.unlimited) {
+      await refundPoints(authUser, env, COST);
+    }
+    return outcome;
   } catch (err) {
     if (err instanceof PointsError) return pointsErrorResponse(err);
     console.error("Scenario request failed unexpectedly");
