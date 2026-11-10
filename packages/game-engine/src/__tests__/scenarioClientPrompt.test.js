@@ -22,7 +22,8 @@ describe("fetchScenarioData", () => {
       "kingdom-court",
       "market-port",
       "rural-village",
-      "resistance-outpost"
+      "resistance-outpost",
+      "ancient-library"
     ]);
     expect(SCENARIO_SYSTEM_PROMPT).toContain('"environmentKey"');
     HISTORY_ENVIRONMENT_KEYS.forEach((key) => {

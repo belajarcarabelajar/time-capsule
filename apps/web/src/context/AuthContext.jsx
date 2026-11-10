@@ -2,6 +2,18 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 
 const AuthContext = createContext(null);
 
+// auth_error arrives in the URL, so anyone can craft a link carrying any
+// text. Only the literals the login and callback handlers send are shown.
+const KNOWN_AUTH_ERRORS = new Set([
+  'Google OAuth Client ID belum dikonfigurasi di Cloudflare Pages project settings.',
+  'Invalid OAuth state parameter. Request rejected for security.',
+  'No code provided',
+  'Token exchange failed',
+  'Failed to fetch user profile',
+  'Authentication failed',
+]);
+const GENERIC_AUTH_ERROR = 'Login gagal. Silakan coba lagi.';
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +51,7 @@ export function AuthProvider({ children }) {
     const error = urlParams.get('auth_error');
 
     if (error) {
-      setAuthError(error);
+      setAuthError(KNOWN_AUTH_ERRORS.has(error) ? error : GENERIC_AUTH_ERROR);
     }
 
     if (success || error) {
