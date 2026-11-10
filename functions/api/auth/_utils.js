@@ -119,7 +119,14 @@ export function parseCookies(request) {
       cookies[trimmedCookie] = "";
     } else if (eqIdx > 0) {
       const name = trimmedCookie.slice(0, eqIdx);
-      cookies[name] = decodeURIComponent(trimmedCookie.slice(eqIdx + 1));
+      const rawValue = trimmedCookie.slice(eqIdx + 1);
+      try {
+        cookies[name] = decodeURIComponent(rawValue);
+      } catch {
+        // Any site on the domain can set a cookie that is not valid
+        // percent-encoding; it must not break parsing of the others.
+        cookies[name] = rawValue;
+      }
     }
   });
   return cookies;

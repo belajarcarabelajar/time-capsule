@@ -1,5 +1,28 @@
 import { describe, it, expect } from "bun:test";
-import { getUserFromRequest, signJwt } from "./_utils.js";
+import { getUserFromRequest, parseCookies, signJwt } from "./_utils.js";
+
+describe("parseCookies", () => {
+  const requestWithCookie = (cookie) =>
+    new Request("http://localhost", { headers: { Cookie: cookie } });
+
+  it("should keep the raw value of a cookie that is not valid percent-encoding", () => {
+    let cookies;
+    let thrown = null;
+    try {
+      cookies = parseCookies(requestWithCookie("foo=%E0%A4%A; auth_token=x"));
+    } catch (err) {
+      thrown = err;
+    }
+
+    expect(thrown).toBeNull();
+    expect(cookies).toEqual({ foo: "%E0%A4%A", auth_token: "x" });
+  });
+
+  it("should still decode a well-formed percent-encoded cookie", () => {
+    const cookies = parseCookies(requestWithCookie("name=a%20b"));
+    expect(cookies).toEqual({ name: "a b" });
+  });
+});
 
 describe("getUserFromRequest", () => {
   const env = { JWT_SECRET: "test-secret" };
