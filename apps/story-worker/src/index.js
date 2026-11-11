@@ -86,9 +86,16 @@ export async function handleStoryRequest(request, env, deps = {}) {
   if (result.refused) {
     return reply(422, { success: false, error: "REFUSED" }, { outcome: "refused", ...tokens });
   }
+  // Usage exists only when a model message came back, so the Pages Function
+  // keeps the user's points for tokens the provider already spent.
   return reply(
     502,
-    { success: false, error: "PRIMARY_UNAVAILABLE", reason: result.reason },
+    {
+      success: false,
+      error: "PRIMARY_UNAVAILABLE",
+      reason: result.reason,
+      ...(result.usage ? { tokens_spent: true } : {}),
+    },
     {
       outcome: "primary_unavailable",
       reason: result.reason,

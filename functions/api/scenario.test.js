@@ -151,6 +151,13 @@ describe("onRequestPost scenario request", () => {
     expect(await fixtureStories()).toEqual([]);
   }
 
+  // A provider already returned a model message, so the reservation stands.
+  async function expectChargeKept() {
+    expect(await fixturePoints()).toBe(40);
+    expect(await fixtureStories()).toEqual([]);
+    expect(await fixtureLedger()).toEqual([GENERATE_ROW]);
+  }
+
   describe("request validation", () => {
     it("rejects an unauthenticated scenario request with 401 before calling the story Worker", async () => {
       const worker = primarySuccess();
@@ -480,7 +487,7 @@ describe("onRequestPost scenario request", () => {
   });
 
   describe("terminal failure", () => {
-    it("maps a story Worker 422 REFUSED to 422 without the fallback provider or a charge", async () => {
+    it("maps a story Worker 422 REFUSED to 422 without the fallback provider and keeps the 10 points", async () => {
       const response = await onRequestPost({
         request: scenarioRequest(await userToken()),
         env: envWith({ STORY_WORKER: fakeStoryWorker(422, { success: false, error: "REFUSED" }) }),
@@ -492,7 +499,7 @@ describe("onRequestPost scenario request", () => {
         message: "Topik ini tidak dapat diproses. Coba topik sejarah lain.",
       });
       expect(fallbackCalls).toHaveLength(0);
-      await expectNothingCharged();
+      await expectChargeKept();
     });
 
     it("maps a story Worker 429 RATE_LIMITED to 429 without the fallback provider or a charge", async () => {
@@ -601,14 +608,29 @@ describe("onRequestPost scenario request", () => {
       await expectNothingCharged();
     });
 
-    const brokenFallback = [
-      ["a thrown fallback provider fetch", () => { throw new Error(UPSTREAM_DETAIL); }],
+    it("returns 502 STORY_UNAVAILABLE for a thrown fallback provider fetch without a charge", async () => {
+      stubFallbackProvider(() => {
+        throw new Error(UPSTREAM_DETAIL);
+      });
+      const response = await onRequestPost({
+        request: scenarioRequest(await userToken()),
+        env: envWith({ STORY_WORKER: primaryUnavailable() }),
+      });
+      expect(response.status).toBe(502);
+      const text = await response.text();
+      expect(JSON.parse(text)).toEqual(STORY_UNAVAILABLE);
+      expect(text).not.toContain(UPSTREAM_DETAIL);
+      expect(loggedText()).not.toContain(UPSTREAM_DETAIL);
+      await expectNothingCharged();
+    });
+
+    const unusableOkFallback = [
       ["an empty fallback provider content", fallbackReply("")],
       ["a non-string fallback provider content", fallbackReply(null)],
       ["an unparsable fallback provider body", () => new Response(`<html>${UPSTREAM_DETAIL}</html>`, { status: 200 })],
     ];
-    for (const [name, respond] of brokenFallback) {
-      it(`returns 502 STORY_UNAVAILABLE for ${name} without a charge`, async () => {
+    for (const [name, respond] of unusableOkFallback) {
+      it(`returns 502 STORY_UNAVAILABLE for ${name} and keeps the 10 points`, async () => {
         stubFallbackProvider(respond);
         const response = await onRequestPost({
           request: scenarioRequest(await userToken()),
@@ -619,9 +641,58 @@ describe("onRequestPost scenario request", () => {
         expect(JSON.parse(text)).toEqual(STORY_UNAVAILABLE);
         expect(text).not.toContain(UPSTREAM_DETAIL);
         expect(loggedText()).not.toContain(UPSTREAM_DETAIL);
-        await expectNothingCharged();
+        await expectChargeKept();
       });
     }
+
+    const primarySpent = () =>
+      fakeStoryWorker(502, {
+        success: false,
+        error: "PRIMARY_UNAVAILABLE",
+        reason: "max_tokens",
+        tokens_spent: true,
+      });
+
+    it("keeps the 10 points when the primary provider spent tokens and the fallback provider answers non-OK", async () => {
+      stubFallbackProvider(() => new Response("{}", { status: 503 }));
+      const response = await onRequestPost({
+        request: scenarioRequest(await userToken()),
+        env: envWith({ STORY_WORKER: primarySpent() }),
+      });
+      expect(response.status).toBe(502);
+      expect(await response.json()).toEqual(STORY_UNAVAILABLE);
+      expect(fallbackCalls).toHaveLength(1);
+      await expectChargeKept();
+    });
+
+    it("keeps the 10 points when the primary provider spent tokens and PROVIDER_API_KEY is missing", async () => {
+      const response = await onRequestPost({
+        request: scenarioRequest(await userToken()),
+        env: envWith({ STORY_WORKER: primarySpent(), PROVIDER_API_KEY: undefined }),
+      });
+      expect(response.status).toBe(502);
+      expect(fallbackCalls).toHaveLength(0);
+      await expectChargeKept();
+    });
+
+    it("refunds when the primary provider spent no tokens and the fallback provider fetch throws", async () => {
+      stubFallbackProvider(() => {
+        throw new Error(UPSTREAM_DETAIL);
+      });
+      const response = await onRequestPost({
+        request: scenarioRequest(await userToken()),
+        env: envWith({
+          STORY_WORKER: fakeStoryWorker(502, {
+            success: false,
+            error: "PRIMARY_UNAVAILABLE",
+            reason: "unknown",
+          }),
+        }),
+      });
+      expect(response.status).toBe(502);
+      await expectNothingCharged();
+      expect(await fixtureLedger()).toEqual([GENERATE_ROW, REFUND_ROW]);
+    });
 
     const finishedReply = (content, finishReason) => () =>
       new Response(
@@ -635,7 +706,7 @@ describe("onRequestPost scenario request", () => {
       ["a fallback provider content that is not JSON", finishedReply(`{"meta": ${UPSTREAM_DETAIL}`, "stop"), "invalid_json"],
     ];
     for (const [name, respond, reason] of unusableFallback) {
-      it(`returns 502 STORY_UNAVAILABLE for ${name} without a charge, logging only a reason code`, async () => {
+      it(`returns 502 STORY_UNAVAILABLE for ${name} and keeps the 10 points, logging only a reason code`, async () => {
         stubFallbackProvider(respond);
         const response = await onRequestPost({
           request: scenarioRequest(await userToken()),
@@ -648,7 +719,7 @@ describe("onRequestPost scenario request", () => {
         expect(errorSpy).toHaveBeenCalledWith("Scenario fallback provider output rejected:", reason);
         expect(loggedText()).not.toContain(UPSTREAM_DETAIL);
         expect(fallbackCalls).toHaveLength(1);
-        await expectNothingCharged();
+        await expectChargeKept();
       });
     }
 
@@ -715,7 +786,7 @@ describe("onRequestPost scenario request", () => {
       expect(await fixtureLedger()).toEqual([]);
     });
 
-    it("returns 503 POINTS_UNAVAILABLE and refunds when saving the story fails after a primary provider success, without the fallback provider", async () => {
+    it("returns 503 POINTS_UNAVAILABLE and keeps the 10 points when saving the story fails after a primary provider success, without the fallback provider", async () => {
       await fixture.db
         .prepare("CREATE TRIGGER fail_story BEFORE INSERT ON stories BEGIN SELECT RAISE(ABORT, 'injected'); END")
         .run();
@@ -726,8 +797,7 @@ describe("onRequestPost scenario request", () => {
       expect(response.status).toBe(503);
       expect((await response.json()).error).toBe("POINTS_UNAVAILABLE");
       expect(fallbackCalls).toHaveLength(0);
-      await expectNothingCharged();
-      expect(await fixtureLedger()).toEqual([GENERATE_ROW, REFUND_ROW]);
+      await expectChargeKept();
     });
   });
 
