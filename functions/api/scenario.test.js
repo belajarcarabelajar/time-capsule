@@ -675,6 +675,37 @@ describe("onRequestPost scenario request", () => {
       await expectChargeKept();
     });
 
+    it("refunds when the story Worker sends tokens_spent as the string \"true\" and the fallback provider answers non-OK", async () => {
+      stubFallbackProvider(() => new Response("{}", { status: 503 }));
+      const response = await onRequestPost({
+        request: scenarioRequest(await userToken()),
+        env: envWith({
+          STORY_WORKER: fakeStoryWorker(502, {
+            success: false,
+            error: "PRIMARY_UNAVAILABLE",
+            reason: "max_tokens",
+            tokens_spent: "true",
+          }),
+        }),
+      });
+      expect(response.status).toBe(502);
+      await expectNothingCharged();
+      expect(await fixtureLedger()).toEqual([GENERATE_ROW, REFUND_ROW]);
+    });
+
+    it("answers 200 without a refund when the primary provider spent tokens and the fallback provider succeeds", async () => {
+      const response = await onRequestPost({
+        request: scenarioRequest(await userToken()),
+        env: envWith({ STORY_WORKER: primarySpent() }),
+      });
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ success: true, result: { response: SCENARIO_JSON } });
+      expect(fallbackCalls).toHaveLength(1);
+      expect(await fixturePoints()).toBe(40);
+      expect(await fixtureLedger()).toEqual([GENERATE_ROW]);
+      expect(await fixtureStories()).toHaveLength(1);
+    });
+
     it("refunds when the primary provider spent no tokens and the fallback provider fetch throws", async () => {
       stubFallbackProvider(() => {
         throw new Error(UPSTREAM_DETAIL);
@@ -786,7 +817,7 @@ describe("onRequestPost scenario request", () => {
       expect(await fixtureLedger()).toEqual([]);
     });
 
-    it("returns 503 POINTS_UNAVAILABLE and keeps the 10 points when saving the story fails after a primary provider success, without the fallback provider", async () => {
+    it("returns 503 POINTS_UNAVAILABLE and refunds the 10 points when saving the story fails after a primary provider success, without the fallback provider", async () => {
       await fixture.db
         .prepare("CREATE TRIGGER fail_story BEFORE INSERT ON stories BEGIN SELECT RAISE(ABORT, 'injected'); END")
         .run();
@@ -797,7 +828,23 @@ describe("onRequestPost scenario request", () => {
       expect(response.status).toBe(503);
       expect((await response.json()).error).toBe("POINTS_UNAVAILABLE");
       expect(fallbackCalls).toHaveLength(0);
-      await expectChargeKept();
+      await expectNothingCharged();
+      expect(await fixtureLedger()).toEqual([GENERATE_ROW, REFUND_ROW]);
+    });
+
+    it("returns 503 POINTS_UNAVAILABLE and refunds the 10 points when saving the story fails after a fallback provider success", async () => {
+      await fixture.db
+        .prepare("CREATE TRIGGER fail_story BEFORE INSERT ON stories BEGIN SELECT RAISE(ABORT, 'injected'); END")
+        .run();
+      const response = await onRequestPost({
+        request: scenarioRequest(await userToken()),
+        env: envWith({ STORY_WORKER: primaryUnavailable() }),
+      });
+      expect(response.status).toBe(503);
+      expect((await response.json()).error).toBe("POINTS_UNAVAILABLE");
+      expect(fallbackCalls).toHaveLength(1);
+      await expectNothingCharged();
+      expect(await fixtureLedger()).toEqual([GENERATE_ROW, REFUND_ROW]);
     });
   });
 

@@ -225,7 +225,7 @@ Tables:
 
 **Points flow:** each `/api/scenario` generation costs **10 points**; balances reset to `max_points` once per day (`last_point_reset`). If the user lacks points, generation is refused. Unauthenticated requests get `401`; without a D1 binding only the verified admin account can generate, every other account gets `503` `POINTS_UNAVAILABLE`.
 
-The 10 points are reserved before the story call. A failure is refunded only when no provider returned a model message: request validation, the story Worker rate limit, an unreachable story Worker, a missing provider key, or a provider that errored or could not be reached. Once a provider returned a message (a `422` refusal, a cut-off or invalid reply, or a story that then failed to save), the points stay spent. The story Worker marks its `502` `PRIMARY_UNAVAILABLE` reply with `tokens_spent: true` when Claude returned a message.
+The 10 points are reserved before the story call. A failure is refunded when no provider returned a model message: request validation, the story Worker rate limit, an unreachable story Worker, a missing provider key, or a provider that errored or could not be reached. A story that was generated but then failed to save in our database (`503` `POINTS_UNAVAILABLE`) is refunded too, since that failure is ours. Otherwise, once a provider returned a message (a `422` refusal, or a cut-off or invalid reply), the points stay spent. The story Worker marks its `502` `PRIMARY_UNAVAILABLE` reply with `tokens_spent: true` when Claude returned a message; any other value, such as the string `"true"`, counts as no tokens spent.
 
 ### Data retention (90 days)
 
