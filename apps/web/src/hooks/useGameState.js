@@ -66,7 +66,7 @@ ${errorDetail.stack || "N/A"}
 
   const preloadNextChapter = (activeTopic, nextChapterNum, currentHistory = []) => {
     if (inFlightPreloadRef.current || !user) return;
-    const preload = { chapter: nextChapterNum, claimed: false, promise: null };
+    const preload = { topic: activeTopic, chapter: nextChapterNum, claimed: false, discarded: false, promise: null };
     inFlightPreloadRef.current = preload;
     setIsPreloading(true);
     preload.promise = (async () => {
@@ -75,7 +75,7 @@ ${errorDetail.stack || "N/A"}
         const data = await fetchScenarioData(activeTopic, nextChapterNum, historySummary);
         // A claimed preload is shown directly by handleContinue; caching it
         // too would replay this chapter as the following one.
-        if (!preload.claimed) setNextGameData(data);
+        if (!preload.claimed && !preload.discarded) setNextGameData(data);
         return data;
       } catch (e) {
         // Preload failed; handleContinue falls back to its own request.
@@ -83,9 +83,21 @@ ${errorDetail.stack || "N/A"}
       } finally {
         if (inFlightPreloadRef.current === preload) inFlightPreloadRef.current = null;
         void checkSession();
-        setIsPreloading(false);
+        // A discarded preload may finish after a newer one started; the
+        // flag then belongs to the newer one.
+        if (!preload.discarded) setIsPreloading(false);
       }
     })();
+  };
+
+  // Going home or starting another adventure makes a running preload stale:
+  // its chapter belongs to the adventure that just ended.
+  const discardInFlightPreload = () => {
+    const preload = inFlightPreloadRef.current;
+    if (!preload) return;
+    preload.discarded = true;
+    inFlightPreloadRef.current = null;
+    setIsPreloading(false);
   };
 
   const handleStartAdventure = async (e) => {
@@ -97,6 +109,7 @@ ${errorDetail.stack || "N/A"}
       return;
     }
 
+    discardInFlightPreload();
     setIsLoading(true);
     SoundEngine.init();
     SoundEngine.playWarp();
@@ -168,7 +181,7 @@ ${errorDetail.stack || "N/A"}
       try {
         const inFlight = inFlightPreloadRef.current;
         let data = null;
-        if (inFlight && inFlight.chapter === nextChapterNum) {
+        if (inFlight && inFlight.topic === topic && inFlight.chapter === nextChapterNum) {
           inFlight.claimed = true;
           data = await inFlight.promise;
         }
@@ -228,7 +241,9 @@ ${errorDetail.stack || "N/A"}
     }
 
     // Jika skrip saat ini adalah kuis, aktifkan mode kuis (popup akan muncul)
-    if (currentScript?.type === 'quiz' && !quizMode) {
+    // A quiz without choices has no answer to press, so the popup would
+    // never close; it falls through and advances like any other slide.
+    if (currentScript?.type === 'quiz' && !quizMode && currentScript.choices?.length > 0) {
       setQuizMode(true);
       return;
     }
@@ -255,6 +270,7 @@ ${errorDetail.stack || "N/A"}
   };
 
   const handleFinish = () => {
+    discardInFlightPreload();
     setIsWarpingHome(true);
     setShowContinuePrompt(false);
     SoundEngine.playWarp();

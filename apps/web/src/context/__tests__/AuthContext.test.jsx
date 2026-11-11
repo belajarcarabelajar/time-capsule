@@ -28,9 +28,13 @@ function TestComponent({ onRender }) {
   );
 }
 
+// Several tests replace window.location; later test files in the same bun
+// process (RoomModel builds URLs from window.location.href) need it back.
+const originalLocationDescriptor = Object.getOwnPropertyDescriptor(window, 'location');
+const originalLocationHref = window.location.href;
+
 describe('AuthContext & AuthProvider', () => {
   let originalFetch;
-  let _originalLocation;
   let replaceStateMock;
 
   beforeEach(() => {
@@ -42,6 +46,11 @@ describe('AuthContext & AuthProvider', () => {
   afterEach(() => {
     cleanup();
     global.fetch = originalFetch;
+    if (originalLocationDescriptor) {
+      Object.defineProperty(window, 'location', originalLocationDescriptor);
+    } else {
+      delete window.location;
+    }
   });
 
   test('useAuth returns default context when used outside AuthProvider', () => {
@@ -123,13 +132,13 @@ describe('AuthContext & AuthProvider', () => {
     expect(getByTestId('user').textContent).toBe('No User');
   });
 
-  test('handles auth_error URL parameter and cleans history', async () => {
+  const renderWithAuthError = async (value) => {
     global.fetch = mock(async () => new Response(JSON.stringify({ authenticated: false }), { status: 200 }));
-    
-    delete window.location;
-    window.location = new URL('http://localhost/?auth_error=Gagal%20login');
 
-    const { getByTestId } = render(
+    delete window.location;
+    window.location = new URL(`http://localhost/?auth_error=${encodeURIComponent(value)}`);
+
+    const view = render(
       <AuthProvider>
         <TestComponent />
       </AuthProvider>
@@ -139,7 +148,28 @@ describe('AuthContext & AuthProvider', () => {
       await new Promise((r) => setTimeout(r, 50));
     });
 
-    expect(getByTestId('error').textContent).toBe('Gagal login');
+    return view;
+  };
+
+  test('replaces an unknown auth_error URL parameter with the generic login message and cleans history', async () => {
+    const { getByTestId } = await renderWithAuthError('Akun diblokir wa.me/62');
+
+    expect(getByTestId('error').textContent).toBe('Login gagal. Silakan coba lagi.');
+    expect(replaceStateMock).toHaveBeenCalled();
+  });
+
+  // The literals the login and callback handlers put in auth_error.
+  test.each([
+    'Google OAuth Client ID belum dikonfigurasi di Cloudflare Pages project settings.',
+    'Invalid OAuth state parameter. Request rejected for security.',
+    'No code provided',
+    'Token exchange failed',
+    'Failed to fetch user profile',
+    'Authentication failed',
+  ])('shows the server auth_error message unchanged: %s', async (message) => {
+    const { getByTestId } = await renderWithAuthError(message);
+
+    expect(getByTestId('error').textContent).toBe(message);
     expect(replaceStateMock).toHaveBeenCalled();
   });
 
@@ -214,5 +244,10 @@ describe('AuthContext & AuthProvider', () => {
 
     expect(logoutCalled).toBe(true);
     expect(getByTestId('user').textContent).toBe('No User');
+  });
+
+  // Keep last: proves earlier tests left window.location as they found it.
+  test('leaves window.location unchanged for later tests', () => {
+    expect(window.location.href).toBe(originalLocationHref);
   });
 });

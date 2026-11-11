@@ -398,6 +398,129 @@ describe('useGameState', () => {
     expect(result.current.errorMsg).toBeNull();
   });
 
+  // Chapter 1 answers at once for any topic; a chapter 2 request waits under
+  // its topic, so one topic's preload can be settled while another's stays
+  // in flight.
+  const topicScenarioFetch = () => {
+    const requests = [];
+    const pending = new Map();
+    const fetchMock = mock((_url, options) => {
+      const { topic, chapter } = JSON.parse(options.body);
+      requests.push(`${topic}:${chapter}`);
+      if (chapter === 1) return Promise.resolve(chapterReply(`${topic} chapter 1`));
+      return new Promise((resolve) => pending.set(topic, resolve));
+    });
+    return {
+      fetchMock,
+      requests,
+      resolvePreload: (topic) => pending.get(topic)(chapterReply(`${topic} chapter 2`)),
+    };
+  };
+
+  const startTopic = async (result, topic) => {
+    act(() => result.current.setTopic(topic));
+    await act(async () => { await result.current.handleStartAdventure(); });
+  };
+
+  test('a chapter preload still in flight when the visitor goes home is dropped', async () => {
+    const server = topicScenarioFetch();
+    global.fetch = server.fetchMock;
+    const { result } = renderHook(() => useGameState());
+    await startTopic(result, 'Majapahit');
+    expect(server.requests).toEqual(['Majapahit:1', 'Majapahit:2']);
+    expect(result.current.isPreloading).toBe(true);
+
+    act(() => result.current.handleFinish());
+    expect(result.current.isPreloading).toBe(false);
+
+    await act(async () => {
+      server.resolvePreload('Majapahit');
+      await flush();
+    });
+
+    expect(result.current.nextGameData).toBeNull();
+    expect(result.current.isPreloading).toBe(false);
+  });
+
+  test('a preload from the previous topic does not become the next chapter of a new adventure', async () => {
+    const server = topicScenarioFetch();
+    global.fetch = server.fetchMock;
+    const { result } = renderHook(() => useGameState());
+    await startTopic(result, 'Majapahit');
+
+    act(() => result.current.handleFinish());
+    await startTopic(result, 'Sriwijaya');
+    expect(server.requests).toEqual(['Majapahit:1', 'Majapahit:2', 'Sriwijaya:1', 'Sriwijaya:2']);
+
+    await act(async () => {
+      server.resolvePreload('Majapahit');
+      await flush();
+    });
+    expect(result.current.nextGameData).toBeNull();
+    expect(result.current.isPreloading).toBe(true);
+
+    await act(async () => {
+      server.resolvePreload('Sriwijaya');
+      await flush();
+    });
+    expect(result.current.nextGameData.meta.location).toBe('Sriwijaya chapter 2');
+    expect(result.current.isPreloading).toBe(false);
+  });
+
+  test('continuing does not wait for an in-flight preload of another topic', async () => {
+    const server = topicScenarioFetch();
+    global.fetch = server.fetchMock;
+    const { result } = renderHook(() => useGameState());
+    await startTopic(result, 'Majapahit');
+
+    act(() => result.current.setTopic('Sriwijaya'));
+    await continueAndFlush(result);
+
+    expect(server.requests).toEqual(['Majapahit:1', 'Majapahit:2', 'Sriwijaya:2']);
+  });
+
+  const quizScriptReply = (choices) => scenarioReply(200, {
+    success: true,
+    result: {
+      response: JSON.stringify({
+        ...validMockGameData,
+        script: [
+          { type: "dialogue", speakerId: "PLAYER", mood: "happy", text: "Hello" },
+          { type: "quiz", speakerId: "NPC_1", mood: "happy", text: "Quiz time", choices },
+          { type: "dialogue", speakerId: "NPC_1", mood: "happy", text: "Goodbye" },
+        ],
+      }),
+    },
+  });
+
+  // Start, then press next until the quiz slide has finished typing and one
+  // more press decides between the quiz popup and the following slide.
+  const advanceOntoQuizSlide = async (choices) => {
+    global.fetch = mock(async () => quizScriptReply(choices));
+    const { result } = renderHook(() => useGameState());
+    act(() => result.current.setTopic('History'));
+    await act(async () => { await result.current.handleStartAdventure(); });
+    act(() => result.current.handleNext());
+    act(() => result.current.handleNext());
+    expect(result.current.idx).toBe(1);
+    act(() => result.current.handleNext());
+    expect(result.current.isTyping).toBe(false);
+    act(() => result.current.handleNext());
+    return result;
+  };
+
+  test('a quiz slide with choices opens the quiz popup', async () => {
+    const result = await advanceOntoQuizSlide([{ text: 'A', correct: true, response: 'Benar' }]);
+    expect(result.current.quizMode).toBe(true);
+    expect(result.current.idx).toBe(1);
+  });
+
+  test('a quiz slide without choices is skipped instead of opening the quiz popup', async () => {
+    const result = await advanceOntoQuizSlide([]);
+    expect(result.current.quizMode).toBe(false);
+    expect(result.current.idx).toBe(2);
+  });
+
   test('handleStartAdventure shows auth modal if user is missing', async () => {
     mockUser = null;
     const { result } = renderHook(() => useGameState());

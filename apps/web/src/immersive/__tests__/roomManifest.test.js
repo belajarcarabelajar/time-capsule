@@ -1,5 +1,10 @@
 import { expect, test } from 'bun:test';
+import { HISTORY_ENVIRONMENT_KEYS } from '@time-capsule/game-engine';
 import { roomManifest } from '../rooms.js';
+
+test('every authored room is an environment key the story Worker may return, and the reverse', () => {
+  expect([...HISTORY_ENVIRONMENT_KEYS].sort()).toEqual(Object.keys(roomManifest).sort());
+});
 
 test('archive instrument inspection targets its authored ring pivot, not the table', () => {
   expect(roomManifest.archive.objects.find(object => object.id === 'instrument').view.target)

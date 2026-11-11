@@ -5,7 +5,8 @@ const HISTORY_ENVIRONMENT_KEYS = Object.freeze([
   "kingdom-court",
   "market-port",
   "rural-village",
-  "resistance-outpost"
+  "resistance-outpost",
+  "ancient-library"
 ]);
 
 export { HISTORY_ENVIRONMENT_KEYS };

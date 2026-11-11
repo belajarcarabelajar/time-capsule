@@ -43,8 +43,10 @@ async function fetchGoogleUserProfile(accessToken) {
   return { ok: userResponse.ok, data };
 }
 
+// Returns false only when the row of a new user could not be created; every
+// other database error is logged and still lets the login through.
 async function syncUserProfileToDatabase(env, request, userData, userPayload) {
-  if (!env.DB) return;
+  if (!env.DB) return true;
 
   try {
     const todayStr = new Date().toISOString().split("T")[0];
@@ -69,26 +71,32 @@ async function syncUserProfileToDatabase(env, request, userData, userPayload) {
 
     if (!existingUser) {
       // Insert new user with 50 initial welcome points
-      await env.DB.prepare(
-        `
+      try {
+        await env.DB.prepare(
+          `
         INSERT INTO users (id, google_id, email, email_verified, name, given_name, family_name, picture, locale, hd, points, max_points, last_point_reset)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 50, 50, ?)
       `,
-      )
-        .bind(
-          googleId,
-          googleId,
-          email,
-          verifiedEmail,
-          name,
-          givenName,
-          familyName,
-          picture,
-          locale,
-          hd,
-          todayStr,
         )
-        .run();
+          .bind(
+            googleId,
+            googleId,
+            email,
+            verifiedEmail,
+            name,
+            givenName,
+            familyName,
+            picture,
+            locale,
+            hd,
+            todayStr,
+          )
+          .run();
+      } catch {
+        // A session without a users row cannot read or spend points.
+        console.error("Database sync error during authentication:", "new_user_insert_failed");
+        return false;
+      }
 
       // Log welcome bonus transaction (+50)
       await env.DB.prepare(
@@ -148,6 +156,7 @@ async function syncUserProfileToDatabase(env, request, userData, userPayload) {
     console.error("Database sync error during authentication:", dbErr);
     // Log database sync error for security observability, but do not block authentication
   }
+  return true;
 }
 
 export async function onRequestGet(context) {
@@ -225,7 +234,15 @@ export async function onRequestGet(context) {
     };
 
     // 4. Sync profile & audit logs to Cloudflare D1 Database if env.DB is configured
-    await syncUserProfileToDatabase(env, request, userData, userPayload);
+    const userRowReady = await syncUserProfileToDatabase(
+      env,
+      request,
+      userData,
+      userPayload,
+    );
+    if (!userRowReady) {
+      return redirectWithError("Authentication failed");
+    }
 
     // 5. Generate JWT session token
     const token = await signJwt(userPayload, jwtSecret);

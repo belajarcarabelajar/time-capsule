@@ -61,24 +61,64 @@ export async function readUserPoints(authUser, env) {
   }
 }
 
-export async function checkUserPoints(authUser, env, cost = 10) {
-  if (isUnlimitedQuotaUser(authUser, env)) {
-    return { success: true, unlimited: true, currentPoints: null };
-  }
+// Takes the points before any paid call, in one transactional batch, so
+// parallel requests cannot both pass on the same balance. Resolves to
+// { unlimited: true } for the admin, else { unlimited: false, points }.
+export async function reservePoints(authUser, env, cost = 10, description = 'Generasi cerita time capsule') {
+  if (isUnlimitedQuotaUser(authUser, env)) return { unlimited: true };
+  if (!authUser || !env.DB) throw new PointsError();
+  const db = env.DB;
+  const affordable = `google_id = ? AND ${validQuota} AND points >= ?`;
+  let result;
   try {
-    const row = await readUserPoints(authUser, env);
-    if (row.points < cost) throw new PointsError('INSUFFICIENT_POINTS', 403);
-    return { success: true, currentPoints: row.points };
-  } catch (error) {
-    return { success: false, errorResponse: pointsErrorResponse(error) };
+    result = await db.batch([
+      ...resetStatements(db, authUser.sub),
+      db.prepare(`INSERT INTO point_transactions (user_id, amount, balance_after, type, description)
+        SELECT id, ?, points - ?, 'GENERATE_STORY', ? FROM users WHERE ${affordable}`)
+        .bind(-cost, cost, description, authUser.sub, cost),
+      db.prepare(`UPDATE users SET points = points - ? WHERE ${affordable}`)
+        .bind(cost, authUser.sub, cost),
+      db.prepare('SELECT points, max_points FROM users WHERE google_id = ?').bind(authUser.sub),
+    ]);
+  } catch {
+    throw new PointsError();
+  }
+  const row = requireQuota(result[4].results[0]);
+  if (result[3].meta.changes !== 1) throw new PointsError('INSUFFICIENT_POINTS', 403);
+  return { unlimited: false, points: row.points };
+}
+
+// Gives a reservation back after a failed generation. Never throws: a failed
+// refund is logged with a reason code and the points stay spent.
+export async function refundPoints(authUser, env, cost = 10, description = 'Pengembalian poin generasi gagal') {
+  // A daily reset may have refilled the balance since the reservation, so the
+  // refund stops at max_points and never lowers a balance already above it.
+  const refunded = 'max(points, min(points + ?, max_points))';
+  try {
+    const db = env.DB;
+    const result = await db.batch([
+      db.prepare(`INSERT INTO point_transactions (user_id, amount, balance_after, type, description)
+        SELECT id, ${refunded} - points, ${refunded}, 'REFUND_STORY', ?
+        FROM users WHERE google_id = ? AND ${validQuota}`)
+        .bind(cost, cost, description, authUser.sub),
+      db.prepare(`UPDATE users SET points = ${refunded} WHERE google_id = ? AND ${validQuota}`)
+        .bind(cost, authUser.sub),
+    ]);
+    if (result[1].meta.changes !== 1) throw new Error('no refundable row');
+    return true;
+  } catch {
+    console.error('Point refund failed:', 'refund_unavailable');
+    return false;
   }
 }
 
-export async function deductPointsAndSaveStory({
+// Records the generated story. The balance was already debited by
+// reservePoints, so this neither reads nor changes it.
+export async function saveStory({
   authUser, env, cost = 10,
   transactionDescription = 'Generasi cerita time capsule',
   storyTitle = 'Time Capsule Chapter', promptSnippet = 'Time Capsule Story',
-  contentStr = '{}', dataObj,
+  contentStr = '{}',
 }) {
   const unlimited = isUnlimitedQuotaUser(authUser, env);
   if (!authUser || (!env.DB && !unlimited)) throw new PointsError();
@@ -99,24 +139,12 @@ export async function deductPointsAndSaveStory({
       return null;
     }
     const result = await db.batch([
-      ...resetStatements(db, authUser.sub),
       db.prepare(`INSERT INTO stories (id, user_id, title, prompt, content, points_spent)
-        SELECT ?, id, ?, ?, ?, ? FROM users
-        WHERE google_id = ? AND ${validQuota} AND points >= ?`)
-        .bind(storyId, storyTitle, promptSnippet, contentStr, cost, authUser.sub, cost),
-      db.prepare(`UPDATE users SET points = points - ? WHERE google_id = ?
-        AND EXISTS (SELECT 1 FROM stories WHERE id = ? AND user_id = users.id)`)
-        .bind(cost, authUser.sub, storyId),
-      db.prepare(`INSERT INTO point_transactions (user_id, amount, balance_after, type, description)
-        SELECT id, ?, points, 'GENERATE_STORY', ? FROM users WHERE google_id = ?
-        AND EXISTS (SELECT 1 FROM stories WHERE id = ? AND user_id = users.id)`)
-        .bind(-cost, transactionDescription, authUser.sub, storyId),
-      db.prepare('SELECT points, max_points FROM users WHERE google_id = ?').bind(authUser.sub),
+        SELECT ?, id, ?, ?, ?, ? FROM users WHERE google_id = ? AND ${validQuota}`)
+        .bind(storyId, storyTitle, promptSnippet, contentStr, cost, authUser.sub),
     ]);
-    const row = requireQuota(result[5].results[0]);
-    if (result[2].meta.changes !== 1) throw new PointsError('INSUFFICIENT_POINTS', 403);
-    if (dataObj) dataObj.user_points = row.points;
-    return row.points;
+    if (result[0].meta.changes !== 1) throw new PointsError();
+    return storyId;
   } catch (error) {
     if (unlimited) {
       console.error('Admin story persistence unavailable');

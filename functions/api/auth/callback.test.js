@@ -315,6 +315,103 @@ describe("onRequestGet - Auth Callback", () => {
     console.error = originalConsoleError;
   });
 
+  const mockGoogleLogin = () => {
+    globalThis.fetch = mock(async (url) => {
+      if (url === "https://oauth2.googleapis.com/token") {
+        return {
+          ok: true,
+          json: async () => ({ access_token: "valid_token" }),
+        };
+      }
+      if (url === "https://www.googleapis.com/oauth2/v2/userinfo") {
+        return {
+          ok: true,
+          json: async () => ({ id: "user123", email: "test@test.com", name: "Test User" }),
+        };
+      }
+    });
+  };
+
+  // Fake D1 for a new user (the lookup finds no row) whose run() throws for
+  // every query containing failOn.
+  const createNewUserDbFailingOn = (failOn, executedQueries) => ({
+    prepare: (query) => ({
+      bind: () => ({
+        first: async () => null,
+        run: async () => {
+          if (query.includes(failOn)) {
+            throw new Error("Simulated D1 write error");
+          }
+          executedQueries.push(query);
+          return { success: true };
+        },
+      }),
+    }),
+  });
+
+  const withSilencedConsoleError = async (fn) => {
+    const originalConsoleError = console.error;
+    console.error = mock(() => {});
+    try {
+      return await fn();
+    } finally {
+      console.error = originalConsoleError;
+    }
+  };
+
+  it("should stop the login without a session when the new user insert fails", async () => {
+    mockGoogleLogin();
+    const executedQueries = [];
+    const context = createBaseContext();
+    context.env.DB = createNewUserDbFailingOn("INSERT INTO users", executedQueries);
+
+    const response = await withSilencedConsoleError(() => onRequestGet(context));
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(
+      "http://localhost/?auth_error=Authentication%20failed",
+    );
+    const setCookies = response.headers.getSetCookie();
+    expect(setCookies.some((c) => c.startsWith("auth_token="))).toBe(false);
+    expect(setCookies.some((c) => c.startsWith("oauth_state=;"))).toBe(true);
+    expect(executedQueries.some((q) => q.includes("INSERT INTO point_transactions"))).toBe(false);
+  });
+
+  it("should still authenticate a new user when only the audit log insert fails", async () => {
+    mockGoogleLogin();
+    const executedQueries = [];
+    const context = createBaseContext();
+    context.env.DB = createNewUserDbFailingOn("INSERT INTO auth_audit_logs", executedQueries);
+
+    const response = await withSilencedConsoleError(() => onRequestGet(context));
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(
+      "http://localhost/?auth_success=1",
+    );
+    expect(response.headers.getSetCookie().some((c) => c.startsWith("auth_token="))).toBe(true);
+    expect(executedQueries.some((q) => q.includes("INSERT INTO users"))).toBe(true);
+  });
+
+  it("should reject the callback instead of throwing when another cookie is not valid percent-encoding", async () => {
+    const request = new Request(
+      `http://localhost/api/auth/callback?code=test-code&state=attacker-state`,
+      { headers: { Cookie: `foo=%E0%A4%A; oauth_state=${TEST_STATE}` } },
+    );
+
+    let response = null;
+    let thrown = null;
+    try {
+      response = await onRequestGet({ request, env: {} });
+    } catch (err) {
+      thrown = err;
+    }
+
+    expect(thrown).toBeNull();
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toContain("Invalid%20OAuth%20state%20parameter");
+  });
+
   it("should catch general errors and redirect to error", async () => {
     globalThis.fetch = mock(async () => {
       throw new Error("Simulated fetch network error");

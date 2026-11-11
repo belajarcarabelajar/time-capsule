@@ -129,6 +129,16 @@ describe("onRequestPost scenario request", () => {
     return results;
   }
 
+  const GENERATE_ROW = { amount: -10, balance_after: 40, type: "GENERATE_STORY" };
+  const REFUND_ROW = { amount: 10, balance_after: 50, type: "REFUND_STORY" };
+
+  async function fixtureLedger() {
+    const { results } = await fixture.db
+      .prepare("SELECT amount, balance_after, type FROM point_transactions ORDER BY id")
+      .all();
+    return results;
+  }
+
   function loggedText() {
     return [...warnSpy.mock.calls, ...errorSpy.mock.calls]
       .flat()
@@ -299,6 +309,79 @@ describe("onRequestPost scenario request", () => {
       const response = await onRequestPost({ request, env: envWith({ STORY_WORKER: worker }) });
       expect(response.status).toBe(413);
       expect(await response.json()).toEqual(PAYLOAD_TOO_LARGE);
+      expect(worker.calls).toHaveLength(0);
+      await expectNothingCharged();
+    });
+  });
+
+  describe("streamed body cap", () => {
+    // highWaterMark 0 makes every chunk an explicit pull by the handler.
+    function chunkedRequest(token, chunks, seen) {
+      let index = 0;
+      const body = new ReadableStream(
+        {
+          pull(controller) {
+            if (index >= chunks.length) return controller.close();
+            seen.pulls += 1;
+            controller.enqueue(chunks[index]);
+            index += 1;
+          },
+          cancel() {
+            seen.cancelled = true;
+          },
+        },
+        { highWaterMark: 0 },
+      );
+      const request = new Request("http://localhost/api/scenario", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body,
+        duplex: "half",
+      });
+      expect(request.headers.get("Content-Length")).toBeNull();
+      return request;
+    }
+
+    it("stops reading a 40 KB stream without Content-Length once it passes 16384 bytes and answers 413", async () => {
+      const seen = { pulls: 0, cancelled: false };
+      const chunks = Array.from({ length: 40 }, () => new Uint8Array(1024).fill(120));
+      const worker = primarySuccess();
+      const response = await onRequestPost({
+        request: chunkedRequest(await userToken(), chunks, seen),
+        env: envWith({ STORY_WORKER: worker }),
+      });
+      expect(response.status).toBe(413);
+      expect((await response.json()).error).toBe("PAYLOAD_TOO_LARGE");
+      // 17 chunks of 1024 bytes are the first to exceed the cap.
+      expect(seen.pulls).toBe(17);
+      expect(seen.cancelled).toBe(true);
+      expect(worker.calls).toHaveLength(0);
+      await expectNothingCharged();
+    });
+
+    it("decodes a multibyte character split across two chunks of a streamed body", async () => {
+      const bytes = new TextEncoder().encode(JSON.stringify({ topic: "Kafé Roma", chapter: 1, history: "" }));
+      const split = bytes.indexOf(0xc3) + 1;
+      const seen = { pulls: 0, cancelled: false };
+      const worker = primarySuccess();
+      const response = await onRequestPost({
+        request: chunkedRequest(await userToken(), [bytes.slice(0, split), bytes.slice(split)], seen),
+        env: envWith({ STORY_WORKER: worker }),
+      });
+      expect(response.status).toBe(200);
+      expect(worker.calls[0].body.topic).toBe("Kafé Roma");
+    });
+
+    it("rejects a scenario request without a body with 400 INVALID_REQUEST", async () => {
+      const worker = primarySuccess();
+      const request = new Request("http://localhost/api/scenario", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${await userToken()}` },
+      });
+      expect(request.body).toBeNull();
+      const response = await onRequestPost({ request, env: envWith({ STORY_WORKER: worker }) });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual(INVALID_REQUEST);
       expect(worker.calls).toHaveLength(0);
       await expectNothingCharged();
     });
@@ -539,6 +622,45 @@ describe("onRequestPost scenario request", () => {
         await expectNothingCharged();
       });
     }
+
+    const finishedReply = (content, finishReason) => () =>
+      new Response(
+        JSON.stringify({
+          choices: [{ message: { role: "assistant", content }, finish_reason: finishReason }],
+        }),
+        { status: 200 },
+      );
+    const unusableFallback = [
+      ["a fallback provider reply truncated with finish_reason length", finishedReply(SCENARIO_JSON, "length"), "truncated"],
+      ["a fallback provider content that is not JSON", finishedReply(`{"meta": ${UPSTREAM_DETAIL}`, "stop"), "invalid_json"],
+    ];
+    for (const [name, respond, reason] of unusableFallback) {
+      it(`returns 502 STORY_UNAVAILABLE for ${name} without a charge, logging only a reason code`, async () => {
+        stubFallbackProvider(respond);
+        const response = await onRequestPost({
+          request: scenarioRequest(await userToken()),
+          env: envWith({ STORY_WORKER: primaryUnavailable() }),
+        });
+        expect(response.status).toBe(502);
+        const text = await response.text();
+        expect(JSON.parse(text)).toEqual(STORY_UNAVAILABLE);
+        expect(text).not.toContain(UPSTREAM_DETAIL);
+        expect(errorSpy).toHaveBeenCalledWith("Scenario fallback provider output rejected:", reason);
+        expect(loggedText()).not.toContain(UPSTREAM_DETAIL);
+        expect(fallbackCalls).toHaveLength(1);
+        await expectNothingCharged();
+      });
+    }
+
+    it("accepts a complete fallback provider reply with finish_reason stop", async () => {
+      stubFallbackProvider(finishedReply(SCENARIO_JSON, "stop"));
+      const response = await onRequestPost({
+        request: scenarioRequest(await userToken()),
+        env: envWith({ STORY_WORKER: primaryUnavailable() }),
+      });
+      expect(response.status).toBe(200);
+      expect(await fixturePoints()).toBe(40);
+    });
   });
 
   describe("points", () => {
@@ -581,24 +703,177 @@ describe("onRequestPost scenario request", () => {
       expect(worker.calls[0].body.userId).toBe("admin-user");
     });
 
-    it("returns 503 POINTS_UNAVAILABLE when charging fails after a primary provider success, without the fallback provider", async () => {
-      let batches = 0;
-      const flakyDb = {
-        prepare: (...args) => fixture.db.prepare(...args),
-        batch: async (statements) => {
-          batches += 1;
-          if (batches > 1) throw new Error(UPSTREAM_DETAIL);
-          return fixture.db.batch(statements);
-        },
-      };
+    it("returns 503 POINTS_UNAVAILABLE for a session without a user row before calling the story Worker", async () => {
+      const worker = primarySuccess();
+      const response = await onRequestPost({
+        request: scenarioRequest(await signJwt({ sub: "absent-user" }, JWT_SECRET)),
+        env: envWith({ STORY_WORKER: worker }),
+      });
+      expect(response.status).toBe(503);
+      expect((await response.json()).error).toBe("POINTS_UNAVAILABLE");
+      expect(worker.calls).toHaveLength(0);
+      expect(await fixtureLedger()).toEqual([]);
+    });
+
+    it("returns 503 POINTS_UNAVAILABLE and refunds when saving the story fails after a primary provider success, without the fallback provider", async () => {
+      await fixture.db
+        .prepare("CREATE TRIGGER fail_story BEFORE INSERT ON stories BEGIN SELECT RAISE(ABORT, 'injected'); END")
+        .run();
       const response = await onRequestPost({
         request: scenarioRequest(await userToken()),
-        env: envWith({ DB: flakyDb }),
+        env: envWith(),
       });
       expect(response.status).toBe(503);
       expect((await response.json()).error).toBe("POINTS_UNAVAILABLE");
       expect(fallbackCalls).toHaveLength(0);
       await expectNothingCharged();
+      expect(await fixtureLedger()).toEqual([GENERATE_ROW, REFUND_ROW]);
+    });
+  });
+
+  describe("point reservation", () => {
+
+    // Holds its reply until release() so the test can look at the balance
+    // while the story Worker call is still pending.
+    function heldStoryWorker() {
+      const calls = [];
+      let release;
+      const gate = new Promise((resolve) => {
+        release = resolve;
+      });
+      return {
+        calls,
+        release,
+        fetch: async (url, init) => {
+          calls.push({ url, init });
+          await gate;
+          return new Response(
+            JSON.stringify({ success: true, provider: "claude", response: SCENARIO_JSON }),
+            { status: 200 },
+          );
+        },
+      };
+    }
+
+    async function waitForCalls(worker, wanted) {
+      for (let tries = 0; tries < 400 && worker.calls.length < wanted; tries += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+      }
+    }
+
+    it("holds 10 points with a GENERATE_STORY ledger row while the story Worker reply is pending", async () => {
+      const worker = heldStoryWorker();
+      const pending = onRequestPost({
+        request: scenarioRequest(await userToken()),
+        env: envWith({ STORY_WORKER: worker }),
+      });
+      await waitForCalls(worker, 1);
+      expect(worker.calls).toHaveLength(1);
+      expect(await fixturePoints()).toBe(40);
+      expect(await fixtureLedger()).toEqual([GENERATE_ROW]);
+      expect(await fixtureStories()).toEqual([]);
+      worker.release();
+      expect((await pending).status).toBe(200);
+      expect(await fixturePoints()).toBe(40);
+      expect(await fixtureLedger()).toEqual([GENERATE_ROW]);
+      expect(await fixtureStories()).toHaveLength(1);
+    });
+
+    it("lets two parallel scenario requests with 10 points reach the story Worker once and answers the other 403", async () => {
+      await fixture.db.prepare("UPDATE users SET points = 10").run();
+      const worker = heldStoryWorker();
+      const env = envWith({ STORY_WORKER: worker });
+      const token = await userToken();
+      const both = Promise.all([
+        onRequestPost({ request: scenarioRequest(token), env }),
+        onRequestPost({ request: scenarioRequest(token), env }),
+      ]);
+      await waitForCalls(worker, 2);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      worker.release();
+      const statuses = (await both).map((response) => response.status).sort();
+      expect(statuses).toEqual([200, 403]);
+      expect(worker.calls).toHaveLength(1);
+      expect(await fixturePoints()).toBe(0);
+      expect(await fixtureStories()).toHaveLength(1);
+    });
+
+    it("returns the balance to its start with a REFUND_STORY ledger row after a story Worker 502", async () => {
+      const response = await onRequestPost({
+        request: scenarioRequest(await userToken()),
+        env: envWith({ STORY_WORKER: fakeStoryWorker(502, { success: false, error: "BAD_GATEWAY" }) }),
+      });
+      expect(response.status).toBe(502);
+      await expectNothingCharged();
+      expect(await fixtureLedger()).toEqual([GENERATE_ROW, REFUND_ROW]);
+    });
+
+    it("refunds after a fallback provider failure", async () => {
+      stubFallbackProvider(() => new Response("{}", { status: 503 }));
+      const response = await onRequestPost({
+        request: scenarioRequest(await userToken()),
+        env: envWith({ STORY_WORKER: primaryUnavailable() }),
+      });
+      expect(response.status).toBe(502);
+      await expectNothingCharged();
+      expect(await fixtureLedger()).toEqual([GENERATE_ROW, REFUND_ROW]);
+    });
+
+    it("refunds after an unexpected error behind the reservation and answers 500", async () => {
+      const worker = {
+        fetch: async () => ({
+          get status() {
+            throw new Error(UPSTREAM_DETAIL);
+          },
+          json: async () => ({}),
+        }),
+      };
+      const response = await onRequestPost({
+        request: scenarioRequest(await userToken()),
+        env: envWith({ STORY_WORKER: worker }),
+      });
+      expect(response.status).toBe(500);
+      expect(await response.json()).toEqual(STORY_UNAVAILABLE);
+      expect(loggedText()).not.toContain(UPSTREAM_DETAIL);
+      await expectNothingCharged();
+      expect(await fixtureLedger()).toEqual([GENERATE_ROW, REFUND_ROW]);
+    });
+
+    it("never refunds above max_points when a daily reset ran during the story Worker call", async () => {
+      const worker = {
+        fetch: async () => {
+          await fixture.db.prepare("UPDATE users SET points = max_points").run();
+          return new Response(JSON.stringify({ success: false, error: "BAD_GATEWAY" }), { status: 502 });
+        },
+      };
+      const response = await onRequestPost({
+        request: scenarioRequest(await userToken()),
+        env: envWith({ STORY_WORKER: worker }),
+      });
+      expect(response.status).toBe(502);
+      expect(await fixturePoints()).toBe(50);
+      expect(await fixtureLedger()).toEqual([
+        GENERATE_ROW,
+        { amount: 0, balance_after: 50, type: "REFUND_STORY" },
+      ]);
+    });
+
+    it("keeps the points spent and logs only a reason code when the refund itself fails", async () => {
+      await fixture.db
+        .prepare(
+          "CREATE TRIGGER fail_refund BEFORE INSERT ON point_transactions WHEN NEW.type = 'REFUND_STORY' BEGIN SELECT RAISE(ABORT, 'injected'); END",
+        )
+        .run();
+      const response = await onRequestPost({
+        request: scenarioRequest(await userToken()),
+        env: envWith({ STORY_WORKER: fakeStoryWorker(502, { success: false, error: "BAD_GATEWAY" }) }),
+      });
+      expect(response.status).toBe(502);
+      expect(await response.json()).toEqual(STORY_UNAVAILABLE);
+      expect(await fixturePoints()).toBe(40);
+      expect(await fixtureLedger()).toEqual([GENERATE_ROW]);
+      expect(errorSpy).toHaveBeenCalledWith("Point refund failed:", "refund_unavailable");
+      expect(loggedText()).not.toContain("injected");
     });
   });
 
