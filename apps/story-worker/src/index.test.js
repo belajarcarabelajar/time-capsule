@@ -178,30 +178,38 @@ describe("story Worker outcomes", () => {
     expect(body).toEqual({ success: false, error: "REFUSED" });
   });
 
+  // The last column is whether a model message came back, which is when the
+  // reply carries tokens_spent so the Pages Function keeps the points.
   const fallbackEligible = [
-    ["max_tokens", () => fakeFetch(message({ stop_reason: "max_tokens" })), 1],
+    ["max_tokens", () => fakeFetch(message({ stop_reason: "max_tokens" })), 1, true],
     [
       "invalid_output",
       () => fakeFetch(message({ content: [{ type: "text", text: "Ini bukan JSON" }] })),
       1,
+      true,
     ],
-    ["unknown", () => fakeFetch(message({ stop_reason: "pause_turn" })), 1],
-    ["auth", () => fakeFetch(apiError(401, "authentication_error")), 1],
-    ["auth", () => fakeFetch(apiError(403, "permission_error")), 1],
-    ["upstream_rate_limited", () => fakeFetch(apiError(429, "rate_limit_error")), 2],
-    ["overloaded", () => fakeFetch(apiError(500, "api_error")), 2],
-    ["overloaded", () => fakeFetch(apiError(529, "overloaded_error")), 2],
-    ["timeout", () => fakeFetch(new Error(`connect timed out: ${UPSTREAM_SECRET}`)), 2],
+    ["unknown", () => fakeFetch(message({ stop_reason: "pause_turn" })), 1, true],
+    ["auth", () => fakeFetch(apiError(401, "authentication_error")), 1, false],
+    ["auth", () => fakeFetch(apiError(403, "permission_error")), 1, false],
+    ["upstream_rate_limited", () => fakeFetch(apiError(429, "rate_limit_error")), 2, false],
+    ["overloaded", () => fakeFetch(apiError(500, "api_error")), 2, false],
+    ["overloaded", () => fakeFetch(apiError(529, "overloaded_error")), 2, false],
+    ["timeout", () => fakeFetch(new Error(`connect timed out: ${UPSTREAM_SECRET}`)), 2, false],
   ];
 
-  for (const [reason, makeFetch, attempts] of fallbackEligible) {
-    test(`${reason} is a fallback-eligible failure after ${attempts} attempt(s): 502 PRIMARY_UNAVAILABLE`, async () => {
+  for (const [reason, makeFetch, attempts, spent] of fallbackEligible) {
+    test(`${reason} is a fallback-eligible failure after ${attempts} attempt(s): 502 PRIMARY_UNAVAILABLE${spent ? " with tokens_spent" : ""}`, async () => {
       const fetch = makeFetch();
       const { status, res, body, text } = await send(storyRequest(), makeEnv(), fetch);
 
       expect(status).toBe(502);
       expect(res.headers.get("content-type")).toBe("application/json");
-      expect(body).toEqual({ success: false, error: "PRIMARY_UNAVAILABLE", reason });
+      expect(body).toEqual({
+        success: false,
+        error: "PRIMARY_UNAVAILABLE",
+        reason,
+        ...(spent ? { tokens_spent: true } : {}),
+      });
       expect(fetch.calls).toHaveLength(attempts);
       expect(text).not.toContain(UPSTREAM_SECRET);
     });

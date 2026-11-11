@@ -143,7 +143,7 @@ test("workspace quality commands cover package tests without shell-specific disc
   );
   expect(rootPackage.scripts["test:backend"]).toBe("bun test functions/api");
   expect(rootPackage.scripts["test:script"]).toBe(
-    "bun test scripts/build-website.test.js scripts/seo-head.test.js",
+    "bun test scripts/build-website.test.js scripts/seo-head.test.js scripts/retention-purge.test.js",
   );
   expect(rootPackage.scripts["test:assets"]).toBe(
     "bun scripts/verify-history-assets.mjs",

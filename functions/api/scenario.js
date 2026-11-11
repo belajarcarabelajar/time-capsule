@@ -82,20 +82,22 @@ async function askStoryWorker(binding, payload) {
     return { response: data.response };
   }
   if (reply.status === 422 && data?.error === "REFUSED") {
-    return { outcome: failure(422, REFUSED) };
+    return { outcome: failure(422, REFUSED), spent: true };
   }
   if (reply.status === 429 && data?.error === "RATE_LIMITED") {
     return { outcome: failure(429, RATE_LIMITED) };
   }
   if (reply.status === 502 && data?.error === "PRIMARY_UNAVAILABLE") {
-    return { fallback: reasonCode(data.reason) };
+    return { fallback: reasonCode(data.reason), spent: data.tokens_spent === true };
   }
   console.error("Scenario story Worker unexpected reply:", reply.status);
   return { outcome: failure(502, STORY_UNAVAILABLE) };
 }
 
-// Resolves to the scenario JSON string, or null on any failure.
-async function askFallbackProvider(env, scenario) {
+// Resolves to the scenario JSON string, or null on any failure. Sets
+// usage.spent once the provider answered with an OK reply, since that reply
+// was generated even when its content is unusable.
+async function askFallbackProvider(env, scenario, usage) {
   const key = env.PROVIDER_API_KEY;
   if (!key) {
     console.error("Scenario fallback provider not configured: PROVIDER_API_KEY");
@@ -124,6 +126,7 @@ async function askFallbackProvider(env, scenario) {
     console.error("Scenario fallback provider request failed");
     return null;
   }
+  if (reply.ok) usage.spent = true;
   const data = reply.ok ? await readJson(reply) : null;
   const choice = data?.choices?.[0];
   const content = choice?.message?.content;
@@ -172,17 +175,19 @@ async function readCappedBody(request) {
   return new TextDecoder().decode(bytes);
 }
 
-// Runs after the reservation; every reply other than a 200 is refunded by the caller.
-async function generateAndSave({ authUser, env, binding, scenario }) {
+// Runs after the reservation. Sets usage.spent once a provider returned a
+// model message; the caller refunds a failure only while it is still false.
+async function generateAndSave({ authUser, env, binding, scenario, usage }) {
   const { topic, chapter } = scenario;
   const primary = await askStoryWorker(binding, { userId: authUser.sub, ...scenario });
+  if (primary.spent || primary.response) usage.spent = true;
   if (primary.outcome) return primary.outcome;
 
   let provider = "claude";
   let response = primary.response;
   if (primary.fallback) {
     console.warn("Scenario primary provider unavailable:", primary.fallback);
-    response = await askFallbackProvider(env, scenario);
+    response = await askFallbackProvider(env, scenario, usage);
     if (!response) return failure(502, STORY_UNAVAILABLE);
     provider = "fallback";
   }
@@ -244,6 +249,9 @@ export async function onRequestPost(context) {
     // cancelled requests cannot generate for free.
     const reservation = await reservePoints(authUser, env, COST);
 
+    // Owner decision 2026-11-11: tokens a provider already spent stay paid, so
+    // only a failure before any model message comes back is refunded.
+    const usage = { spent: false };
     let outcome;
     try {
       outcome = await generateAndSave({
@@ -251,6 +259,7 @@ export async function onRequestPost(context) {
         env,
         binding,
         scenario: { topic, chapter, history },
+        usage,
       });
     } catch (err) {
       if (err instanceof PointsError) {
@@ -260,7 +269,7 @@ export async function onRequestPost(context) {
         outcome = failure(500, STORY_UNAVAILABLE);
       }
     }
-    if (outcome.status !== 200 && !reservation.unlimited) {
+    if (outcome.status !== 200 && !usage.spent && !reservation.unlimited) {
       await refundPoints(authUser, env, COST);
     }
     return outcome;
