@@ -176,7 +176,8 @@ async function readCappedBody(request) {
 }
 
 // Runs after the reservation. Sets usage.spent once a provider returned a
-// model message; the caller refunds a failure only while it is still false.
+// model message and clears it again when saving the story fails; the caller
+// refunds a failure only while it is false.
 async function generateAndSave({ authUser, env, binding, scenario, usage }) {
   const { topic, chapter } = scenario;
   const primary = await askStoryWorker(binding, { userId: authUser.sub, ...scenario });
@@ -192,15 +193,22 @@ async function generateAndSave({ authUser, env, binding, scenario, usage }) {
     provider = "fallback";
   }
 
-  await saveStory({
-    authUser,
-    env,
-    cost: COST,
-    transactionDescription: "Generasi cerita time capsule",
-    storyTitle: "Time Capsule Chapter",
-    promptSnippet: `${topic} (bagian ${chapter})`,
-    contentStr: JSON.stringify({ provider, response }),
-  });
+  try {
+    await saveStory({
+      authUser,
+      env,
+      cost: COST,
+      transactionDescription: "Generasi cerita time capsule",
+      storyTitle: "Time Capsule Chapter",
+      promptSnippet: `${topic} (bagian ${chapter})`,
+      contentStr: JSON.stringify({ provider, response }),
+    });
+  } catch (err) {
+    // Owner decision 2026-11-11: a story lost by our own database is refunded
+    // even though the provider already spent tokens on it.
+    usage.spent = false;
+    throw err;
+  }
 
   return jsonResponse(200, { success: true, result: { response } });
 }
@@ -250,7 +258,8 @@ export async function onRequestPost(context) {
     const reservation = await reservePoints(authUser, env, COST);
 
     // Owner decision 2026-11-11: tokens a provider already spent stay paid, so
-    // only a failure before any model message comes back is refunded.
+    // only a failure before any model message comes back, or a failure to save
+    // the story, is refunded.
     const usage = { spent: false };
     let outcome;
     try {
