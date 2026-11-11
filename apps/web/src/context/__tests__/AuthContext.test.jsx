@@ -28,9 +28,13 @@ function TestComponent({ onRender }) {
   );
 }
 
+// Several tests replace window.location; later test files in the same bun
+// process (RoomModel builds URLs from window.location.href) need it back.
+const originalLocationDescriptor = Object.getOwnPropertyDescriptor(window, 'location');
+const originalLocationHref = window.location.href;
+
 describe('AuthContext & AuthProvider', () => {
   let originalFetch;
-  let _originalLocation;
   let replaceStateMock;
 
   beforeEach(() => {
@@ -42,6 +46,11 @@ describe('AuthContext & AuthProvider', () => {
   afterEach(() => {
     cleanup();
     global.fetch = originalFetch;
+    if (originalLocationDescriptor) {
+      Object.defineProperty(window, 'location', originalLocationDescriptor);
+    } else {
+      delete window.location;
+    }
   });
 
   test('useAuth returns default context when used outside AuthProvider', () => {
@@ -235,5 +244,10 @@ describe('AuthContext & AuthProvider', () => {
 
     expect(logoutCalled).toBe(true);
     expect(getByTestId('user').textContent).toBe('No User');
+  });
+
+  // Keep last: proves earlier tests left window.location as they found it.
+  test('leaves window.location unchanged for later tests', () => {
+    expect(window.location.href).toBe(originalLocationHref);
   });
 });
