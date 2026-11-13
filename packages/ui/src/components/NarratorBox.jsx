@@ -10,12 +10,12 @@ const NarratorBox = ({ text, onComplete, isTyping }) => {
   }, []);
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-500">
+    <div className="absolute inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-xs animate-in fade-in duration-500">
       {/* UPDATE: max-w-2xl diubah menjadi max-w-lg md:max-w-4xl agar lebih lebar di desktop */}
       <div className="bg-stone-900 border-2 border-amber-600 rounded-2xl w-full max-w-lg md:max-w-4xl p-6 md:p-12 text-center shadow-[0_0_60px_rgba(217,119,6,0.3)] relative overflow-hidden flex flex-col items-center">
         
         {/* Header Decoration */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-amber-500 to-transparent"></div>
 
         {/* CENTERED ICON - Ukuran disesuaikan sedikit di mobile agar proporsional */}
         <div className="w-16 h-16 md:w-24 md:h-24 rounded-full border-4 border-amber-600 bg-stone-800 flex items-center justify-center shadow-2xl mb-4 md:mb-6 relative z-10">

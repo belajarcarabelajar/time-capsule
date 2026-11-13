@@ -9,10 +9,10 @@ const QuizPopup = ({ data, onAnswer, charData }) => {
   const choices = data?.choices || data?.options || [];
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in zoom-in-95">
+    <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs animate-in fade-in zoom-in-95">
       <div className="bg-stone-900 border-2 border-amber-600 rounded-2xl w-full max-w-lg p-6 shadow-[0_0_50px_rgba(217,119,6,0.3)] relative overflow-hidden flex flex-col items-center text-center">
         
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-amber-500 to-transparent"></div>
         
         <div className="w-20 h-20 rounded-full border-4 border-amber-600 bg-stone-800 flex items-center justify-center shadow-xl -mt-10 mb-4 z-10 relative">
            <span className="text-4xl filter drop-shadow-md">{charData?.icon || "👤"}</span>

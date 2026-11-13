@@ -63,7 +63,7 @@ export default function UserBar() {
   return (
     <div className="flex items-center gap-3 font-sans">
       {/* Points Badge - desktop header only; mobile reads quota inside profile dropdown */}
-      <div className="hidden md:flex items-center gap-1.5 bg-amber-950/60 border border-amber-500/40 text-amber-300 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm">
+      <div className="hidden md:flex items-center gap-1.5 bg-amber-950/60 border border-amber-500/40 text-amber-300 px-3 py-1.5 rounded-full text-xs font-bold shadow-xs">
         <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
         <span role="status">{unlimitedQuota ? balanceLabel : pointsAvailable ? `${balanceLabel} Poin` : balanceLabel}</span>
       </div>

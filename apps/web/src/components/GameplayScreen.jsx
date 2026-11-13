@@ -55,7 +55,7 @@ export default function GameplayScreen({
   const finalSpeakerDesc = speakerDesc;
 
   return (
-    <div className={`fixed inset-0 overflow-hidden bg-black font-sans flex items-center justify-center select-none${immersiveEnabled ? ' history-gameplay' : ''}`} onClick={handleNext}>
+    <div className={`fixed inset-0 overflow-hidden bg-black font-sans flex items-center justify-center select-none ${immersiveEnabled ? 'history-gameplay' : ''}`} onClick={handleNext}>
       <div className="relative w-full h-full md:max-w-6xl md:h-[95vh] md:rounded-2xl overflow-hidden shadow-2xl bg-black border border-white/10">
 
         {isLoading && <LoadingPanel text="MENYIAPKAN BABAK BERIKUTNYA..." />}
@@ -109,7 +109,7 @@ export default function GameplayScreen({
 
         {/* 3. DIALOGUE LAYER (BOTTOM) */}
         {!isNarrator && !showContinuePrompt && !isLoading && (
-          <div className="absolute bottom-0 left-0 w-full z-30 p-4 pb-24 md:px-10 md:pb-24 flex flex-col justify-end min-h-[50%] bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none">
+          <div className="absolute bottom-0 left-0 w-full z-30 p-4 pb-24 md:px-10 md:pb-24 flex flex-col justify-end min-h-[50%] bg-linear-to-t from-black via-black/80 to-transparent pointer-events-none">
               <div className={`w-full flex ${isPlayerTurn ? 'justify-end' : 'justify-start'} pointer-events-auto`}>
                  <DialogueBox
                    key={activeCharId + idx}
