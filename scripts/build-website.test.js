@@ -117,7 +117,8 @@ test("Vite development API traffic uses an explicit local Pages Functions origin
 
 test("Vite build splits the 3D vendor payload from the room entry chunk", () => {
   const source = readFileSync(join(root, "apps/web/vite.config.js"), "utf8");
-  expect(source).toContain("manualChunks");
+  expect(source).toContain("codeSplitting");
+  expect(source).not.toContain("manualChunks");
   expect(source).toContain("three-vendor");
   expect(source).toContain("react-vendor");
   expect(source).toContain("chunkSizeWarningLimit: 750");

@@ -29,22 +29,29 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       chunkSizeWarningLimit: 750,
-      rollupOptions: {
+      rolldownOptions: {
         output: {
-          manualChunks(id) {
-            if (id.includes("/node_modules/@react-three/")) {
-              return "three-fiber-vendor";
-            }
-            if (id.includes("/node_modules/three/")) {
-              return "three-vendor";
-            }
-            if (
-              id.includes("/node_modules/react/") ||
-              id.includes("/node_modules/react-dom/")
-            ) {
-              return "react-vendor";
-            }
-            return undefined;
+          // Groups pull in their dependencies, so the fiber group gets the
+          // lowest priority; otherwise it swallows three, and the entry chunk,
+          // which imports three, then loads fiber eagerly too.
+          codeSplitting: {
+            groups: [
+              {
+                name: "three-vendor",
+                test: /\/node_modules\/three\//,
+                priority: 3,
+              },
+              {
+                name: "react-vendor",
+                test: /\/node_modules\/react(-dom)?\//,
+                priority: 2,
+              },
+              {
+                name: "three-fiber-vendor",
+                test: /\/node_modules\/@react-three\//,
+                priority: 1,
+              },
+            ],
           },
         },
       },
