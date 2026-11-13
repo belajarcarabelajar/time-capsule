@@ -113,7 +113,8 @@ describe("primary provider request", () => {
     const [call] = fetch.calls;
     expect(call.method).toBe("POST");
     expect(call.url.endsWith("/v1/messages")).toBe(true);
-    expect(call.headers.get("x-api-key")).toBe(API_KEY);
+    expect(call.headers.get("authorization")).toBe(`Bearer ${API_KEY}`);
+    expect(call.headers.get("anthropic-version")).toBe("2026-10-21");
     expect(call.body.model).toBe("claude-haiku-5-5");
     expect(call.body.max_tokens).toBe(16000);
     expect(call.body.thinking).toEqual({ type: "adaptive" });

@@ -20,19 +20,19 @@
     "packages/*"
   ],
   "devDependencies": {
-    "@happy-dom/global-registrator": "^20.11.1",
+    "@happy-dom/global-registrator": "^21.0.4",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.10",
-    "happy-dom": "^20.11.1",
+    "happy-dom": "^21.0.4",
     "miniflare": "4.20260730.0",
     "prettier": "3.10.1",
-    "react-test-renderer": "18",
+    "react-test-renderer": "19",
     "turbo": "^2.11.11",
     "wrangler": "4.162.0"
   },
   "packageManager": "bun@1.4.4",
   "dependencies": {
-    "isomorphic-dompurify": "^3.19.0"
+    "isomorphic-dompurify": "^4.7.0"
   }
 }
