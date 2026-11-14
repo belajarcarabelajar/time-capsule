@@ -21,15 +21,15 @@
   ],
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.11.1",
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.10",
     "happy-dom": "^20.11.1",
     "miniflare": "4.20260730.0",
-    "prettier": "3.5.3",
+    "prettier": "3.10.1",
     "react-test-renderer": "18",
-    "turbo": "^2.3.0",
-    "wrangler": "4.129.0"
+    "turbo": "^2.11.11",
+    "wrangler": "4.162.0"
   },
   "packageManager": "bun@1.4.4",
   "dependencies": {
