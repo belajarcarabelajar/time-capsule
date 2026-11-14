@@ -23,7 +23,7 @@ export default function StartScreen({
   const displayError = errorMsg || authError;
 
   return (
-    <div className={`min-h-screen bg-black text-amber-50 font-serif flex items-center justify-center p-6 relative overflow-hidden${immersiveEnabled ? ' history-start' : ''}`}>
+    <div className={`min-h-screen bg-black text-amber-50 font-serif flex items-center justify-center p-6 relative overflow-hidden ${immersiveEnabled ? 'history-start' : ''}`}>
       {/* Top Header Bar for User Login / Profile */}
       <div className="absolute top-4 right-4 z-40">
         <UserBar />
@@ -32,12 +32,12 @@ export default function StartScreen({
       {isLoading && <LoadingPanel text="MEMBUKA PORTAL SEJARAH..." />}
 
       {immersiveEnabled ? <HistoricalEnvironment startScreen blocked={isLoading || showAuthModal} /> : <>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-900/40 via-stone-950 to-black animate-pulse"></div>
+        <div className="absolute inset-0 bg-radial-[circle_at_center] from-amber-900/40 via-stone-950 to-black animate-pulse"></div>
       </>}
 
-      <div className={`w-full max-w-md relative z-10 text-center space-y-8${immersiveEnabled ? ' history-start__form' : ''}`}>
-        <div className="flex justify-center mb-4">
-           <div className={`w-24 h-24 rounded-full bg-gradient-to-tr from-amber-600 to-orange-700 flex items-center justify-center shadow-[0_0_50px_rgba(245,158,11,0.5)] animate-float-slow border-4 border-amber-800${immersiveEnabled ? ' history-start__mark' : ''}`}>
+      <div className={`w-full max-w-md relative z-10 text-center space-y-8 ${immersiveEnabled ? 'history-start__form' : ''}`}>
+        <div className="flex justify-center">
+           <div className={`w-24 h-24 rounded-full bg-linear-to-tr from-amber-600 to-orange-700 flex items-center justify-center shadow-[0_0_50px_rgba(245,158,11,0.5)] animate-float-slow border-4 border-amber-800 ${immersiveEnabled ? 'history-start__mark' : ''}`}>
               <Hourglass className="w-12 h-12 text-amber-100" />
            </div>
         </div>
@@ -69,7 +69,7 @@ export default function StartScreen({
         )}
 
         <form onSubmit={handleStartAdventure} className="relative group px-4">
-          <div className="absolute inset-x-4 inset-y-0 bg-gradient-to-r from-amber-600 to-orange-600 rounded-xl blur opacity-25 group-hover:opacity-75 transition duration-1000"></div>
+          <div className="absolute inset-x-4 inset-y-0 bg-linear-to-r from-amber-600 to-orange-600 rounded-xl blur-sm opacity-25 group-hover:opacity-75 transition duration-1000"></div>
           <div className="relative">
             <input
               aria-label="Peristiwa sejarah"
@@ -77,7 +77,7 @@ export default function StartScreen({
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="Ketik Peristiwa Sejarah..."
-              className="w-full bg-stone-900 text-amber-50 p-4 pr-12 rounded-xl border-2 border-amber-900 focus:border-amber-500 outline-none text-center font-bold placeholder-amber-700 transition-colors font-sans"
+              className="w-full bg-stone-900 text-amber-50 p-4 pr-12 rounded-xl border-2 border-amber-900 focus:border-amber-500 outline-hidden text-center font-bold placeholder-amber-700 transition-colors font-sans"
               disabled={isLoading}
             />
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-amber-700 w-5 h-5" />

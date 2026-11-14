@@ -1,4 +1,4 @@
-import { describe, it, expect, mock, beforeEach, beforeAll, afterAll } from 'bun:test';
+import { describe, it, expect, mock, beforeEach, beforeAll } from 'bun:test';
 import React from 'react';
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
 if (!GlobalRegistrator.isRegistered) {
@@ -21,11 +21,10 @@ mock.module('@time-capsule/game-engine', () => ({
 const { SoundEngine } = await import('@time-capsule/game-engine');
 const { NarratorBox } = await import('./NarratorBox.jsx');
 
+// The happy-dom window stays registered for later files in this process:
+// react-dom 19 keeps the queueMicrotask of the window it loaded under, and a
+// closed happy-dom window drops those microtasks, so no later render commits.
 describe('NarratorBox', () => {
-  afterAll(() => {
-    GlobalRegistrator.unregister();
-  });
-
   beforeEach(() => {
     SoundEngine.playNarrator.mockClear();
     cleanup();

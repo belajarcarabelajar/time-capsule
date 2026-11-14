@@ -8,7 +8,7 @@ export default function AuthModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="relative w-full max-w-md bg-stone-900 border-2 border-amber-600/60 rounded-2xl p-6 text-center shadow-[0_0_50px_rgba(245,158,11,0.25)] space-y-6 font-sans">
         <button 
           type="button"
@@ -19,7 +19,7 @@ export default function AuthModal({ isOpen, onClose }) {
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex justify-center">
+        <div className="flex justify-center mt-6">
           <div className="w-16 h-16 rounded-full bg-amber-950/80 border border-amber-500/50 flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.3)]">
             <Lock className="w-8 h-8 text-amber-500" />
           </div>

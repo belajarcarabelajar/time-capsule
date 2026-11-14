@@ -7,7 +7,7 @@ const DEFAULT_HINT = "AI sedang menulis babak ini. Biasanya butuh sekitar 30 det
 
 const LoadingPanel = ({ text = "MEMBUKA PORTAL WAKTU...", hint = DEFAULT_HINT }) => {
   return (
-    <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center p-8 backdrop-blur-md">
+    <div className="absolute inset-0 z-100 bg-black/90 flex flex-col items-center justify-center p-8 backdrop-blur-md">
        <div className="w-full max-w-md space-y-6 text-center">
           <div className="relative mx-auto w-24 h-24">
              <div className="absolute inset-0 border-4 border-amber-600/30 rounded-full animate-ping"></div>
@@ -25,7 +25,7 @@ const LoadingPanel = ({ text = "MEMBUKA PORTAL WAKTU...", hint = DEFAULT_HINT })
           </div>
           <div className="h-2 w-full bg-stone-800 rounded-full overflow-hidden relative border border-stone-700">
              {/* UPDATE: Warna gradient diubah menjadi coklat ke oranye */}
-             <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-amber-700 via-orange-600 to-amber-500 animate-progress-loading w-full origin-left"></div>
+             <div className="absolute top-0 left-0 h-full bg-linear-to-r from-amber-700 via-orange-600 to-amber-500 animate-progress-loading w-full origin-left"></div>
           </div>
        </div>
     </div>

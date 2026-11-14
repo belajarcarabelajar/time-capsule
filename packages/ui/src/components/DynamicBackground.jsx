@@ -35,7 +35,7 @@ const DynamicBackground = ({ scene, currentMood }) => {
   const particleIcon = getMoodParticles(currentMood) || '⚪';
 
   return (
-    <div className={`absolute inset-0 transition-colors duration-1000 bg-gradient-to-b ${activeGradient} overflow-hidden`}>
+    <div className={`absolute inset-0 transition-colors duration-1000 bg-linear-to-b ${activeGradient} overflow-hidden`}>
       {/* UPDATE: 
           1. Opacity dinaikkan dari 20 ke 50 agar lebih jelas.
           2. mix-blend-overlay dihapus agar warna emoji asli terlihat.
@@ -61,7 +61,7 @@ const DynamicBackground = ({ scene, currentMood }) => {
           {particleIcon}
         </div>
       ))}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60 pointer-events-none"></div>
+      <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-black/60 pointer-events-none"></div>
     </div>
   );
 };

@@ -13,7 +13,7 @@ export default function ContinuePrompt({
   handleFinish,
 }) {
   return (
-    <div className="absolute inset-0 z-[60] bg-stone-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 animate-in fade-in">
+    <div className="absolute inset-0 z-60 bg-stone-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 animate-in fade-in">
       <div aria-hidden="true" className="absolute inset-0 opacity-10 pointer-events-none"
         style={{ backgroundImage: 'radial-gradient(#d6d3d1 0.5px, transparent 0.5px)', backgroundSize: '4px 3px' }}></div>
 
@@ -25,7 +25,7 @@ export default function ContinuePrompt({
 
         {errorMsg && (
           <div className="flex flex-col gap-1 w-full mx-auto mb-4 animate-pulse">
-            <div className="p-2 bg-red-900/60 border border-red-500 rounded text-red-200 text-xs text-center">
+            <div className="p-2 bg-red-900/60 border border-red-500 rounded-sm text-red-200 text-xs text-center">
               {errorMsg}
             </div>
             {errorDetail && (
@@ -41,11 +41,11 @@ export default function ContinuePrompt({
         )}
 
         {nextGameData ? (
-          <div className="mb-6 text-xs text-emerald-400 flex items-center justify-center gap-2 font-mono bg-emerald-900/30 py-2 rounded border border-emerald-500/30 animate-pulse">
+          <div className="mb-6 text-xs text-emerald-400 flex items-center justify-center gap-2 font-mono bg-emerald-900/30 py-2 rounded-sm border border-emerald-500/30 animate-pulse">
             <Zap className="w-3 h-3" /> DATA BAGIAN {chapterCount + 1} SIAP!
           </div>
         ) : isPreloading ? (
-          <div className="mb-6 text-xs text-amber-300 flex items-center justify-center gap-2 font-mono bg-amber-900/30 py-2 rounded border border-amber-500/30">
+          <div className="mb-6 text-xs text-amber-300 flex items-center justify-center gap-2 font-mono bg-amber-900/30 py-2 rounded-sm border border-amber-500/30">
             <Loader2 className="w-3 h-3 animate-spin" /> SEDANG MENYUSUN DATA...
           </div>
         ) : null}

@@ -36,7 +36,7 @@ Signed-in users get a **points economy** backed by Cloudflare D1: each generatio
 ```
 time-capsule/
 ├── apps/
-│   ├── web/                 # @time-capsule/web: Vite + React 18 + Tailwind CSS v3
+│   ├── web/                 # @time-capsule/web: Vite + React 18 + Tailwind CSS v4
 │   └── story-worker/        # @time-capsule/story-worker: private Worker, rate limits + Claude
 ├── packages/
 │   ├── game-engine/         # @time-capsule/game-engine: scenario client, server prompt module, SoundEngine
@@ -68,14 +68,14 @@ time-capsule/
 - **Package manager:** Bun workspaces
 - **Orchestration:** Turborepo (`dev`, `build`, `lint`, `test`)
 - **App bundler:** Vite + `@vitejs/plugin-react`
-- **UI:** React 18, Tailwind CSS v3, `lucide-react`
+- **UI:** React 18, Tailwind CSS v4 (`@tailwindcss/vite`), `lucide-react`
 - **Backend:** Cloudflare Pages Functions (`functions/api`)
 - **Database:** Cloudflare D1 (SQLite)
 - **Auth:** Google OAuth 2.0 + JWT session cookie
 - **AI:** Claude Haiku 5.5 through the official `@anthropic-ai/sdk` in a Cloudflare Worker (primary); Groq OpenAI-compatible API (`openai/gpt-oss-120b` by default, env-driven) as the fallback
 - **Sanitization:** `isomorphic-dompurify`
 
-Tailwind `content` scans both `apps/web/src` and `packages/ui/src` so utility classes used in the UI package are not purged.
+Tailwind scans `apps/web` automatically, and the `@source` line in `apps/web/src/index.css` adds `packages/ui/src`, so utility classes used in the UI package are generated too.
 
 ## Getting started
 

@@ -13,7 +13,7 @@ export default function GameplayHeader({ gameData, chapterCount, handleFinish })
           </span>
         </div>
         {chapterCount > 1 && (
-          <div className="bg-indigo-600/80 px-2 py-0.5 rounded text-[10px] text-white font-bold tracking-widest">
+          <div className="bg-indigo-600/80 px-2 py-0.5 rounded-sm text-[10px] text-white font-bold tracking-widest">
             BAGIAN {chapterCount}
           </div>
         )}
