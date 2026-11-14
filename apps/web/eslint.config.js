@@ -1,3 +1,4 @@
+import { fixupPluginRules } from '@eslint/compat';
 import js from '@eslint/js';
 import react from 'eslint-plugin-react';
 import globals from 'globals';
@@ -20,7 +21,11 @@ export default [
       }
     },
     plugins: {
-      react
+      // eslint-plugin-react 7.37.5 declares peer eslint only up to ^9.7. The two
+      // rules below run the same on ESLint 10 without the shim; it stays as a
+      // guard for plugin code that still calls rule-context methods ESLint 10
+      // removed (lib/util/version.js has a context.getFilename() call).
+      react: fixupPluginRules(react)
     },
     settings: {
       react: { version: 'detect' }
